@@ -1,0 +1,63 @@
+name: Nuvio One TV APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      simkl_client_id:
+        description: 'Optional public Simkl Client ID (not an account token or Client Secret)'
+        required: false
+        type: string
+  push:
+    branches: [main, codex/nuvio-one-tv]
+    paths:
+      - 'app/**'
+      - 'mediaservicecore/**'
+      - 'scripts/*codex*.sh'
+      - '.github/workflows/nuvio-one-tv-preview.yml'
+      - '**/*.gradle.kts'
+      - 'gradle/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nuvio-one-tv-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SIMKL_CLIENT_ID: ${{ inputs.simkl_client_id || vars.SIMKL_CLIENT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ../gradle-cache
+            ../signing
+          key: nuvio-one-tv-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', 'gradle/libs.versions.toml') }}
+          restore-keys: nuvio-one-tv-${{ runner.os }}-
+      - name: Build and test personal preview
+        run: bash scripts/build-codex-preview.sh
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nuvio-One-TV-preview
+          path: ../deliverables/Nuvio-One-TV-preview.apk
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nuvio-One-TV-test-results
+          path: app/build/reports/tests/testFullDebugUnitTest/
+          if-no-files-found: ignore
+          retention-days: 14

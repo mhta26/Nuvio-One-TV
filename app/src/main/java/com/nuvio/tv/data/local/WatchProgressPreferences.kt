@@ -81,7 +81,8 @@ class WatchProgressPreferences @Inject constructor(
     private fun progressSnapshots(profileId: Int): Flow<ProgressSnapshot> {
         return hotProgressSnapshots.computeIfAbsent(profileId) {
             progressSnapshotsCold(profileId)
-                .stateIn(scope, kotlinx.coroutines.flow.SharingStarted.Eagerly, null)
+                // Stop observing inactive profiles once their screens and sync consumers leave.
+                .stateIn(scope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000), null)
         }.mapNotNull { it }
     }
 
@@ -582,6 +583,18 @@ class WatchProgressPreferences @Inject constructor(
     /**
      * Clear all watch progress
      */
+    suspend fun clearAfterVerifiedImport(expected: Map<String, WatchProgress>, profileId: Int) {
+        storageMutex.withLock {
+            ensureStorageLocked(profileId)
+            val current = readBucketsLocked(profileId)
+            check(mergeWatchProgressBuckets(current.recent, current.archive) == expected) {
+                "Watch progress changed during import; retry"
+            }
+            clearBucketLocked(recentStore(profileId))
+            clearBucketLocked(archiveStore(profileId))
+        }
+    }
+
     suspend fun clearAll(profileId: Int = profileManager.activeProfileId.value) {
         storageMutex.withLock {
             ensureStorageLocked(profileId)

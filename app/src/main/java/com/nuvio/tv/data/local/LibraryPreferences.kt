@@ -17,8 +17,15 @@ import com.nuvio.tv.domain.model.LibrarySyncKey
 import com.nuvio.tv.domain.model.LibrarySyncReducer
 import com.nuvio.tv.domain.model.LibrarySyncState
 import com.nuvio.tv.domain.model.SavedLibraryItem
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -32,6 +39,7 @@ class LibraryPreferences @Inject constructor(
     private val profileManager: ProfileManager
 ) : LibrarySyncLocalStore {
     private val gson = Gson()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val libraryItemsKey = stringSetPreferencesKey("library_items")
     private val sortOptionKey = stringPreferencesKey("library_sort_option")
     private val lastSelectedListKey = stringPreferencesKey("library_last_selected_list")
@@ -53,10 +61,33 @@ class LibraryPreferences @Inject constructor(
 
     val libraryItems: Flow<List<SavedLibraryItem>> =
         profileManager.activeProfileId.flatMapLatest { profileId ->
-            factory.get(profileId, FEATURE).data.map { preferences ->
-                preferences.toLibrarySyncState().items
-            }
+            // Sorting, tab selection and sync cursor writes do not change library contents.
+            factory.get(profileId, FEATURE).data
+                .map { preferences ->
+                    Triple(preferences[libraryItemsKey].orEmpty(),
+                        preferences[pendingUpsertKeysKey].orEmpty(),
+                        preferences[pendingDeleteKeysKey].orEmpty())
+                }
+                .distinctUntilChanged()
+                .map { (items, upserts, deletes) ->
+                    LibrarySyncReducer.sanitize(
+                        LibrarySyncState(
+                            items = decodeRawSet(items, SavedLibraryItem::class.java),
+                            pendingUpsertKeys = decodeRawSet(upserts, LibrarySyncKey::class.java),
+                            pendingDeleteKeys = decodeRawSet(deletes, LibrarySyncKey::class.java)
+                        )
+                    ).items
+                }
+                .flowOn(Dispatchers.Default)
+        }.shareIn(scope, SharingStarted.WhileSubscribed(5_000), replay = 1)
+
+    /** Local cleanup after a verified Simkl import; never creates remote delete mutations. */
+    suspend fun clearAfterVerifiedImport(expected: LibrarySyncState, profileId: Int) {
+        store(profileId).edit { preferences ->
+            check(preferences.toLibrarySyncState() == expected) { "Library changed during import; retry" }
+            preferences.writeLibrarySyncState(LibrarySyncState())
         }
+    }
 
     suspend fun setSortOption(key: String) {
         store().edit { preferences ->
@@ -252,10 +283,11 @@ class LibraryPreferences @Inject constructor(
         key: Preferences.Key<Set<String>>,
         type: Class<T>
     ): List<T> {
-        return this[key].orEmpty().mapNotNull { value ->
-            runCatching { gson.fromJson(value, type) }.getOrNull()
-        }
+        return decodeRawSet(this[key].orEmpty(), type)
     }
+
+    private fun <T> decodeRawSet(raw: Set<String>, type: Class<T>): List<T> =
+        raw.mapNotNull { value -> runCatching { gson.fromJson(value, type) }.getOrNull() }
 
     private companion object {
         const val FEATURE = "library_preferences"

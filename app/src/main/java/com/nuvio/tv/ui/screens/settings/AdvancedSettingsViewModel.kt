@@ -1,5 +1,10 @@
 package com.nuvio.tv.ui.screens.settings
 
+import com.nuvio.tv.core.image.ArtworkRefreshService
+import com.nuvio.tv.R
+import com.nuvio.tv.data.simkl.SimklLocalReimportService
+import com.nuvio.tv.data.simkl.SimklReimportException
+import kotlinx.coroutines.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nuvio.tv.core.runtime.AppRestarter
@@ -24,7 +29,11 @@ data class AdvancedSettingsUiState(
     val playbackIssueReportsEnabled: Boolean = false,
     val playerStatsHudEnabled: Boolean = false,
     val rgb565Enabled: Boolean = true,
-    val sentryEnabled: Boolean = true
+    val sentryEnabled: Boolean = true,
+    val artworkRefreshing: Boolean = false,
+    val artworkMessageRes: Int? = null,
+    val reimportRunning: Boolean = false,
+    val reimportMessageRes: Int? = null
 )
 
 sealed class AdvancedSettingsEvent {
@@ -44,7 +53,9 @@ class AdvancedSettingsViewModel @Inject constructor(
     private val deviceLocalPlayerPreferences: DeviceLocalPlayerPreferences,
     private val sentrySettingsDataStore: SentrySettingsDataStore,
     private val imagePerformancePreferences: ImagePerformancePreferences,
-    private val appRestarter: AppRestarter
+    private val appRestarter: AppRestarter,
+    private val simklReimport: SimklLocalReimportService,
+    private val artworkRefresh: ArtworkRefreshService
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AdvancedSettingsUiState())
     val uiState: StateFlow<AdvancedSettingsUiState> = _uiState.asStateFlow()
@@ -79,6 +90,42 @@ class AdvancedSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             sentrySettingsDataStore.enabled.collectLatest { enabled ->
                 _uiState.update { it.copy(sentryEnabled = enabled) }
+            }
+        }
+    }
+
+    fun refreshArtwork() {
+        if (_uiState.value.artworkRefreshing || _uiState.value.reimportRunning) return
+        _uiState.update { it.copy(artworkRefreshing = true, artworkMessageRes = null) }
+        viewModelScope.launch {
+            try {
+                artworkRefresh.clearArtworkCaches()
+                _uiState.update { it.copy(artworkMessageRes = R.string.artwork_refresh_restart_manually) }
+                appRestarter.restart()
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Exception) {
+                _uiState.update { it.copy(artworkMessageRes = R.string.artwork_refresh_failed) }
+            } finally {
+                _uiState.update { it.copy(artworkRefreshing = false) }
+            }
+        }
+    }
+
+    fun uploadAndReimportSimkl() {
+        if (_uiState.value.reimportRunning || _uiState.value.artworkRefreshing) return
+        _uiState.update { it.copy(reimportRunning = true, reimportMessageRes = null) }
+        viewModelScope.launch {
+            try {
+                simklReimport.uploadAndReimport()
+                _uiState.update { it.copy(reimportMessageRes = R.string.simkl_reimport_success) }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                _uiState.update { it.copy(reimportMessageRes =
+                    (error as? SimklReimportException)?.messageRes ?: R.string.simkl_reimport_failed) }
+            } finally {
+                _uiState.update { it.copy(reimportRunning = false) }
             }
         }
     }

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="simkl_reimport_title">إعادة جلب المكتبة وسجل المشاهدة من Simkl</string>
+    <string name="simkl_reimport_action">رفع البيانات والتحقق منها وإعادة جلبها</string>
+    <string name="simkl_reimport_subtitle">رفع العناصر المحلية أولًا، ثم جلب بيانات Simkl كاملة وحذف السجلات المحلية التي تم التحقق منها.</string>
+    <string name="simkl_reimport_confirmation">سيتم رفع عناصر المكتبة وسجل المشاهدة المكتمل إلى حساب Simkl المرتبط، والتحقق من تنزيلها مجددًا، ثم اعتماد Simkl مصدرًا للمكتبة والمشاهدة وحذف السجلات المحلية القديمة. لن تُستعاد نسخة احتياطية محلية. تتوقف العملية قبل الحذف عند وجود نقاط استكمال محلية أو تخصيصات للمشاهدة أو عناصر غير مطابقة. أي بيانات يقبلها Simkl تبقى فيه إذا فشلت خطوة لاحقة.</string>
+    <string name="simkl_reimport_running">جارٍ الرفع والتحقق. أبقِ هذه الشاشة مفتوحة.</string>
+    <string name="simkl_reimport_success">تم الرفع والتحقق. تُجلب المكتبة وسجل المشاهدة الآن من Simkl.</string>
+    <string name="simkl_reimport_sign_in">اربط حساب Simkl أولًا.</string>
+    <string name="simkl_reimport_resume_unsupported">توجد نقاط استكمال محلية أو تخصيصات للمشاهدة لا يمكن استعادتها بدقة من Simkl. لم يتم رفع أي بيانات أو حذفها.</string>
+    <string name="simkl_reimport_pending_deletes">أكمل مزامنة تغييرات المكتبة المعلقة قبل إعادة الجلب. لم يتم حذف أي بيانات.</string>
+    <string name="simkl_reimport_unmatched">تعذرت مطابقة بعض العناصر بأمان مع Simkl. لم تُحذف السجلات المحلية.</string>
+    <string name="simkl_reimport_not_verified">لم يُرجع Simkl جميع العناصر المرفوعة بعد. أعد المحاولة لاحقًا. لم تُحذف السجلات المحلية.</string>
+    <string name="simkl_reimport_failed">لم تكتمل إعادة الجلب. تبقى العناصر المرفوعة في Simkl. تحقق من الاتصال والحساب، ثم أعد المحاولة.</string>
+</resources>

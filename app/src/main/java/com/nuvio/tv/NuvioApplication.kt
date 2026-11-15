@@ -103,8 +103,9 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
     override fun newImageLoader(context: android.content.Context): ImageLoader {
         val imageOkHttpClient by lazy {
             val imageDispatcher = okhttp3.Dispatcher().apply {
-                maxRequests = 32
-                maxRequestsPerHost = 16
+                // Keep image work from competing with playback and focus handling on small TVs.
+                maxRequests = if (MemoryBudget.isLowRamTier) 8 else 32
+                maxRequestsPerHost = if (MemoryBudget.isLowRamTier) 4 else 16
             }
             OkHttpClient.Builder()
                 .dispatcher(imageDispatcher)
@@ -187,7 +188,7 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
             .precision(coil3.size.Precision.INEXACT)
             .allowHardware(false)
             .allowRgb565(imagePerformancePreferences.rgb565Enabled)
-            .bitmapFactoryMaxParallelism(4)
+            .bitmapFactoryMaxParallelism(if (MemoryBudget.isLowRamTier) 2 else 4)
             .build()
     }
 }

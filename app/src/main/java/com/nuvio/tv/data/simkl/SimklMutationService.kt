@@ -35,7 +35,9 @@ class SimklMutationService internal constructor(
 
     suspend fun moveToList(
         items: Collection<TrackingMediaReference>,
-        destination: TrackingListStatus
+        destination: TrackingListStatus,
+        expectedAuthScope: SimklAuthScope? = null,
+        updateLocalSnapshot: Boolean = true
     ): TrackingMutationResult {
         val candidates = items.validated()
         if (candidates.isEmpty()) return TrackingMutationResult(attemptedCount = 0)
@@ -45,17 +47,22 @@ class SimklMutationService internal constructor(
                 path = "/sync/add-to-list",
                 body = buildSimklListMutationBody(candidates, destination, json),
                 retryPolicy = SimklRetryPolicy.SYNC_WRITE
-            )
+            ),
+            expectedAuthScope = expectedAuthScope
         )
         val receipt = response.toListMutationReceipt(candidates, json)
-        onMutationCommitted(receipt)
+        if (updateLocalSnapshot) onMutationCommitted(receipt)
         return receipt.result
     }
 
     suspend fun removeFromList(items: Collection<TrackingMediaReference>): TrackingMutationResult =
         removeFromHistory(items)
 
-    suspend fun addToHistory(items: Collection<TrackingHistoryItem>): TrackingMutationResult {
+    suspend fun addToHistory(
+        items: Collection<TrackingHistoryItem>,
+        expectedAuthScope: SimklAuthScope? = null,
+        updateLocalSnapshot: Boolean = true
+    ): TrackingMutationResult {
         val candidates = items.toList().also { historyItems ->
             require(historyItems.all { item -> item.media.hasResolvableIdentity }) {
                 "Simkl mutation requires a media ID or title for every item"
@@ -68,10 +75,11 @@ class SimklMutationService internal constructor(
                 path = "/sync/history",
                 body = buildSimklHistoryMutationBody(candidates, json),
                 retryPolicy = SimklRetryPolicy.SYNC_WRITE
-            )
+            ),
+            expectedAuthScope = expectedAuthScope
         )
         val receipt = response.toHistoryMutationReceipt(candidates, json)
-        onMutationCommitted(receipt)
+        if (updateLocalSnapshot) onMutationCommitted(receipt)
         return receipt.result
     }
 

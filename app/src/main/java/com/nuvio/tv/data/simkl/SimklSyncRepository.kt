@@ -94,6 +94,39 @@ class SimklSyncRepository @Inject constructor(
         }
     }
 
+    /** Full server read: no delta cursor and no merge with stale local playback. */
+    internal suspend fun reloadFromServer(
+        validate: suspend (SimklSnapshotProjection) -> Unit
+    ) = withContext(Dispatchers.IO) {
+        ensureLoaded()
+        val profileId = profileManager.activeProfileId.value
+        val generation = profileGeneration
+        val authorization = checkNotNull(authStorage.authorization()) { "Simkl authentication is required" }
+        snapshotMutex.withLock {
+            check(isCurrent(profileId, generation) && authStorage.isCurrent(authorization.scope))
+            val previous = _state.value
+            _state.value = previous.copy(isLoading = true, errorMessage = null)
+            try {
+                val fresh = engine.synchronize(SimklSyncSnapshot())
+                val projection = buildProjection(fresh)
+                check(isCurrent(profileId, generation) && authStorage.isCurrent(authorization.scope))
+                validate(projection)
+                check(isCurrent(profileId, generation) && authStorage.isCurrent(authorization.scope))
+                val stored = fresh.withFreshStorageRevision()
+                storage.save(profileId, encodeSnapshot(stored))
+                if (isCurrent(profileId, generation) && authStorage.isCurrent(authorization.scope)) {
+                    _projection.value = projection
+                    _state.value = SimklSyncState(snapshot = stored, hasLoaded = true)
+                }
+            } catch (error: Throwable) {
+                if (isCurrent(profileId, generation)) {
+                    _state.value = previous.copy(isLoading = false, errorMessage = error.message)
+                }
+                throw error
+            }
+        }
+    }
+
     suspend fun clearCurrentProfile() = withContext(Dispatchers.IO) {
         val profileId = profileManager.activeProfileId.value
         profileGeneration += 1L

@@ -311,6 +311,15 @@ class WatchedItemsPreferences @Inject constructor(
         return preservedLocalItems
     }
 
+    suspend fun clearAfterVerifiedImport(expected: List<WatchedItem>, profileId: Int) {
+        store(profileId).edit { preferences ->
+            check(decodeItems(profileId, preferences[watchedItemsKey].orEmpty()).toSet() == expected.toSet()) {
+                "Watched history changed during import; retry"
+            }
+            preferences.remove(watchedItemsKey)
+        }
+    }
+
     suspend fun clearAll(profileId: Int = profileManager.activeProfileId.value) {
         store(profileId).edit { preferences ->
             preferences.remove(watchedItemsKey)

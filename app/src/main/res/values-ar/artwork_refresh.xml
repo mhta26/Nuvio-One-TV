@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="artwork_refresh_title">تحديث البوسترات</string>
+    <string name="artwork_refresh_action">تحديث البوسترات وإعادة التشغيل</string>
+    <string name="artwork_refresh_subtitle">تنزيل صور جديدة للمكتبة وقائمة المشاهدة أثناء التصفح، مع الاحتفاظ بالعناصر وتقدم المشاهدة.</string>
+    <string name="artwork_refresh_confirmation">سيمسح التطبيق الصور وتفاصيلها المؤقتة، ثم يعيد التشغيل. ستُحمّل البوسترات مجددًا أثناء التصفح، لذا يلزم اتصال بالإنترنت. ستبقى المكتبة وسجل المشاهدة ونقاط الاستكمال والحسابات والإعدادات محفوظة. لن يتم رفع أي بيانات إلى Simkl.</string>
+    <string name="artwork_refresh_running">جارٍ مسح الصور المؤقتة…</string>
+    <string name="artwork_refresh_restart_manually">تم مسح الصور المؤقتة. أغلق التطبيق وافتحه لتنزيل البوسترات مجددًا.</string>
+    <string name="artwork_refresh_failed">تعذر إكمال تحديث البوسترات. المكتبة وسجل المشاهدة محفوظان. أعد المحاولة.</string>
+</resources>

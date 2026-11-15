@@ -199,7 +199,7 @@ android {
         val updateRepo = (findProperty("livetvUpdateRepo") as String?)
             ?.trim()
             ?.takeIf { it.isNotBlank() }
-            ?: "zoga2o3-ops/Nuvio-One"
+            ?: "mhta26/Nuvio-One-TV"
         buildConfigField("String", "GITHUB_OWNER", "\"${updateRepo.substringBefore('/', "")}\"")
         buildConfigField("String", "GITHUB_REPO", "\"${updateRepo.substringAfter('/', "")}\"")
     }

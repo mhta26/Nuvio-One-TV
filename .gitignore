@@ -63,3 +63,8 @@ AGENTS.md
 /PR.md
 docs/
 status-page/
+
+# Personal Android TV build helpers (keep SDK, signing files and service keys ignored).
+!scripts/codex-android-env.sh
+!scripts/setup-codex-android.sh
+!scripts/build-codex-preview.sh

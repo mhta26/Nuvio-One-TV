@@ -68,6 +68,8 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import androidx.tv.material3.Button
+import com.nuvio.tv.ui.components.NuvioDialog
 import com.nuvio.tv.R
 import com.nuvio.tv.data.local.Dv7HandlingMode
 import com.nuvio.tv.data.local.InternalPlayerEngine
@@ -195,6 +197,8 @@ fun AdvancedSettingsContent(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    var showSimklReimportConfirmation by remember { mutableStateOf(false) }
+    var showArtworkRefreshConfirmation by remember { mutableStateOf(false) }
     val globalStatsOverlay by GlobalStatsOverlaySettings.enabled.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { GlobalStatsOverlaySettings.init(context) }
     var connectionType by remember { mutableStateOf(getConnectionType(context)) }
@@ -495,6 +499,38 @@ fun AdvancedSettingsContent(
                             )
                         )
                     }
+                )
+            }
+        }
+
+        item(key = "artwork_refresh") {
+            SettingsGroupCard(
+                modifier = Modifier.fillMaxWidth(),
+                title = stringResource(R.string.artwork_refresh_title)
+            ) {
+                SettingsActionRow(
+                    title = stringResource(R.string.artwork_refresh_action),
+                    subtitle = stringResource(uiState.artworkMessageRes
+                        ?: if (uiState.artworkRefreshing) R.string.artwork_refresh_running
+                        else R.string.artwork_refresh_subtitle),
+                    enabled = !uiState.artworkRefreshing && !uiState.reimportRunning,
+                    onClick = { showArtworkRefreshConfirmation = true }
+                )
+            }
+        }
+
+        item(key = "simkl_reimport") {
+            SettingsGroupCard(
+                modifier = Modifier.fillMaxWidth(),
+                title = stringResource(R.string.simkl_reimport_title)
+            ) {
+                SettingsActionRow(
+                    title = stringResource(R.string.simkl_reimport_action),
+                    subtitle = stringResource(uiState.reimportMessageRes
+                        ?: if (uiState.reimportRunning) R.string.simkl_reimport_running
+                        else R.string.simkl_reimport_subtitle),
+                    enabled = !uiState.reimportRunning && !uiState.artworkRefreshing,
+                    onClick = { showSimklReimportConfirmation = true }
                 )
             }
         }
@@ -849,6 +885,48 @@ fun AdvancedSettingsContent(
         }
     }
         SettingsVerticalScrollIndicators(state = networkListState)
+    }
+
+    if (showArtworkRefreshConfirmation) {
+        val confirmFocus = remember { FocusRequester() }
+        LaunchedEffect(Unit) { confirmFocus.requestFocus() }
+        NuvioDialog(
+            title = stringResource(R.string.artwork_refresh_title),
+            subtitle = stringResource(R.string.artwork_refresh_confirmation),
+            onDismiss = { showArtworkRefreshConfirmation = false }
+        ) {
+            Button(
+                modifier = Modifier.fillMaxWidth().focusRequester(confirmFocus),
+                onClick = {
+                    showArtworkRefreshConfirmation = false
+                    viewModel.refreshArtwork()
+                }
+            ) { Text(stringResource(R.string.artwork_refresh_action)) }
+            Button(onClick = { showArtworkRefreshConfirmation = false }) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        }
+    }
+
+    if (showSimklReimportConfirmation) {
+        val confirmFocus = remember { FocusRequester() }
+        LaunchedEffect(Unit) { confirmFocus.requestFocus() }
+        NuvioDialog(
+            title = stringResource(R.string.simkl_reimport_title),
+            subtitle = stringResource(R.string.simkl_reimport_confirmation),
+            onDismiss = { showSimklReimportConfirmation = false }
+        ) {
+            Button(
+                modifier = Modifier.fillMaxWidth().focusRequester(confirmFocus),
+                onClick = {
+                    showSimklReimportConfirmation = false
+                    viewModel.uploadAndReimportSimkl()
+                }
+            ) { Text(stringResource(R.string.simkl_reimport_action)) }
+            Button(onClick = { showSimklReimportConfirmation = false }) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        }
     }
 
     if (showExperienceModeConfirmation) {

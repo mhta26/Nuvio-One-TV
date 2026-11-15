@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="artwork_refresh_title">Refresh posters</string>
+    <string name="artwork_refresh_action">Refresh posters and restart</string>
+    <string name="artwork_refresh_subtitle">Download fresh artwork for your library and watch list as you browse, preserving your items and watch progress.</string>
+    <string name="artwork_refresh_confirmation">The app will clear cached images and artwork details, then restart. Posters download again as you browse, so an internet connection is needed. Your library, watch history, resume positions, accounts and settings are preserved. This does not upload anything to Simkl.</string>
+    <string name="artwork_refresh_running">Clearing artwork caches…</string>
+    <string name="artwork_refresh_restart_manually">Image caches cleared. Close and reopen the app to download posters again.</string>
+    <string name="artwork_refresh_failed">Could not finish refreshing posters. Your library and watch history are preserved. Try again.</string>
+</resources>

@@ -1,8 +1,10 @@
 <div align="center">
 
-# Nuvio One
+# Nuvio One TV
 
-**Movies and shows, live TV, sports, YouTube and music in one app for Google TV, Android TV and Fire TV.**
+**Personal Nuvio One TV fork for Android TV, Google TV and Fire TV.**
+
+This fork adds poster-cache refresh, device-aware image loading, and guarded Simkl reimport. See [personal preview build instructions](BUILD-NUVIO-ONE-TV.md) for local/Codex setup and GitHub Actions. The original project documentation and credits follow below.
 
 [![Latest release](https://img.shields.io/github/v/release/zoga2o3-ops/Nuvio-One?label=latest&style=for-the-badge)](https://github.com/zoga2o3-ops/Nuvio-One/releases)
 [![Downloads](https://img.shields.io/github/downloads/zoga2o3-ops/Nuvio-One/total?style=for-the-badge)](https://github.com/zoga2o3-ops/Nuvio-One/releases)

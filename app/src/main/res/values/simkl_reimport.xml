@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="simkl_reimport_title">Rebuild library and history from Simkl</string>
+    <string name="simkl_reimport_action">Upload, verify and reimport</string>
+    <string name="simkl_reimport_subtitle">Upload local items first, fetch a full Simkl snapshot, then remove verified local records.</string>
+    <string name="simkl_reimport_confirmation">This uploads local library items and completed viewing history to your connected Simkl account, verifies a fresh download, and switches both sources to Simkl. It does not restore a local backup. Local resume positions, custom progress settings, or unmatched items stop the operation before deletion. Uploads already accepted by Simkl remain if a later step fails.</string>
+    <string name="simkl_reimport_running">Uploading and verifying. Keep this screen open.</string>
+    <string name="simkl_reimport_success">Uploaded and verified. Library and history now come from Simkl.</string>
+    <string name="simkl_reimport_sign_in">Connect your Simkl account first.</string>
+    <string name="simkl_reimport_resume_unsupported">Local resume positions or custom progress settings cannot be restored exactly from Simkl. Nothing was uploaded or deleted.</string>
+    <string name="simkl_reimport_pending_deletes">Finish pending library changes before reimporting. Nothing was deleted.</string>
+    <string name="simkl_reimport_unmatched">Some items cannot be matched safely in Simkl. No local records were deleted.</string>
+    <string name="simkl_reimport_not_verified">Simkl has not returned all uploaded items yet. Retry later. No local records were deleted.</string>
+    <string name="simkl_reimport_failed">Reimport did not finish. Uploaded items remain in Simkl. Check your connection and account, then retry.</string>
+</resources>

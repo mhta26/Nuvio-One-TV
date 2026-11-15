@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.nuvio.tv.core.profile.ProfileManager
 import com.nuvio.tv.data.local.ProfileDataStoreFactory
 import java.io.IOException
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.Flow
@@ -61,6 +63,87 @@ class SimklSyncRepositoryStorageTest {
     }
 
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+
+    @Test
+    fun `full reimport ignores old cursor and replaces stale playback`() = runTest {
+        val storage = FakeSimklSyncStorage()
+        val old = SimklSyncSnapshot(isInitialized = true, watermark = "old", playback = listOf(
+            SimklPlaybackSession(id = 999L, progress = 30.0, type = "movie")
+        ))
+        storage.snapshots[1] = json.encodeToString(old)
+        val scope = SimklAuthScope(1, 1L)
+        val auth = mockk<SimklAuthStorage> {
+            every { authorization() } returns SimklAuthorization(scope, "test-token")
+            every { isCurrent(scope) } returns true
+        }
+        val engine = mockk<SimklSyncEngine>()
+        val fresh = SimklSyncSnapshot(isInitialized = true, watermark = "fresh")
+        coEvery { engine.synchronize(SimklSyncSnapshot()) } returns fresh
+        val repository = SimklSyncRepository(engine, storage, mockk(relaxed = true), auth,
+            mockk { every { activeProfileId } returns MutableStateFlow(1) })
+        repository.ensureLoaded()
+        var validated = false
+
+        repository.reloadFromServer { validated = true }
+
+        assertTrue(validated)
+        coVerify(exactly = 1) { engine.synchronize(SimklSyncSnapshot()) }
+        assertEquals("fresh", repository.state.value.snapshot.watermark)
+        assertTrue(repository.state.value.snapshot.playback.isEmpty())
+        assertEquals(1, storage.saveSnapshotCalls)
+    }
+
+    @Test
+    fun `failed reimport verification never replaces persisted data`() = runTest {
+        val storage = FakeSimklSyncStorage()
+        val original = json.encodeToString(SimklSyncSnapshot(isInitialized = true, watermark = "old"))
+        storage.snapshots[1] = original
+        val scope = SimklAuthScope(1, 1L)
+        val auth = mockk<SimklAuthStorage> {
+            every { authorization() } returns SimklAuthorization(scope, "test-token")
+            every { isCurrent(scope) } returns true
+        }
+        val engine = mockk<SimklSyncEngine>()
+        coEvery { engine.synchronize(any()) } returns SimklSyncSnapshot(isInitialized = true)
+        val repository = SimklSyncRepository(engine, storage, mockk(relaxed = true), auth,
+            mockk { every { activeProfileId } returns MutableStateFlow(1) })
+        repository.ensureLoaded()
+        try {
+            repository.reloadFromServer { throw IOException("Missing uploaded episode") }
+            fail("Expected validation failure")
+        } catch (_: IOException) {
+            // A failed verification is not permission to delete the user's old records.
+        }
+        assertEquals(original, storage.snapshots[1])
+        assertEquals(0, storage.saveSnapshotCalls)
+        assertEquals("old", repository.state.value.snapshot.watermark)
+    }
+
+    @Test
+    fun `failed full download preserves old snapshot`() = runTest {
+        val storage = FakeSimklSyncStorage()
+        val original = json.encodeToString(SimklSyncSnapshot(isInitialized = true, watermark = "old"))
+        storage.snapshots[1] = original
+        val scope = SimklAuthScope(1, 1L)
+        val auth = mockk<SimklAuthStorage> {
+            every { authorization() } returns SimklAuthorization(scope, "test-token")
+            every { isCurrent(scope) } returns true
+        }
+        val engine = mockk<SimklSyncEngine>()
+        coEvery { engine.synchronize(any()) } throws IOException("offline")
+        val repository = SimklSyncRepository(engine, storage, mockk(relaxed = true), auth,
+            mockk { every { activeProfileId } returns MutableStateFlow(1) })
+        repository.ensureLoaded()
+        try {
+            repository.reloadFromServer { fail("Must not validate an incomplete download") }
+            fail("Expected network failure")
+        } catch (_: IOException) {
+            // Preserve the old data so the user can retry.
+        }
+        assertEquals(original, storage.snapshots[1])
+        assertEquals(0, storage.saveSnapshotCalls)
+        assertEquals("old", repository.state.value.snapshot.watermark)
+    }
 
     @Test
     fun `commitScrobble with pause writes only to playback storage and does not re-serialize base snapshot`() = runTest {
