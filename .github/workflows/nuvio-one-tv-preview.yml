@@ -29,9 +29,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
+      CODEX_ANDROID_WORK_DIR: ${{ runner.temp }}/nuvio-one-tv-build
       CODEX_GRADLE_HEAP_MB: '6144'
       CODEX_GRADLE_METASPACE_MB: '1024'
-      SIMKL_CLIENT_ID: ${{ inputs.simkl_client_id || vars.SIMKL_CLIENT_ID }}
+      SIMKL_CLIENT_ID: ${{ inputs.simkl_client_id || vars.SIMKL_CLIENT_ID || secrets.SIMKL_CLIENT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -43,8 +44,7 @@ jobs:
           packages: platform-tools
       - uses: actions/cache@v4
         with:
-          path: |
-            ../gradle-cache
+          path: ${{ runner.temp }}/nuvio-one-tv-build/gradle-cache
           key: nuvio-one-tv-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: nuvio-one-tv-${{ runner.os }}-
       - name: Build and test personal preview
@@ -53,7 +53,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Nuvio-One-TV-preview
-          path: ../deliverables/Nuvio-One-TV-preview.apk
+          path: ${{ runner.temp }}/nuvio-one-tv-build/deliverables/Nuvio-One-TV-preview.apk
           if-no-files-found: error
           retention-days: 14
       - name: Upload test results
