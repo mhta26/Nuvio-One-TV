@@ -427,7 +427,8 @@ android.defaultConfig.buildConfigField("String", "TEST_UPDATES_URL", "\"https://
 android.defaultConfig.buildConfigField("String", "TESTER_KEY", buildConfigString(livetvTesterKey))
 if (livetvIsTestBuild) {
     // 1767225600 = 2026-01-01 00:00 UTC, in seconds.
-    val minutesSince2026: Int = ((System.currentTimeMillis() / 1000L - 1767225600L) / 60L).toInt()
+    val minutesSince2026: Int = providers.gradleProperty("nuvioPreviewBuildMinutes").orNull?.toInt()
+        ?: ((System.currentTimeMillis() / 1000L - 1767225600L) / 60L).toInt()
     android.defaultConfig.versionCode = 200_000_000 + minutesSince2026
     if ((findProperty("livetvVersionName") as String?).isNullOrBlank()) {
         val base = android.defaultConfig.versionName ?: "0.0.0"

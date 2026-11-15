@@ -72,7 +72,7 @@ confirmed the `Nuvio One TV` label, package `app.onetube.tv.personal.preview`, m
 and both `armeabi-v7a` and `arm64-v8a`. Playback, account linking and performance on a
 physical TV still require device testing; these checks do not establish runtime behavior.
 
-Personal previews now assemble fullRelease with R8 code optimization and resource shrinking, without debugger or Compose tooling. The personal application ID and signing identity remain compatible with earlier previews. Targeted Simkl tests still run against the debug unit-test variant.
+Personal previews now assemble fullRelease with R8 code optimization and resource shrinking, without debugger or Compose tooling. The personal application ID and signing identity remain compatible with earlier previews. Targeted Simkl tests run against the release unit-test variant before packaging. Tests and R8 run in separate Gradle processes with one worker, avoiding concurrent compiler/optimizer memory pressure. The preview build timestamp is pinned across both invocations to preserve the same version and reuse compilation outputs.
 
 ## Trakt and MDBList app registration
 

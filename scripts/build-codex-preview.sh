@@ -47,13 +47,21 @@ if [[ ! -f "$NUVIO_RELEASE_STORE_FILE" ]]; then
         -keypass:env NUVIO_RELEASE_KEY_PASSWORD -dname 'CN=Nuvio One TV Preview,O=Personal Build,C=US' \
         -keyalg RSA -keysize 2048 -validity 10000
 fi
-bash ./gradlew :app:assembleFullRelease :app:testFullDebugUnitTest \
+# Keep the same version across two Gradle processes. Releasing the compiler heap
+# before R8 avoids running both memory-heavy stages together on the CI runner.
+preview_minutes=$(python3 -c 'import time; print((int(time.time()) - 1767225600) // 60)')
+run_preview_gradle() {
+    bash ./gradlew "$@" \
+        -PnuvioPersonalAppId=app.onetube.tv.personal.preview -PlivetvTestBuild=true -Pdebuggable=false \
+        "-PnuvioPreviewBuildMinutes=$preview_minutes" \
+        --no-daemon --max-workers=1 --no-parallel \
+        -Pkotlin.compiler.execution.strategy=in-process \
+        "-Dorg.gradle.jvmargs=-Xmx${CODEX_GRADLE_HEAP_MB:-3584}m -XX:MaxMetaspaceSize=${CODEX_GRADLE_METASPACE_MB:-768}m -XX:+ExitOnOutOfMemoryError -Dfile.encoding=UTF-8"
+}
+run_preview_gradle :app:testFullReleaseUnitTest \
     --tests 'com.nuvio.tv.data.simkl.SimklLocalReimportServiceTest' \
-    --tests 'com.nuvio.tv.data.simkl.SimklSyncRepositoryStorageTest' \
-    -PnuvioPersonalAppId=app.onetube.tv.personal.preview -PlivetvTestBuild=true -Pdebuggable=false \
-    --no-daemon --max-workers=2 \
-    -Pkotlin.compiler.execution.strategy=in-process \
-    "-Dorg.gradle.jvmargs=-Xmx${CODEX_GRADLE_HEAP_MB:-3584}m -XX:MaxMetaspaceSize=${CODEX_GRADLE_METASPACE_MB:-768}m -Dfile.encoding=UTF-8"
+    --tests 'com.nuvio.tv.data.simkl.SimklSyncRepositoryStorageTest'
+run_preview_gradle :app:assembleFullRelease
 mkdir -p "$CODEX_ANDROID_WORK_DIR/deliverables"
 for abi in arm64-v8a armeabi-v7a; do
     preview_source="app/build/outputs/apk/full/release/app-full-$abi-release.apk"
