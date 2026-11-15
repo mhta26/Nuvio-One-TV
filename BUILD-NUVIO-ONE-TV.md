@@ -71,3 +71,5 @@ storage/reimport tests passed. APK signature verification passed. Package inspec
 confirmed the `Nuvio One TV` label, package `app.onetube.tv.personal.preview`, minSdk 24,
 and both `armeabi-v7a` and `arm64-v8a`. Playback, account linking and performance on a
 physical TV still require device testing; these checks do not establish runtime behavior.
+
+Personal previews now assemble fullRelease with R8 code optimization and resource shrinking, without debugger or Compose tooling. The personal application ID and signing identity remain compatible with earlier previews. Targeted Simkl tests still run against the debug unit-test variant.

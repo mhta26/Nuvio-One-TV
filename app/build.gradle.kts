@@ -452,7 +452,11 @@ androidComponents {
         // Test builds (-PlivetvTestBuild=true) get their own ID, so they install next to the
         // real app instead of replacing it.
         val testBuild = (findProperty("livetvTestBuild") as String?)?.toBoolean() == true
-        if (!isPlaystore) variant.applicationId.set(if (testBuild) "app.onetube.tv.test" else "app.onetube.tv")
+        if (!isPlaystore) {
+            val personalAppId = providers.gradleProperty("nuvioPersonalAppId").orNull
+                ?.takeIf { it.isNotBlank() }
+            variant.applicationId.set(personalAppId ?: if (testBuild) "app.onetube.tv.test" else "app.onetube.tv")
+        }
     }
     // Only the full flavor ships the in-app updater.
     onVariants(selector().withFlavor("distribution" to "full")) { variant ->

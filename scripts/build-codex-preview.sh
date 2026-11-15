@@ -43,16 +43,16 @@ if [[ ! -f "$NUVIO_RELEASE_STORE_FILE" ]]; then
         -keypass:env NUVIO_RELEASE_KEY_PASSWORD -dname 'CN=Nuvio One TV Preview,O=Personal Build,C=US' \
         -keyalg RSA -keysize 2048 -validity 10000
 fi
-bash ./gradlew :app:assembleFullDebug :app:testFullDebugUnitTest \
+bash ./gradlew :app:assembleFullRelease :app:testFullDebugUnitTest \
     --tests 'com.nuvio.tv.data.simkl.SimklLocalReimportServiceTest' \
     --tests 'com.nuvio.tv.data.simkl.SimklSyncRepositoryStorageTest' \
-    -PlivetvDebugAppId=app.onetube.tv.personal.preview -PlivetvTestBuild=true -Pdebuggable=true \
+    -PnuvioPersonalAppId=app.onetube.tv.personal.preview -PlivetvTestBuild=true -Pdebuggable=false \
     --no-daemon --max-workers=2 \
     -Pkotlin.compiler.execution.strategy=in-process \
     "-Dorg.gradle.jvmargs=-Xmx${CODEX_GRADLE_HEAP_MB:-3584}m -XX:MaxMetaspaceSize=${CODEX_GRADLE_METASPACE_MB:-768}m -Dfile.encoding=UTF-8"
 mkdir -p "$CODEX_ANDROID_WORK_DIR/deliverables"
 for abi in arm64-v8a armeabi-v7a; do
-    preview_source="app/build/outputs/apk/full/debug/app-full-$abi-debug.apk"
+    preview_source="app/build/outputs/apk/full/release/app-full-$abi-release.apk"
     preview_target="$CODEX_ANDROID_WORK_DIR/deliverables/Nuvio-One-TV-$abi.apk"
     if [[ ! "$preview_source" -ef "$preview_target" ]]; then
         ln -f "$preview_source" "$preview_target" 2>/dev/null || cp "$preview_source" "$preview_target"
@@ -60,5 +60,10 @@ for abi in arm64-v8a armeabi-v7a; do
     "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$preview_target"
     native_code=$("$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$preview_target" | sed -n '/^native-code:/p')
     [[ "$native_code" == "native-code: '$abi'" ]]
+    # Never distribute a debuggable APK as the TV performance build.
+    if "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$preview_target" | grep -q '^application-debuggable'; then
+        echo "Refusing to distribute a debuggable APK" >&2
+        exit 1
+    fi
     sha256sum "$preview_target"
 done
