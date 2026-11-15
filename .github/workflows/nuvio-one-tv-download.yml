@@ -1,0 +1,117 @@
+name: Publish Nuvio One TV download
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: 'Successful Nuvio One TV APK build on main'
+        required: true
+        default: '43704039711'
+        type: string
+  workflow_run:
+    workflows: [Nuvio One TV APK]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: publish-nuvio-preview-${{ github.event.workflow_run.id || inputs.build_run_id }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Validate the successful source build
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RUN_ID: ${{ github.event.workflow_run.id || inputs.build_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$BUILD_RUN_ID" =~ ^[0-9]+$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BUILD_RUN_ID" > "$RUNNER_TEMP/source-build.json"
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          run = json.loads((Path(os.environ['RUNNER_TEMP']) / 'source-build.json').read_text())
+          repo = os.environ['GITHUB_REPOSITORY']
+          assert run['repository']['full_name'] == repo
+          assert run['head_repository']['full_name'] == repo
+          assert run['head_branch'] == 'main'
+          assert run['event'] in ('push', 'workflow_dispatch')
+          assert run['name'] == 'Nuvio One TV APK'
+          assert run['path'] == '.github/workflows/nuvio-one-tv-preview.yml'
+          assert run['conclusion'] == 'success'
+          assert re.fullmatch(r'[0-9a-f]{40}', run['head_sha'])
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f"run_id={run['id']}\nsha={run['head_sha']}\nnumber={run['run_number']}\n")
+          PY
+      - name: Download the tested APK
+        uses: actions/download-artifact@v4
+        with:
+          name: Nuvio-One-TV-preview
+          path: ${{ runner.temp }}/nuvio-download
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.source.outputs.run_id }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Verify APK signing and prepare download
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="$RUNNER_TEMP/nuvio-download/Nuvio-One-TV-preview.apk"
+          [[ -f "$apk" ]]
+          mapfile -t signers < <(printf '%s\n' "$ANDROID_HOME"/build-tools/*/apksigner | sort -V)
+          signer="${signers[-1]}"
+          [[ -x "$signer" ]]
+          "$signer" verify --print-certs "$apk" > "$RUNNER_TEMP/nuvio-signing.txt"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          text = (Path(os.environ['RUNNER_TEMP']) / 'nuvio-signing.txt').read_text()
+          expected = 'e2c9a67239c6297fb28a28b72a088ad32cff8aeb94e0157b02d22ee7aeb5cbd8'
+          assert f'Signer #1 certificate SHA-256 digest: {expected}' in text
+          PY
+          mv "$apk" "$RUNNER_TEMP/nuvio-download/Nuvio-One-TV.apk"
+          sha256sum "$RUNNER_TEMP/nuvio-download/Nuvio-One-TV.apk"
+      - name: Publish a downloadable preview release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+          SOURCE_NUMBER: ${{ steps.source.outputs.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="tv-preview-$SOURCE_RUN_ID"
+          notes="$RUNNER_TEMP/nuvio-release-notes.md"
+          cat > "$notes" <<EOF_NOTES
+          نسخة تجريبية من **Nuvio One TV** لأجهزة Android TV، تدعم ARM بنوعيها 32 و64 بت وAndroid 7 أو أحدث.
+
+          حمّل **Nuvio-One-TV.apk** من Assets أدناه وثبّته مباشرة، دون فك ضغط ZIP أو استخدام صفحة Artifacts.
+
+          - تُثبت بجانب التطبيق الأصلي؛ لا تحذف نسختك الحالية.
+          - تتضمن تحديث البوسترات من الإعدادات المتقدمة وتحسينات تحميل الصور.
+          - اجتازت النسخة اختبارات البناء وفحص التوقيع، ولم تُختبر على تلفزيون فعلي بعد.
+          - إعدادات خدمات الحسابات تعتمد على إعدادات البناء المرفق.
+
+          [البناء والاختبارات](https://github.com/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID) · [المصدر المطابق](https://github.com/$GITHUB_REPOSITORY/tree/$SOURCE_SHA)
+          EOF_NOTES
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$tag" "$RUNNER_TEMP/nuvio-download/Nuvio-One-TV.apk" --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$tag" "$RUNNER_TEMP/nuvio-download/Nuvio-One-TV.apk" \
+              --repo "$GITHUB_REPOSITORY" --target "$SOURCE_SHA" --prerelease \
+              --title "Nuvio One TV — Preview $SOURCE_NUMBER" --notes-file "$notes"
+          fi
+          printf '### Nuvio One TV\n\n[Download APK](https://github.com/%s/releases/download/%s/Nuvio-One-TV.apk)\n' "$GITHUB_REPOSITORY" "$tag" >> "$GITHUB_STEP_SUMMARY"

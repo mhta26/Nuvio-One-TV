@@ -2,12 +2,18 @@
 
 # Nuvio One TV
 
+**[تحميل ملف APK مباشرة — Nuvio One TV](https://github.com/mhta26/Nuvio-One-TV/releases/download/tv-preview-43704039711/Nuvio-One-TV.apk)**
+
+[جميع الإصدارات التجريبية / Releases](https://github.com/mhta26/Nuvio-One-TV/releases) · Android TV 7+ · ARM 32/64
+
+نسخة تجريبية تُثبت بجانب التطبيق الحالي. لا تحذف نسختك الأصلية.
+
 **Personal Nuvio One TV fork for Android TV, Google TV and Fire TV.**
 
 This fork adds poster-cache refresh, device-aware image loading, and guarded Simkl reimport. See [personal preview build instructions](BUILD-NUVIO-ONE-TV.md) for local/Codex setup and GitHub Actions. The original project documentation and credits follow below.
 
-[![Latest release](https://img.shields.io/github/v/release/zoga2o3-ops/Nuvio-One?label=latest&style=for-the-badge)](https://github.com/zoga2o3-ops/Nuvio-One/releases)
-[![Downloads](https://img.shields.io/github/downloads/zoga2o3-ops/Nuvio-One/total?style=for-the-badge)](https://github.com/zoga2o3-ops/Nuvio-One/releases)
+[![Latest release](https://img.shields.io/github/v/release/mhta26/Nuvio-One-TV?include_prereleases&label=preview&style=for-the-badge)](https://github.com/mhta26/Nuvio-One-TV/releases)
+[![Downloads](https://img.shields.io/github/downloads/mhta26/Nuvio-One-TV/total?style=for-the-badge)](https://github.com/mhta26/Nuvio-One-TV/releases)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=for-the-badge)](LICENSE)
 <a href="https://ko-fi.com/zoga2o3"><img src="https://img.shields.io/badge/Ko--fi-Support%20the%20project-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Support the project on Ko-fi" /></a>
 
@@ -139,7 +145,7 @@ All of this comes from NuvioPlusIPTV and works as it does there. Here is what yo
 
 ## Installation
 
-1. Open the **[latest release](https://github.com/zoga2o3-ops/Nuvio-One/releases)**.
+1. Open the **[latest release](https://github.com/mhta26/Nuvio-One-TV/releases)**.
 2. Download the APK for your device:
 
    | Device | APK |
