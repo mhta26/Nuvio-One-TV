@@ -22,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.shareIn
@@ -59,7 +60,7 @@ class LibraryPreferences @Inject constructor(
         }
     }
 
-    val libraryItems: Flow<List<SavedLibraryItem>> =
+    private val sharedLibraryItems =
         profileManager.activeProfileId.flatMapLatest { profileId ->
             // Sorting, tab selection and sync cursor writes do not change library contents.
             factory.get(profileId, FEATURE).data
@@ -70,7 +71,7 @@ class LibraryPreferences @Inject constructor(
                 }
                 .distinctUntilChanged()
                 .map { (items, upserts, deletes) ->
-                    LibrarySyncReducer.sanitize(
+                    profileId to LibrarySyncReducer.sanitize(
                         LibrarySyncState(
                             items = decodeRawSet(items, SavedLibraryItem::class.java),
                             pendingUpsertKeys = decodeRawSet(upserts, LibrarySyncKey::class.java),
@@ -80,6 +81,12 @@ class LibraryPreferences @Inject constructor(
                 }
                 .flowOn(Dispatchers.Default)
         }.shareIn(scope, SharingStarted.WhileSubscribed(5_000), replay = 1)
+
+    val libraryItems: Flow<List<SavedLibraryItem>> = combine(
+        profileManager.activeProfileId, sharedLibraryItems
+    ) { activeId, (sourceId, items) ->
+        if (activeId == sourceId) items else emptyList()
+    }.distinctUntilChanged()
 
     /** Local cleanup after a verified Simkl import; never creates remote delete mutations. */
     suspend fun clearAfterVerifiedImport(expected: LibrarySyncState, profileId: Int) {

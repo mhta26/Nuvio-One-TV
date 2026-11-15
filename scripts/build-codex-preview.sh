@@ -29,10 +29,12 @@ if os.environ.get('SIMKL_CLIENT_ID'):
 p.write_text('\n'.join(lines)+'\n')
 p.chmod(0o600)
 PY
-export NUVIO_RELEASE_STORE_FILE="${NUVIO_RELEASE_STORE_FILE:-$CODEX_ANDROID_WORK_DIR/signing/nuvio-preview.jks}"
-export NUVIO_RELEASE_KEY_ALIAS="${NUVIO_RELEASE_KEY_ALIAS:-androiddebugkey}"
-export NUVIO_RELEASE_KEY_PASSWORD="${NUVIO_RELEASE_KEY_PASSWORD:-android}"
-export NUVIO_RELEASE_STORE_PASSWORD="${NUVIO_RELEASE_STORE_PASSWORD:-android}"
+# The repository's existing public fork key keeps previews compatible across local and CI builds.
+# Override all four variables to use a private signing identity instead.
+export NUVIO_RELEASE_STORE_FILE="${NUVIO_RELEASE_STORE_FILE:-$CODEX_REPO_ROOT/keystore/livetv-fork.jks}"
+export NUVIO_RELEASE_KEY_ALIAS="${NUVIO_RELEASE_KEY_ALIAS:-livetv}"
+export NUVIO_RELEASE_KEY_PASSWORD="${NUVIO_RELEASE_KEY_PASSWORD:-livetvfork}"
+export NUVIO_RELEASE_STORE_PASSWORD="${NUVIO_RELEASE_STORE_PASSWORD:-livetvfork}"
 if [[ ! -f "$NUVIO_RELEASE_STORE_FILE" ]]; then
     mkdir -p "$(dirname "$NUVIO_RELEASE_STORE_FILE")"
     keytool -genkeypair -keystore "$NUVIO_RELEASE_STORE_FILE" \

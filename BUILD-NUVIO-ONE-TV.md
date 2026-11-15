@@ -17,16 +17,18 @@ configuration and configures JVM HTTP(S) clients to use that proxy.
 bash scripts/build-codex-preview.sh
 ```
 
-Generated tools, Gradle cache, signing material and APK are stored in the parent of
+Generated tools, Gradle cache and APK are stored in the parent of
 the checkout by default; `CODEX_ANDROID_WORK_DIR` overrides that directory.
 Service configuration stays in the ignored `local.properties` file. An optional
 `SIMKL_CLIENT_ID` environment variable sets that public app identifier at build time.
 Never supply a personal access token, Simkl account token or Client Secret in its place.
 Other optional service settings must be configured separately when needed.
 
-The output is `../deliverables/Nuvio-One-TV-preview.apk`. Keep the generated preview
-signing key if you want future personal builds to update this preview in place.
-The production app's signing key and private account data are not included.
+The output is `../deliverables/Nuvio-One-TV-preview.apk`. Previews use the fork signing key already committed to the original repository,
+so local and GitHub builds can update the same preview package. This public test key
+is not a private production signing identity. Override the `NUVIO_RELEASE_STORE_FILE`,
+`NUVIO_RELEASE_KEY_ALIAS`, `NUVIO_RELEASE_KEY_PASSWORD` and `NUVIO_RELEASE_STORE_PASSWORD`
+environment variables together when using your own private key. Account data is not included.
 
 ## GitHub Actions
 

@@ -43,7 +43,6 @@ jobs:
         with:
           path: |
             ../gradle-cache
-            ../signing
           key: nuvio-one-tv-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: nuvio-one-tv-${{ runner.os }}-
       - name: Build and test personal preview
