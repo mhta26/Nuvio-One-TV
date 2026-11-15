@@ -149,10 +149,6 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = 24
         targetSdk = 36
-        // Keep preview builds restricted to the two Android TV ARM architectures.
-        if (parseBooleanProperty(providers.gradleProperty("livetvTestBuild").orNull)) {
-            ndk { abiFilters += setOf("armeabi-v7a", "arm64-v8a") }
-        }
         versionCode = 1076
         versionName = "1.1.0-beta.13"
 
