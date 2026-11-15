@@ -59,3 +59,11 @@ if a later step fails. Local resume positions/custom progress settings, unmatche
 whole-series marks without episode coordinates, pending library deletes, changed local
 data or an account/profile change stop the destructive part of the operation. This is
 not an export of every application setting or every local field to Simkl.
+
+## Validation of the first personal preview
+
+On 2026-11-15, the full debug APK assembled successfully and all 12 selected Simkl
+storage/reimport tests passed. APK signature verification passed. Package inspection
+confirmed the `Nuvio One TV` label, package `app.onetube.tv.personal.preview`, minSdk 24,
+and both `armeabi-v7a` and `arm64-v8a`. Playback, account linking and performance on a
+physical TV still require device testing; these checks do not establish runtime behavior.
