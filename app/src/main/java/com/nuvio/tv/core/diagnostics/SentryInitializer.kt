@@ -11,9 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 object SentryInitializer {
     private val droppedIssueText = listOf(
@@ -27,10 +25,8 @@ object SentryInitializer {
     fun start(application: Application, settings: SentrySettingsDataStore) {
         if (started) return
         started = true
-        val initialEnabled = runBlocking(Dispatchers.IO) {
-            settings.enabled.first()
-        }
-        applyEnabled(application, initialEnabled)
+        // Diagnostics must not block Application.onCreate waiting for DataStore/disk IO.
+        // Collect emits the current preference first, then keeps runtime changes in sync.
         scope.launch {
             settings.enabled.distinctUntilChanged().collect { enabled ->
                 applyEnabled(application, enabled)
