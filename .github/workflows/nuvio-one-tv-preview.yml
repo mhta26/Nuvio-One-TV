@@ -29,12 +29,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      CODEX_ANDROID_WORK_DIR: ${{ runner.temp }}/nuvio-one-tv-build
       CODEX_GRADLE_HEAP_MB: '6144'
       CODEX_GRADLE_METASPACE_MB: '1024'
       SIMKL_CLIENT_ID: ${{ inputs.simkl_client_id || vars.SIMKL_CLIENT_ID || secrets.SIMKL_CLIENT_ID }}
     steps:
       - uses: actions/checkout@v4
+      - name: Select build workspace
+        run: echo "CODEX_ANDROID_WORK_DIR=$RUNNER_TEMP/nuvio-one-tv-build" >> "$GITHUB_ENV"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
