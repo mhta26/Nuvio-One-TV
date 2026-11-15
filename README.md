@@ -2,11 +2,11 @@
 
 # Nuvio One TV
 
-**[تحميل ملف APK مباشرة — Nuvio One TV](https://github.com/mhta26/Nuvio-One-TV/releases/download/tv-preview-43704039711/Nuvio-One-TV.apk)**
+**[تحميل ARM 64-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/tv-preview-43713708942/Nuvio-One-TV-arm64-v8a.apk)** · **[تحميل ARM 32-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/tv-preview-43713708942/Nuvio-One-TV-armeabi-v7a.apk)**
 
 [جميع الإصدارات التجريبية / Releases](https://github.com/mhta26/Nuvio-One-TV/releases) · Android TV 7+ · ARM 32/64
 
-نسخة تجريبية تُثبت بجانب التطبيق الحالي. لا تحذف نسختك الأصلية.
+اختر ملفًا واحدًا يناسب معمارية جهازك. يتضمن هذا الإصدار تصحيح إعدادات تسجيل الدخول إلى Nuvio. حدّث النسخة التجريبية السابقة مباشرة دون حذف بياناتها؛ وتُثبت النسخة التجريبية بجانب التطبيق الأصلي.
 
 **Personal Nuvio One TV fork for Android TV, Google TV and Fire TV.**
 
