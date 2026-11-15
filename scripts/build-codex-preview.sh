@@ -24,8 +24,12 @@ for key,value in {
     'DOVI_ENABLE_REAL_LINK':'true', 'DOVI_LIBDOVI_PREBUILT_ROOT':'DV7/libdovi',
     'SIMKL_APP_NAME':'nuvio-one-tv'
 }.items(): set_value(key,value)
-if os.environ.get('SIMKL_CLIENT_ID'):
-    set_value('SIMKL_CLIENT_ID',os.environ['SIMKL_CLIENT_ID'],True)
+for key in ('SIMKL_CLIENT_ID', 'TRAKT_CLIENT_ID', 'TRAKT_CLIENT_SECRET', 'MDBLIST_CLIENT_ID'):
+    value = os.environ.get(key, '').strip()
+    if value:
+        if any(c in value for c in '\r\n'):
+            raise SystemExit(f'{key} must be a single line')
+        set_value(key, value, True)
 p.write_text('\n'.join(lines)+'\n')
 p.chmod(0o600)
 PY

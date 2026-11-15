@@ -73,3 +73,14 @@ and both `armeabi-v7a` and `arm64-v8a`. Playback, account linking and performanc
 physical TV still require device testing; these checks do not establish runtime behavior.
 
 Personal previews now assemble fullRelease with R8 code optimization and resource shrinking, without debugger or Compose tooling. The personal application ID and signing identity remain compatible with earlier previews. Targeted Simkl tests still run against the debug unit-test variant.
+
+## Trakt and MDBList app registration
+
+These services require your registered app credentials; the public repository does not provide them.
+In GitHub Settings → Secrets and variables → Actions, set `TRAKT_CLIENT_ID`
+and `MDBLIST_CLIENT_ID` as repository variables (or secrets), and set
+`TRAKT_CLIENT_SECRET` as a repository secret. Then dispatch the APK workflow again.
+The helper also accepts these names as environment variables for local builds.
+Do not use account passwords or personal access tokens in these fields.
+Existing APKs cannot gain missing build-time credentials by adding repository settings;
+a new build must include them. Missing credentials do not affect Simkl or local data.
