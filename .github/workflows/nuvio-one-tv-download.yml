@@ -76,11 +76,12 @@ jobs:
           [[ -x "$signer" ]]
           "$signer" verify --print-certs "$apk" > "$RUNNER_TEMP/nuvio-signing.txt"
           python3 - <<'PY'
-          import os
+          import os, re
           from pathlib import Path
           text = (Path(os.environ['RUNNER_TEMP']) / 'nuvio-signing.txt').read_text()
           expected = 'e2c9a67239c6297fb28a28b72a088ad32cff8aeb94e0157b02d22ee7aeb5cbd8'
-          assert f'Signer #1 certificate SHA-256 digest: {expected}' in text
+          digests = re.findall(r'certificate SHA-256 digest:\s*([0-9a-f]{64})', text, re.IGNORECASE)
+          assert digests and digests[0].lower() == expected, text
           PY
           mv "$apk" "$RUNNER_TEMP/nuvio-download/Nuvio-One-TV.apk"
           sha256sum "$RUNNER_TEMP/nuvio-download/Nuvio-One-TV.apk"
