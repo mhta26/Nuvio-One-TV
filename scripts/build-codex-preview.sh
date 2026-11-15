@@ -29,6 +29,7 @@ if os.environ.get('SIMKL_CLIENT_ID'):
 p.write_text('\n'.join(lines)+'\n')
 p.chmod(0o600)
 PY
+python3 scripts/configure-preview-backend.py --properties local.properties
 # The repository's existing public fork key keeps previews compatible across local and CI builds.
 # Override all four variables to use a private signing identity instead.
 export NUVIO_RELEASE_STORE_FILE="${NUVIO_RELEASE_STORE_FILE:-$CODEX_REPO_ROOT/keystore/livetv-fork.jks}"
@@ -50,10 +51,14 @@ bash ./gradlew :app:assembleFullDebug :app:testFullDebugUnitTest \
     -Pkotlin.compiler.execution.strategy=in-process \
     "-Dorg.gradle.jvmargs=-Xmx${CODEX_GRADLE_HEAP_MB:-3584}m -XX:MaxMetaspaceSize=${CODEX_GRADLE_METASPACE_MB:-768}m -Dfile.encoding=UTF-8"
 mkdir -p "$CODEX_ANDROID_WORK_DIR/deliverables"
-preview_source="app/build/outputs/apk/full/debug/app-full-debug.apk"
-preview_target="$CODEX_ANDROID_WORK_DIR/deliverables/Nuvio-One-TV-preview.apk"
-if [[ ! "$preview_source" -ef "$preview_target" ]]; then
-    ln -f "$preview_source" "$preview_target" 2>/dev/null || cp "$preview_source" "$preview_target"
-fi
-"$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$CODEX_ANDROID_WORK_DIR/deliverables/Nuvio-One-TV-preview.apk"
-sha256sum "$CODEX_ANDROID_WORK_DIR/deliverables/Nuvio-One-TV-preview.apk"
+for abi in arm64-v8a armeabi-v7a; do
+    preview_source="app/build/outputs/apk/full/debug/app-full-$abi-debug.apk"
+    preview_target="$CODEX_ANDROID_WORK_DIR/deliverables/Nuvio-One-TV-$abi.apk"
+    if [[ ! "$preview_source" -ef "$preview_target" ]]; then
+        ln -f "$preview_source" "$preview_target" 2>/dev/null || cp "$preview_source" "$preview_target"
+    fi
+    "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$preview_target"
+    native_code=$("$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$preview_target" | sed -n '/^native-code:/p')
+    [[ "$native_code" == "native-code: '$abi'" ]]
+    sha256sum "$preview_target"
+done

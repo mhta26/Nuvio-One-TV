@@ -68,3 +68,5 @@ status-page/
 !scripts/codex-android-env.sh
 !scripts/setup-codex-android.sh
 !scripts/build-codex-preview.sh
+
+!scripts/configure-preview-backend.py

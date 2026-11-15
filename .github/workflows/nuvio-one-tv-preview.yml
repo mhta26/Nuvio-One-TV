@@ -48,13 +48,17 @@ jobs:
           path: ${{ runner.temp }}/nuvio-one-tv-build/gradle-cache
           key: nuvio-one-tv-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: nuvio-one-tv-${{ runner.os }}-
+      - name: Test account configuration
+        run: python3 -m unittest discover -s scripts/tests -p 'test_preview_backend.py'
       - name: Build and test personal preview
         run: bash scripts/build-codex-preview.sh
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Nuvio-One-TV-preview
-          path: ${{ runner.temp }}/nuvio-one-tv-build/deliverables/Nuvio-One-TV-preview.apk
+          path: |
+            ${{ runner.temp }}/nuvio-one-tv-build/deliverables/Nuvio-One-TV-arm64-v8a.apk
+            ${{ runner.temp }}/nuvio-one-tv-build/deliverables/Nuvio-One-TV-armeabi-v7a.apk
           if-no-files-found: error
           retention-days: 14
       - name: Upload test results

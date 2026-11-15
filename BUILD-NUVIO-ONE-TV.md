@@ -27,7 +27,11 @@ Service configuration stays in the ignored `local.properties` file. An optional
 Never supply a personal access token, Simkl account token or Client Secret in its place.
 Other optional service settings must be configured separately when needed.
 
-The output is `../deliverables/Nuvio-One-TV-preview.apk`. Previews use the fork signing key already committed to the original repository,
+The outputs are `../deliverables/Nuvio-One-TV-arm64-v8a.apk` and
+`../deliverables/Nuvio-One-TV-armeabi-v7a.apk`; each is a standalone application
+for its architecture. The build fills missing Nuvio backend settings from the
+official public discovery endpoint, so a fresh preview can generate login QR codes.
+Existing complete custom backend settings are preserved. Previews use the fork signing key already committed to the original repository,
 so local and GitHub builds can update the same preview package. This public test key
 is not a private production signing identity. Override the `NUVIO_RELEASE_STORE_FILE`,
 `NUVIO_RELEASE_KEY_ALIAS`, `NUVIO_RELEASE_KEY_PASSWORD` and `NUVIO_RELEASE_STORE_PASSWORD`

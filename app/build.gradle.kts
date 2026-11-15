@@ -149,7 +149,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = 24
         targetSdk = 36
-        // One preview APK for both common Android TV ARM architectures.
+        // Keep preview builds restricted to the two Android TV ARM architectures.
         if (parseBooleanProperty(providers.gradleProperty("livetvTestBuild").orNull)) {
             ndk { abiFilters += setOf("armeabi-v7a", "arm64-v8a") }
         }
@@ -331,15 +331,13 @@ android {
 
     splits {
         abi {
-            // Live TV fork: test builds are one APK for every device (no per-processor copies),
-            // which is all a test needs and builds quicker.
-            isEnable = !buildingAppBundle &&
-                (findProperty("livetvTestBuild") as String?)?.toBoolean() != true
+            // Standalone APKs: each TV downloads only its own native libraries.
+            isEnable = !buildingAppBundle
             reset()
             // Live TV fork: TV boxes are all ARM. The x86 copies (for PC emulators) only made
             // the all-in-one APK, the one most people install, far bigger.
             include("armeabi-v7a", "arm64-v8a")
-            isUniversalApk = true
+            isUniversalApk = (findProperty("livetvTestBuild") as String?)?.toBoolean() != true
         }
     }
 

@@ -6,7 +6,6 @@ on:
       build_run_id:
         description: 'Successful Nuvio One TV APK build on main'
         required: true
-        default: '43704039711'
         type: string
   workflow_run:
     workflows: [Nuvio One TV APK]
@@ -69,22 +68,30 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          apk="$RUNNER_TEMP/nuvio-download/Nuvio-One-TV-preview.apk"
-          [[ -f "$apk" ]]
           mapfile -t signers < <(printf '%s\n' "$ANDROID_HOME"/build-tools/*/apksigner | sort -V)
           signer="${signers[-1]}"
           [[ -x "$signer" ]]
-          "$signer" verify --print-certs "$apk" > "$RUNNER_TEMP/nuvio-signing.txt"
-          python3 - <<'PY'
-          import os, re
+          for abi in arm64-v8a armeabi-v7a; do
+            export APK_ABI="$abi"
+            apk="$RUNNER_TEMP/nuvio-download/Nuvio-One-TV-$abi.apk"
+            [[ -f "$apk" ]]
+            "$signer" verify --print-certs "$apk" > "$RUNNER_TEMP/nuvio-signing-$abi.txt"
+            python3 - <<'PY_VERIFY'
+          import os, re, zipfile
           from pathlib import Path
-          text = (Path(os.environ['RUNNER_TEMP']) / 'nuvio-signing.txt').read_text()
+          abi = os.environ['APK_ABI']
+          root = Path(os.environ['RUNNER_TEMP'])
+          text = (root / f'nuvio-signing-{abi}.txt').read_text()
           expected = 'e2c9a67239c6297fb28a28b72a088ad32cff8aeb94e0157b02d22ee7aeb5cbd8'
           digests = re.findall(r'certificate SHA-256 digest:\s*([0-9a-f]{64})', text, re.IGNORECASE)
           assert digests and digests[0].lower() == expected, text
-          PY
-          mv "$apk" "$RUNNER_TEMP/nuvio-download/Nuvio-One-TV.apk"
-          sha256sum "$RUNNER_TEMP/nuvio-download/Nuvio-One-TV.apk"
+          with zipfile.ZipFile(root / 'nuvio-download' / f'Nuvio-One-TV-{abi}.apk') as archive:
+              abis = {name.split('/')[1] for name in archive.namelist()
+                      if name.startswith('lib/') and name.endswith('.so')}
+              assert abis == {abi}, abis
+          PY_VERIFY
+            sha256sum "$apk"
+          done
       - name: Publish a downloadable preview release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -99,20 +106,24 @@ jobs:
           cat > "$notes" <<EOF_NOTES
           نسخة تجريبية من **Nuvio One TV** لأجهزة Android TV، تدعم ARM بنوعيها 32 و64 بت وAndroid 7 أو أحدث.
 
-          حمّل **Nuvio-One-TV.apk** من Assets أدناه وثبّته مباشرة، دون فك ضغط ZIP أو استخدام صفحة Artifacts.
+          حمّل ملف APK الموافق لمعمارية نظام جهازك من Assets أدناه:
+          - **Nuvio-One-TV-arm64-v8a.apk** لنظام ARM 64 بت.
+          - **Nuvio-One-TV-armeabi-v7a.apk** لنظام ARM 32 بت.
+          كل ملف تطبيق كامل مستقل؛ ثبّت ملفًا واحدًا فقط.
 
           - تُثبت بجانب التطبيق الأصلي؛ لا تحذف نسختك الحالية.
           - تتضمن تحديث البوسترات من الإعدادات المتقدمة وتحسينات تحميل الصور.
           - اجتازت النسخة اختبارات البناء وفحص التوقيع، ولم تُختبر على تلفزيون فعلي بعد.
-          - إعدادات خدمات الحسابات تعتمد على إعدادات البناء المرفق.
+          - تتضمن إعدادات دخول Nuvio من وثيقة الاكتشاف العامة لخادمه، وإعداد Simkl حسب إعدادات البناء.
 
           [البناء والاختبارات](https://github.com/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID) · [المصدر المطابق](https://github.com/$GITHUB_REPOSITORY/tree/$SOURCE_SHA)
           EOF_NOTES
+          apks=("$RUNNER_TEMP/nuvio-download/Nuvio-One-TV-arm64-v8a.apk" "$RUNNER_TEMP/nuvio-download/Nuvio-One-TV-armeabi-v7a.apk")
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$tag" "$RUNNER_TEMP/nuvio-download/Nuvio-One-TV.apk" --repo "$GITHUB_REPOSITORY" --clobber
+            gh release upload "$tag" "${apks[@]}" --repo "$GITHUB_REPOSITORY" --clobber
           else
-            gh release create "$tag" "$RUNNER_TEMP/nuvio-download/Nuvio-One-TV.apk" \
+            gh release create "$tag" "${apks[@]}" \
               --repo "$GITHUB_REPOSITORY" --target "$SOURCE_SHA" --prerelease \
               --title "Nuvio One TV — Preview $SOURCE_NUMBER" --notes-file "$notes"
           fi
-          printf '### Nuvio One TV\n\n[Download APK](https://github.com/%s/releases/download/%s/Nuvio-One-TV.apk)\n' "$GITHUB_REPOSITORY" "$tag" >> "$GITHUB_STEP_SUMMARY"
+          printf '### Nuvio One TV\n\n[Download both architectures](https://github.com/%s/releases/tag/%s)\n' "$GITHUB_REPOSITORY" "$tag" >> "$GITHUB_STEP_SUMMARY"
