@@ -47,8 +47,9 @@ bash ./gradlew :app:assembleFullDebug :app:testFullDebugUnitTest \
     --tests 'com.nuvio.tv.data.simkl.SimklSyncRepositoryStorageTest' \
     -PlivetvDebugAppId=app.onetube.tv.personal.preview -PlivetvTestBuild=true -Pdebuggable=true \
     --no-daemon --max-workers=2 \
-    '-Dorg.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8'
+    -Pkotlin.compiler.execution.strategy=in-process \
+    "-Dorg.gradle.jvmargs=-Xmx${CODEX_GRADLE_HEAP_MB:-3584}m -XX:MaxMetaspaceSize=${CODEX_GRADLE_METASPACE_MB:-768}m -Dfile.encoding=UTF-8"
 mkdir -p "$CODEX_ANDROID_WORK_DIR/deliverables"
 cp app/build/outputs/apk/full/debug/app-full-debug.apk "$CODEX_ANDROID_WORK_DIR/deliverables/Nuvio-One-TV-preview.apk"
-"$ANDROID_HOME/build-tools/36.0.0/apksigner" verify "$CODEX_ANDROID_WORK_DIR/deliverables/Nuvio-One-TV-preview.apk"
+"$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$CODEX_ANDROID_WORK_DIR/deliverables/Nuvio-One-TV-preview.apk"
 sha256sum "$CODEX_ANDROID_WORK_DIR/deliverables/Nuvio-One-TV-preview.apk"

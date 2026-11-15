@@ -29,6 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
+      CODEX_GRADLE_HEAP_MB: '6144'
+      CODEX_GRADLE_METASPACE_MB: '1024'
       SIMKL_CLIENT_ID: ${{ inputs.simkl_client_id || vars.SIMKL_CLIENT_ID }}
     steps:
       - uses: actions/checkout@v4

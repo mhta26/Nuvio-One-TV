@@ -8,8 +8,11 @@ the original app. It does not inherit the original app's private data.
 ## Codex/Linux build
 
 Requires Bash, curl, unzip, tar, Python 3, and a full JDK (17 recommended).
+For a fresh full build, use at least 16 GB of free disk space and 8 GB RAM when
+available; GitHub-hosted runners provide more room than a small Cloud workspace.
+`CODEX_GRADLE_HEAP_MB` and `CODEX_GRADLE_METASPACE_MB` can tune compiler memory.
 The setup script installs a JDK when absent and downloads Android SDK 36,
-build tools 36.0.0, NDK 29.0.14206865, and CMake 3.22.1 into the workspace.
+build tools 35.0.0, NDK 29.0.14206865, and CMake 3.22.1 into the workspace.
 The installer accepts the Android package licenses. It preserves the shell's proxy
 configuration and configures JVM HTTP(S) clients to use that proxy.
 
