@@ -794,11 +794,12 @@ private fun EpisodeItem(
     val isRtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val context = LocalContext.current
     val localizedResources = androidx.compose.ui.platform.LocalResources.current
+    val resourceConfiguration = androidx.compose.ui.platform.LocalConfiguration.current
     val episodeTitle = episode.title.localizeEpisodeTitle(context).ifBlank { localizedResources.getString(R.string.episodes_episode) }
-    val formattedDate = remember(episode.released) {
+    val formattedDate = remember(episode.released, resourceConfiguration) {
         episode.released?.let { formatReleaseDate(it) }?.takeIf { it.isNotBlank() }
     }
-    val episodeCode = remember(episode.season, episode.episode) {
+    val episodeCode = remember(episode.season, episode.episode, resourceConfiguration) {
         val s = episode.season
         val e = episode.episode
         if (s != null && e != null) {

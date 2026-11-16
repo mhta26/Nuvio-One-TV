@@ -499,8 +499,9 @@ open class MainActivity : ComponentActivity() {
             val authState by authManager.authState.collectAsState()
             val context = LocalContext.current
             val localizedResources = androidx.compose.ui.platform.LocalResources.current
+            val resourceConfiguration = androidx.compose.ui.platform.LocalConfiguration.current
 
-            LaunchedEffect(authSessionNoticeDataStore, context) {
+            LaunchedEffect(authSessionNoticeDataStore, context, resourceConfiguration) {
                 authSessionNoticeDataStore.pendingNotice.collect { notice ->
                     if (notice == StartupAuthNotice.NUVIO) {
                         Toast.makeText(

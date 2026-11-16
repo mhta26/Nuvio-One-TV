@@ -77,8 +77,8 @@ private suspend fun HomeViewModel.batchFetchRatingsForItems(items: List<MetaPrev
     if (items.isEmpty()) return
 
     try {
-        coroutineScope {
-            items.map { item ->
+        val ratingsById = coroutineScope {
+            items.distinctBy { it.id }.map { item ->
                 async(Dispatchers.IO) {
                     try {
                         val result = mdbListRepository.getRatingsForMeta(
@@ -87,16 +87,20 @@ private suspend fun HomeViewModel.batchFetchRatingsForItems(items: List<MetaPrev
                             fallbackItemType = item.apiType
                         )
                         if (result != null) {
-                            updateCatalogItemMdbListRatings(item.id, result.ratings)
+                            item.id to result.ratings
                         } else {
                             mdbBatchNegativeIds.add(item.id)
+                            null
                         }
                     } catch (e: CancellationException) {
                         throw e
-                    } catch (_: Exception) { }
+                    } catch (_: Exception) { null }
                 }
-            }.awaitAll()
+            }.awaitAll().filterNotNull().toMap()
         }
+        // The loader already batches the network request. Publish its results together,
+        // rather than rebuilding every displayed row once for each returned title.
+        updateCatalogItemsMdbListRatings(ratingsById)
     } catch (e: CancellationException) {
         throw e
     } catch (_: Exception) { }

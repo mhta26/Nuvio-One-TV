@@ -14,8 +14,9 @@ import com.nuvio.tv.core.party.PartyRepository
 fun PartyEffects(repository: PartyRepository) {
     val context = LocalContext.current
     val localizedResources = androidx.compose.ui.platform.LocalResources.current
+    val resourceConfiguration = androidx.compose.ui.platform.LocalConfiguration.current
     LifecycleEventEffect(Lifecycle.Event.ON_START) { repository.refreshAvailability() }
-    LaunchedEffect(repository, context) {
+    LaunchedEffect(repository, context, resourceConfiguration) {
         repository.events.collect { event ->
             val message = when (event) {
                 is PartyEvent.MemberJoined -> localizedResources.getString(R.string.party_member_joined, event.name)

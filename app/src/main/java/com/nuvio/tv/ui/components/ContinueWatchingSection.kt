@@ -495,7 +495,8 @@ fun ContinueWatchingCard(
     }
     val cardContext = LocalContext.current
     val localizedResources = androidx.compose.ui.platform.LocalResources.current
-    val episodeStr = remember(progress, nextUp, cardContext) {
+    val resourceConfiguration = androidx.compose.ui.platform.LocalConfiguration.current
+    val episodeStr = remember(progress, nextUp, cardContext, resourceConfiguration) {
         val season = progress?.season ?: nextUp?.season
         val episode = progress?.episode ?: nextUp?.episode
         if (season != null && episode != null) {
@@ -567,6 +568,7 @@ fun ContinueWatchingCard(
     val titleText = remember(progress, nextUp) { progress?.name ?: nextUp?.name.orEmpty() }
     val context = LocalContext.current
     val localizedResources = androidx.compose.ui.platform.LocalResources.current
+    val resourceConfiguration = androidx.compose.ui.platform.LocalConfiguration.current
     val strAirsDateForEpisode = computeAirDateBadgeText(context, nextUp?.released, nextUp?.airDateLabel)
     val episodeTitle = remember(progress, nextUp, context, strAirsDateForEpisode) {
         when {

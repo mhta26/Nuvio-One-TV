@@ -933,45 +933,27 @@ private fun HomeViewModel.updateCatalogItemWithTmdb(itemId: String, enrichment: 
     }
 }
 
-internal fun HomeViewModel.updateCatalogItemMdbListRatings(
-    itemId: String,
-    ratings: com.nuvio.tv.domain.model.MDBListRatings
+internal fun HomeViewModel.updateCatalogItemsMdbListRatings(
+    ratingsById: Map<String, com.nuvio.tv.domain.model.MDBListRatings>
 ) {
+    if (ratingsById.isEmpty()) return
     val order = currentMdbListSettings.ratingOrder
-    fun mergeItem(currentItem: MetaPreview): MetaPreview =
-        currentItem.copy(
-            mdbListRatings = ratings,
-            mdbListRatingOrder = order,
-            imdbRating = ratings.imdb?.toFloat() ?: currentItem.imdbRating
-        )
-
-    updateIndexedCatalogItem(itemId, ::mergeItem)
-    // Apply to _uiState.catalogRows for ALL layouts including MODERN.
-    // applyEnrichmentToDisplayedRows skips MODERN, but MDB ratings must
-    // reach catalogRows so the carousel presentation rebuild picks them up.
-    _uiState.update { state ->
-        var changed = false
-        val updatedRows = state.catalogRows.map { row ->
-            val idx = row.items.indexOfFirst { it.id == itemId }
-            if (idx < 0) row
-            else {
-                val merged = mergeItem(row.items[idx])
-                if (merged == row.items[idx]) row
-                else {
-                    changed = true
-                    row.copy(items = row.items.toMutableList().apply { set(idx, merged) })
-                }
-            }
-        }
-        if (changed) state.copy(catalogRows = updatedRows) else state
+    ratingsById.forEach { (itemId, ratings) ->
+        updateIndexedCatalogItem(itemId) { it.withMdbRatings(ratings, order) }
     }
-
-    val existing = _enrichedPreviews.value[itemId]
-    if (existing != null) {
-        val enriched = findCatalogItemById(itemId)
-        if (enriched != null && enriched != existing) {
-            _lastEnrichedPreview.value = enriched
-            addEnrichedPreview(itemId, enriched)
+    // All layouts receive a single catalog emission per completed network batch.
+    _uiState.update { state ->
+        val rows = mergeMdbRatingsRows(state.catalogRows, ratingsById, order)
+        if (rows === state.catalogRows) state else state.copy(catalogRows = rows)
+    }
+    ratingsById.keys.forEach { itemId ->
+        val existing = _enrichedPreviews.value[itemId]
+        if (existing != null) {
+            val enriched = findCatalogItemById(itemId)
+            if (enriched != null && enriched != existing) {
+                _lastEnrichedPreview.value = enriched
+                addEnrichedPreview(itemId, enriched)
+            }
         }
     }
 }
