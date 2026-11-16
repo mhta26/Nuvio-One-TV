@@ -3342,4 +3342,5 @@
   <string name="autosync_label_synced">Αυτόματα συγχρονισμένος</string>
   <string name="stream_resume_from_time">Συνέχεια από %1$s</string>
   <string name="stream_resume_from_percent">Συνέχεια από %1$d%%</string>
+    <string name="one_tv_startup_tagline">Ο κόσμος σου. Μία οθόνη.</string>
 </resources>

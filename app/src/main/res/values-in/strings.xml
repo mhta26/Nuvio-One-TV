@@ -2443,4 +2443,5 @@
     <string name="trakt_comments_error_request_failed">Permintaan komentar Trakt gagal</string>
     <string name="trakt_library_error_fetch_list_items">Gagal mengambil item daftar</string>
 
+    <string name="one_tv_startup_tagline">Duniamu. Satu layar.</string>
 </resources>

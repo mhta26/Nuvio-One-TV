@@ -3405,4 +3405,5 @@
     <string name="stream_resume_from_time">Folytatás innen: %1$s</string>
     <string name="stream_resume_from_percent">Folytatás innen: %1$d%%</string>
 
+    <string name="one_tv_startup_tagline">A te világod. Egy képernyő.</string>
 </resources>

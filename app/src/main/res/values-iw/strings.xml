@@ -3429,4 +3429,5 @@
     <string name="autosync_label_synced">מסונכרן אוטומטית</string>
     <string name="stream_resume_from_time">המשך מ-%1$s</string>
     <string name="stream_resume_from_percent">המשך מ-%1$d%%</string>
+    <string name="one_tv_startup_tagline">העולם שלך. מסך אחד.</string>
 </resources>

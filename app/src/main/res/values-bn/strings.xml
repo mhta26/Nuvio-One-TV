@@ -3225,4 +3225,5 @@
         <item quantity="one">%1$d মিনিট</item>
         <item quantity="other">%1$d মিনিট</item>
     </plurals>
-    </resources>
+        <string name="one_tv_startup_tagline">আপনার জগৎ। একটি পর্দা।</string>
+</resources>

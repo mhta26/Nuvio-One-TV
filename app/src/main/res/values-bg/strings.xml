@@ -3403,4 +3403,5 @@
     <string name="autosync_label_synced">Автоматично синхронизирано</string>
     <string name="stream_resume_from_time">Възобновяване от %1$s</string>
     <string name="stream_resume_from_percent">Възобновяване от %1$d%%</string>
+    <string name="one_tv_startup_tagline">Твоят свят. Един екран.</string>
 </resources>

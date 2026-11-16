@@ -3227,4 +3227,5 @@
     <string name="stream_test_video_bitrate">平均影片位元率：%1$s</string>
     <string name="stream_test_error_connection">連線失敗。上次播放的串流連結可能已過期或無法存取。請重新播放影片並重試。</string>
 
+    <string name="one_tv_startup_tagline">你的世界，盡在一屏。</string>
 </resources>

@@ -3430,4 +3430,5 @@
     <string name="autosync_label_synced">Sincronizado automaticamente</string>
     <string name="stream_resume_from_time">Continuar a partir de %1$s</string>
     <string name="stream_resume_from_percent">Continuar a partir de %1$d%%</string>
+    <string name="one_tv_startup_tagline">Seu mundo. Uma tela.</string>
 </resources>

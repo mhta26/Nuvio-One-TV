@@ -2575,4 +2575,5 @@
     <string name="profile_default_name">Perfil %1$d</string>
     <string name="detail_tmdb_fallback_title">TMDB %1$d</string>
     <string name="collections_editor_tmdb_collection_fallback">Coleção TMDB %1$d</string>
+    <string name="one_tv_startup_tagline">O teu mundo. Um ecrã.</string>
 </resources>

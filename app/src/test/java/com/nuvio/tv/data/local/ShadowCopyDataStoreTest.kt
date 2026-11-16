@@ -78,6 +78,19 @@ class ShadowCopyDataStoreTest {
         assertEquals(2, source.data.first()[key])
     }
 
+    @Test
+    fun `clearing primary preferences also schedules a known empty backup`() = runTest {
+        val source = FakeStore(preferencesOf(key to 1))
+        val copies = mutableListOf<Preferences>()
+        val store = ShadowCopyDataStore(source, backgroundScope) { copies += source.data.first() }
+        store.data.first()
+        runCurrent()
+        store.updateData { emptyPreferences() }
+        runCurrent()
+        assertEquals(2, copies.size)
+        assertEquals(emptyPreferences(), copies.last())
+    }
+
     private class FakeStore(initial: Preferences) : DataStore<Preferences> {
         override val data = MutableStateFlow(initial)
         override suspend fun updateData(transform: suspend (Preferences) -> Preferences): Preferences =

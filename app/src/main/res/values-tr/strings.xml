@@ -3449,4 +3449,5 @@
     <string name="autosync_label_synced">Otomatik eşitlendi</string>
     <string name="stream_resume_from_time">%1$s konumundan devam et</string>
     <string name="stream_resume_from_percent">%1$d%% konumundan devam et</string>
+    <string name="one_tv_startup_tagline">Senin dünyan. Tek ekran.</string>
 </resources>

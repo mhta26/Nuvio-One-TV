@@ -3297,4 +3297,5 @@
     <string name="shuffle_save_failed">Nije moguće ažurirati nasumičnu reprodukciju. Pokušaj ponovno.</string>
     <string name="shuffle_change_selection">Odaberi epizode</string>
     <string name="shuffle_badge">Nasumična reprodukcija epizoda uključena</string>
+    <string name="one_tv_startup_tagline">Vaš svijet. Jedan zaslon.</string>
 </resources>

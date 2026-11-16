@@ -150,12 +150,11 @@ class ProfileManager @Inject constructor(
 
         factory.clearProfile(profileId)
 
-        val suffixWithExtension = "_p${profileId}.preferences_pb"
         val dataStoreDir = File(context.filesDir, "datastore")
         if (dataStoreDir.exists()) {
             dataStoreDir.listFiles()?.forEach { file ->
                 // Shadow copies too: a store that fails to parse is restored from its .bak.
-                if (file.name.endsWith(suffixWithExtension) || file.name.endsWith("$suffixWithExtension.bak")) {
+                if (com.nuvio.tv.data.local.preferenceFileBelongsToProfile(file.name, profileId)) {
                     file.delete()
                 }
             }

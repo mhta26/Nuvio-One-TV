@@ -105,8 +105,10 @@ class ProfileDataStoreFactory @Inject constructor(
 
     suspend fun clearProfileScopedData() = withContext(Dispatchers.IO) {
         val cachedStores = synchronized(lock) { cache.toMap() }
-        cachedStores.values.forEach { scoped ->
+        cachedStores.forEach { (fileName, scoped) ->
             runCatching { scoped.store.edit { it.clear() } }
+            // Complete an empty backup before reset returns; an old account must not recover.
+            writeShadowCopy(fileName)
         }
         deletedProfileIds.clear()
         corruptedFileNames.clear()
@@ -128,8 +130,7 @@ class ProfileDataStoreFactory @Inject constructor(
     }
 
     private fun isProfileScopedDataStoreFile(fileName: String): Boolean {
-        if (!fileName.endsWith(".preferences_pb")) return false
-        val dataStoreName = fileName.removeSuffix(".preferences_pb")
+        val dataStoreName = preferenceStoreName(fileName) ?: return false
         return dataStoreName !in retainedStandaloneDataStoreNames
     }
 
@@ -182,11 +183,13 @@ class ProfileDataStoreFactory @Inject constructor(
         return scoped
     }
 
-    internal fun writeShadowCopy(fileName: String) {
+    private val shadowCopyLocks = ConcurrentHashMap<String, Any>()
+
+    internal fun writeShadowCopy(fileName: String) = synchronized(shadowCopyLocks.getOrPut(fileName) { Any() }) {
         val sourceFile = File(File(context.filesDir, "datastore"), "$fileName.preferences_pb")
         val backupFile = File(File(context.filesDir, "datastore"), "$fileName.preferences_pb.bak")
         try {
-            if (sourceFile.exists() && sourceFile.length() > 0) {
+            if (sourceFile.exists()) {
                 val atomicBackup = AtomicFile(backupFile)
                 val output = atomicBackup.startWrite()
                 try {
