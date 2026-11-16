@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+build_mode="${1:---all}"
+case "$build_mode" in --all|--test-only|--lint-only|--package-only) ;; *) echo "Unsupported build mode" >&2; exit 1 ;; esac
 source "$(dirname "${BASH_SOURCE[0]}")/codex-android-env.sh"
 cd "$CODEX_REPO_ROOT"
 if ! command -v javac >/dev/null || [[ ! -f "$ANDROID_HOME/platforms/android-36/android.jar" || ! -f "$ANDROID_HOME/ndk/29.0.14206865/source.properties" ]]; then
@@ -49,21 +51,29 @@ if [[ ! -f "$NUVIO_RELEASE_STORE_FILE" ]]; then
 fi
 # Keep the same version across two Gradle processes. Releasing the compiler heap
 # before R8 avoids running both memory-heavy stages together on the CI runner.
-preview_minutes=$(python3 -c 'import time; print((int(time.time()) - 1767225600) // 60)')
+release_version="${NUVIO_ONE_TV_VERSION:-1.1.0}"
+if [[ ! "$release_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "NUVIO_ONE_TV_VERSION must be a stable major.minor.patch version" >&2
+    exit 1
+fi
+preview_minutes="${NUVIO_BUILD_MINUTES:-$(python3 -c 'import time; print((int(time.time()) - 1767225600) // 60)')}"
 run_preview_gradle() {
     bash ./gradlew "$@" \
-        -PnuvioPersonalAppId=app.onetube.tv.personal.preview -PlivetvTestBuild=true -Pdebuggable=false \
+        -PnuvioPersonalAppId=app.onetube.tv.personal.preview -PlivetvTestBuild=false -Pdebuggable=false \
+        "-PlivetvVersionName=$release_version" \
         "-PnuvioPreviewBuildMinutes=$preview_minutes" \
         --no-daemon --max-workers=1 --no-parallel \
         -Pkotlin.compiler.execution.strategy=in-process \
         "-Dorg.gradle.jvmargs=-Xmx${CODEX_GRADLE_HEAP_MB:-3584}m -XX:MaxMetaspaceSize=${CODEX_GRADLE_METASPACE_MB:-768}m -XX:+ExitOnOutOfMemoryError -Dfile.encoding=UTF-8"
 }
-run_preview_gradle :app:testFullReleaseUnitTest \
-    --tests 'com.nuvio.tv.data.simkl.SimklLocalReimportServiceTest' \
-    --tests 'com.nuvio.tv.data.simkl.SimklSyncRepositoryStorageTest' \
-    --tests 'com.nuvio.tv.data.repository.TraktOAuthContractTest' \
-    --tests 'com.nuvio.tv.data.mdblist.MdbListAuthRepositoryTest' \
-    --tests 'com.nuvio.tv.core.image.ImageWorkBudgetTest'
+if [[ "$build_mode" == --all || "$build_mode" == --test-only ]]; then
+    run_preview_gradle :app:testFullReleaseUnitTest
+fi
+if [[ "$build_mode" == --test-only ]]; then exit 0; fi
+if [[ "$build_mode" == --all || "$build_mode" == --lint-only ]]; then
+    run_preview_gradle :app:lintFullRelease
+fi
+if [[ "$build_mode" == --lint-only ]]; then exit 0; fi
 run_preview_gradle :app:assembleFullRelease
 mkdir -p "$CODEX_ANDROID_WORK_DIR/deliverables"
 for abi in arm64-v8a armeabi-v7a; do

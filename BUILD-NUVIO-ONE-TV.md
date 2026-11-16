@@ -1,8 +1,8 @@
-# Nuvio One TV personal preview
+# Nuvio One TV stable release
 
 This fork adds an independent poster refresh action, device-aware image concurrency,
 and a guarded upload/verify/reimport action for the local library and completed watch
-history. The preview package is `app.onetube.tv.personal.preview`, so it installs beside
+history. The application package remains `app.onetube.tv.personal.preview`, so existing personal previews update in place and it installs beside
 the original app. It does not inherit the original app's private data.
 
 ## Codex/Linux build
@@ -41,7 +41,7 @@ environment variables together when using your own private key. Account data is 
 
 Run **Actions → Nuvio One TV APK → Run workflow**. Enter the public Simkl Client ID
 in the optional input, or set the repository variable `SIMKL_CLIENT_ID` for repeat builds.
-Download **Nuvio-One-TV-preview** from the successful workflow's artifacts.
+Download **Nuvio-One-TV-release** from the successful workflow's artifacts.
 Fork workflows may require enabling Actions in the fork first.
 
 ## Poster refresh
@@ -72,7 +72,7 @@ confirmed the `Nuvio One TV` label, package `app.onetube.tv.personal.preview`, m
 and both `armeabi-v7a` and `arm64-v8a`. Playback, account linking and performance on a
 physical TV still require device testing; these checks do not establish runtime behavior.
 
-Personal previews now assemble fullRelease with R8 code optimization and resource shrinking, without debugger or Compose tooling. The personal application ID and signing identity remain compatible with earlier previews. Targeted Simkl tests run against the release unit-test variant before packaging. Tests and R8 run in separate Gradle processes with one worker, avoiding concurrent compiler/optimizer memory pressure. The preview build timestamp is pinned across both invocations to preserve the same version and reuse compilation outputs.
+Personal releases assemble fullRelease with R8 code optimization and resource shrinking, without debugger or Compose tooling. The personal application ID and signing identity remain compatible with earlier previews. The full release unit-test suite and full Android Lint run before packaging. Tests and R8 run in separate Gradle processes with one worker, avoiding concurrent compiler/optimizer memory pressure. The preview build timestamp is pinned across both invocations to preserve the same version and reuse compilation outputs.
 
 ## Trakt and MDBList app registration
 
@@ -88,11 +88,33 @@ https://developer.trakt.tv/docs/authentication-oauth
 https://github.com/trakt/trakt-api/blob/master/projects/api/src/contracts/oauth/index.ts
 
 Existing APKs require an update to gain these changes and app identifiers.
-The build runs OAuth request-contract and MDBList authorization tests as well
-as the guarded Simkl reimport tests before packaging the optimized APKs.
+The full test suite includes OAuth request contracts, MDBList authorization,
+protected Simkl reimport, profile-cache isolation, backup coalescing and cancellation.
 
 Image work scheduling uses physical RAM and Android's low-RAM flag in addition to
 heap limits. TVs with up to 3 GB RAM use at most 8 asynchronous image requests,
 4 per host and 2 bitmap decode workers, even when Android grants a 512 MB or
 larger Java heap. This preserves image quality, cache sizes, playback budgets
 and features while reducing competing image work during navigation.
+
+## Stable identity and upgrade compatibility
+
+The default personal release is version `1.1.0`, channel `stable`, with no Test
+resource overlay. `NUVIO_ONE_TV_VERSION` (or the workflow's `app_version` input)
+sets a future stable major.minor.patch version. Version codes remain on the
+previous personal build's monotonically increasing track, with the same package
+and signing identity, so no uninstall or data reset is needed.
+
+Stable GitHub releases use a semantic version tag with build metadata and are
+published as normal releases, so the built-in stable updater uses this fork.
+[Brand assets and packaging](branding/nuvio-one-tv/README.md) describe the new
+logo, TV banners and lightweight launch screen.
+
+## Code audit checks
+
+The GitHub workflow runs all release unit tests, full Android Lint, then APK
+packaging in separate Gradle processes. A pinned build timestamp keeps all phases
+on the same version and reuses compilation outputs. `--test-only`, `--lint-only`
+and `--package-only` modes are available for the helper; the default runs all
+three. `Nuvio-One-TV-audit-reports` contains test XML/HTML and lint XML/HTML.
+No APK is published when unit tests or lint fail.

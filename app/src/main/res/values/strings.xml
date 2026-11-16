@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Nuvio One</string>
+    <string name="app_name">Nuvio One TV</string>
     <string name="music_downloads_channel_name">Music downloads</string>
     <string name="music_party_channel_name">Music party</string>
     <string name="tv_channel_continue_watching">Continue Watching</string>
@@ -3483,4 +3483,5 @@
     <string name="autosync_label_synced">Auto synced</string>
     <string name="stream_resume_from_time">Resume from %1$s</string>
     <string name="stream_resume_from_percent">Resume from %1$d%%</string>
+    <string name="one_tv_startup_tagline">Your world. One screen.</string>
 </resources>

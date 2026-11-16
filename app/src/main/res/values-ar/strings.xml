@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Nuvio One</string>
+    <string name="app_name">Nuvio One TV</string>
     <string name="tv_channel_continue_watching">متابعة المشاهدة</string>
     <string name="type_movies">أفلام</string>
     <string name="type_movie">فيلم</string>
@@ -3028,4 +3028,5 @@
     <string name="web_stream_badge_imported">استُورد رابط الشارة.</string>
     <string name="web_stream_badge_importing">جارٍ الاستيراد\u2026</string>
     <string name="web_stream_badge_load_error">تعذر تحميل إعدادات شارات البث</string>
+    <string name="one_tv_startup_tagline">عالمك على شاشة واحدة</string>
 </resources>

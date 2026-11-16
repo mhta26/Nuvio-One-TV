@@ -3,6 +3,11 @@ name: Nuvio One TV APK
 on:
   workflow_dispatch:
     inputs:
+      app_version:
+        description: 'Stable release version (major.minor.patch)'
+        required: false
+        default: '1.1.0'
+        type: string
       simkl_client_id:
         description: 'Optional public Simkl Client ID (not an account token or Client Secret)'
         required: false
@@ -39,8 +44,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     env:
+      NUVIO_ONE_TV_VERSION: ${{ inputs.app_version || vars.NUVIO_ONE_TV_VERSION || '1.1.0' }}
       CODEX_GRADLE_HEAP_MB: '6144'
       CODEX_GRADLE_METASPACE_MB: '1024'
       SIMKL_CLIENT_ID: ${{ inputs.simkl_client_id || vars.SIMKL_CLIENT_ID || secrets.SIMKL_CLIENT_ID }}
@@ -50,7 +56,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Select build workspace
-        run: echo "CODEX_ANDROID_WORK_DIR=$RUNNER_TEMP/nuvio-one-tv-build" >> "$GITHUB_ENV"
+        run: |
+          python3 - <<'PY'
+          import os, time
+          with open(os.environ['GITHUB_ENV'], 'a') as output:
+              output.write(f"CODEX_ANDROID_WORK_DIR={os.environ['RUNNER_TEMP']}/nuvio-one-tv-build\n")
+              output.write(f"NUVIO_BUILD_MINUTES={(int(time.time()) - 1767225600) // 60}\n")
+          PY
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -65,12 +77,28 @@ jobs:
           restore-keys: nuvio-one-tv-${{ runner.os }}-
       - name: Test account configuration
         run: python3 -m unittest discover -s scripts/tests -p 'test_preview_backend.py'
-      - name: Build and test personal preview
-        run: bash scripts/build-codex-preview.sh
+      - name: Run all release unit tests
+        run: bash scripts/build-codex-preview.sh --test-only
+      - name: Run full Android Lint
+        if: ${{ !cancelled() }}
+        run: bash scripts/build-codex-preview.sh --lint-only
+      - name: Upload code audit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nuvio-One-TV-audit-reports
+          path: |
+            app/build/reports/tests/testFullReleaseUnitTest/
+            app/build/test-results/testFullReleaseUnitTest/
+            app/build/reports/lint-results-fullRelease.*
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Assemble stable TV release
+        run: bash scripts/build-codex-preview.sh --package-only
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Nuvio-One-TV-preview
+          name: Nuvio-One-TV-release
           path: |
             ${{ runner.temp }}/nuvio-one-tv-build/deliverables/Nuvio-One-TV-arm64-v8a.apk
             ${{ runner.temp }}/nuvio-one-tv-build/deliverables/Nuvio-One-TV-armeabi-v7a.apk

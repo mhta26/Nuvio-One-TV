@@ -332,7 +332,8 @@ android {
             // Live TV fork: TV boxes are all ARM. The x86 copies (for PC emulators) only made
             // the all-in-one APK, the one most people install, far bigger.
             include("armeabi-v7a", "arm64-v8a")
-            isUniversalApk = (findProperty("livetvTestBuild") as String?)?.toBoolean() != true
+            isUniversalApk = (findProperty("livetvTestBuild") as String?)?.toBoolean() != true &&
+                !providers.gradleProperty("nuvioPersonalAppId").isPresent
         }
     }
 
@@ -385,6 +386,10 @@ android {
 
     testOptions {
         unitTests.isReturnDefaultValues = true
+        unitTests.all { test ->
+            test.maxHeapSize = "2g"
+            test.maxParallelForks = 1
+        }
     }
 }
 
@@ -417,6 +422,7 @@ android.defaultConfig.versionCode = (android.defaultConfig.versionCode ?: 1) * 1
 // by the build number even when the Nuvio base changes.
 // They update from the tester-only service, using the key in the LIVETV_TESTER_KEY secret (never in the code),
 // and show a TEST band on their icon and banner (src/livetvTest/res).
+val personalDistribution = providers.gradleProperty("nuvioPersonalAppId").orNull?.isNotBlank() == true
 val livetvIsTestBuild = (findProperty("livetvTestBuild") as String?)?.toBoolean() == true
 val livetvTesterKey = if (livetvIsTestBuild) {
     (System.getenv("LIVETV_TESTER_KEY") ?: localProperties.getProperty("LIVETV_TESTER_KEY", "")).trim()
@@ -424,17 +430,23 @@ val livetvTesterKey = if (livetvIsTestBuild) {
 android.defaultConfig.buildConfigField("String", "NUVIO_CHANNEL", "\"${if (livetvIsTestBuild) "test" else "stable"}\"")
 android.defaultConfig.buildConfigField("String", "TEST_UPDATES_URL", "\"https://livetv-cloud.nuvioplusiptv.workers.dev\"")
 android.defaultConfig.buildConfigField("String", "TESTER_KEY", buildConfigString(livetvTesterKey))
-if (livetvIsTestBuild) {
+if (livetvIsTestBuild || personalDistribution) {
+    // Keep the personal app upgrade-compatible with the preview versionCode track.
     // 1767225600 = 2026-01-01 00:00 UTC, in seconds.
     val minutesSince2026: Int = providers.gradleProperty("nuvioPreviewBuildMinutes").orNull?.toInt()
         ?: ((System.currentTimeMillis() / 1000L - 1767225600L) / 60L).toInt()
     android.defaultConfig.versionCode = 200_000_000 + minutesSince2026
-    if ((findProperty("livetvVersionName") as String?).isNullOrBlank()) {
+    if (livetvIsTestBuild && (findProperty("livetvVersionName") as String?).isNullOrBlank()) {
         val base = android.defaultConfig.versionName ?: "0.0.0"
         val core = base.substringBefore('-').substringBefore('+')
         val nuvioPart = base.substringAfter('-', "").substringBefore('+')
         android.defaultConfig.versionName = "$core-test.$minutesSince2026" + if (nuvioPart.isNotEmpty()) "+$nuvioPart" else ""
     }
+}
+if (personalDistribution && !livetvIsTestBuild && providers.gradleProperty("livetvVersionName").orNull.isNullOrBlank()) {
+    android.defaultConfig.versionName = android.defaultConfig.versionName?.substringBefore('-')?.substringBefore('+')
+}
+if (livetvIsTestBuild) {
     android.sourceSets.getByName("release").res.srcDir("src/livetvTest/res")
 }
 

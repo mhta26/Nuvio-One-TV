@@ -70,3 +70,5 @@ status-page/
 !scripts/build-codex-preview.sh
 
 !scripts/configure-preview-backend.py
+
+!scripts/package-nuvio-branding.py

@@ -55,7 +55,7 @@ jobs:
       - name: Download the tested APK
         uses: actions/download-artifact@v4
         with:
-          name: Nuvio-One-TV-preview
+          name: Nuvio-One-TV-release
           path: ${{ runner.temp }}/nuvio-download
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
@@ -65,19 +65,24 @@ jobs:
           distribution: temurin
           java-version: '17'
       - name: Verify APK signing and prepare download
+        id: apk
         shell: bash
         run: |
           set -euo pipefail
           mapfile -t signers < <(printf '%s\n' "$ANDROID_HOME"/build-tools/*/apksigner | sort -V)
           signer="${signers[-1]}"
           [[ -x "$signer" ]]
+          mapfile -t aapts < <(printf '%s\n' "$ANDROID_HOME"/build-tools/*/aapt | sort -V)
+          aapt="${aapts[-1]}"
+          [[ -x "$aapt" ]]
           for abi in arm64-v8a armeabi-v7a; do
             export APK_ABI="$abi"
             apk="$RUNNER_TEMP/nuvio-download/Nuvio-One-TV-$abi.apk"
             [[ -f "$apk" ]]
             "$signer" verify --print-certs "$apk" > "$RUNNER_TEMP/nuvio-signing-$abi.txt"
+            "$aapt" dump badging "$apk" > "$RUNNER_TEMP/nuvio-badging-$abi.txt"
             python3 - <<'PY_VERIFY'
-          import os, re, zipfile
+          import json, os, re, zipfile
           from pathlib import Path
           abi = os.environ['APK_ABI']
           root = Path(os.environ['RUNNER_TEMP'])
@@ -89,41 +94,69 @@ jobs:
               abis = {name.split('/')[1] for name in archive.namelist()
                       if name.startswith('lib/') and name.endswith('.so')}
               assert abis == {abi}, abis
+          badging = (root / f'nuvio-badging-{abi}.txt').read_text()
+          assert "name='app.onetube.tv.personal.preview'" in badging
+          assert "application-label:'Nuvio One TV'" in badging
+          assert 'application-debuggable' not in badging
+          version = re.search(r"versionName='([^']+)'", badging).group(1)
+          code = re.search(r"versionCode='([0-9]+)'", badging).group(1)
+          assert re.fullmatch(r'[0-9A-Za-z.+-]+', version)
+          metadata = {'version_name': version, 'version_code': code}
+          metadata_path = root / 'nuvio-apk-metadata.json'
+          if metadata_path.exists():
+              assert json.loads(metadata_path.read_text()) == metadata
+          else:
+              metadata_path.write_text(json.dumps(metadata))
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f"version_name={version}\nversion_code={code}\n")
           PY_VERIFY
             sha256sum "$apk"
           done
-      - name: Publish a downloadable preview release
+      - name: Publish downloadable release
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
           SOURCE_SHA: ${{ steps.source.outputs.sha }}
           SOURCE_NUMBER: ${{ steps.source.outputs.number }}
+          APK_VERSION_NAME: ${{ steps.apk.outputs.version_name }}
         shell: bash
         run: |
           set -euo pipefail
-          tag="tv-preview-$SOURCE_RUN_ID"
+          if [[ "$APK_VERSION_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            tag="v$APK_VERSION_NAME+build.$SOURCE_RUN_ID"
+            title="Nuvio One TV $APK_VERSION_NAME"
+            release_flags=(--latest)
+            edit_flags=(--prerelease=false --latest)
+            release_label="إصدار مستقر"
+          else
+            tag="tv-preview-$SOURCE_RUN_ID"
+            title="Nuvio One TV — Preview $SOURCE_NUMBER"
+            release_flags=(--prerelease)
+            edit_flags=(--prerelease)
+            release_label="إصدار تجريبي"
+          fi
           notes="$RUNNER_TEMP/nuvio-release-notes.md"
           cat > "$notes" <<EOF_NOTES
-          نسخة تجريبية من **Nuvio One TV** لأجهزة Android TV، تدعم ARM بنوعيها 32 و64 بت وAndroid 7 أو أحدث.
+          $release_label من **Nuvio One TV**، الإصدار **$APK_VERSION_NAME**، لأجهزة Android TV 7 أو أحدث.
 
-          حمّل ملف APK الموافق لمعمارية نظام جهازك من Assets أدناه:
+          حمّل ملفًا واحدًا بحسب معمارية نظام جهازك:
           - **Nuvio-One-TV-arm64-v8a.apk** لنظام ARM 64 بت.
           - **Nuvio-One-TV-armeabi-v7a.apk** لنظام ARM 32 بت.
-          كل ملف تطبيق كامل مستقل؛ ثبّت ملفًا واحدًا فقط.
 
-          - تُثبت بجانب التطبيق الأصلي؛ لا تحذف نسختك الحالية.
-          - تتضمن تحديث البوسترات من الإعدادات المتقدمة وتحسينات تحميل الصور.
-          - اجتازت النسخة اختبارات البناء وفحص التوقيع، ولم تُختبر على تلفزيون فعلي بعد.
-          - تتضمن إعدادات دخول Nuvio من وثيقة الاكتشاف العامة لخادمه، وإعداد Simkl حسب إعدادات البناء.
+          ثبّت الملف كتحديث فوق نسختك الحالية دون حذف التطبيق أو بياناته. معرّف الحزمة والتوقيع محفوظان.
+
+          تتضمن النسخة تحسينات حمل الصور وفق RAM الفعلية، وتحديث البوسترات، وإعادة جلب Simkl المحمية، وإعدادات ربط الخدمات بحسب إعدادات البناء.
+          اجتازت اختبارات البناء وفحص التوقيع والمعمارية؛ لم تُختبر على تلفزيون فعلي.
 
           [البناء والاختبارات](https://github.com/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID) · [المصدر المطابق](https://github.com/$GITHUB_REPOSITORY/tree/$SOURCE_SHA)
           EOF_NOTES
           apks=("$RUNNER_TEMP/nuvio-download/Nuvio-One-TV-arm64-v8a.apk" "$RUNNER_TEMP/nuvio-download/Nuvio-One-TV-armeabi-v7a.apk")
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$tag" "${apks[@]}" --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" "${edit_flags[@]}" --title "$title" --notes-file "$notes"
           else
             gh release create "$tag" "${apks[@]}" \
-              --repo "$GITHUB_REPOSITORY" --target "$SOURCE_SHA" --prerelease \
-              --title "Nuvio One TV — Preview $SOURCE_NUMBER" --notes-file "$notes"
+              --repo "$GITHUB_REPOSITORY" --target "$SOURCE_SHA" "${release_flags[@]}" \
+              --title "$title" --notes-file "$notes"
           fi
           printf '### Nuvio One TV\n\n[Download both architectures](https://github.com/%s/releases/tag/%s)\n' "$GITHUB_REPOSITORY" "$tag" >> "$GITHUB_STEP_SUMMARY"
