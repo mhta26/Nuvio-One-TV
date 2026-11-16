@@ -99,6 +99,8 @@ jobs:
           path: |
             app/build/reports/tests/testFullReleaseUnitTest/
             app/build/test-results/testFullReleaseUnitTest/
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Run full Android Lint
         if: ${{ !cancelled() && steps.service_config.outcome == 'success' }}
         run: bash scripts/build-codex-preview.sh --lint-only
@@ -123,6 +125,4 @@ jobs:
             ${{ runner.temp }}/nuvio-one-tv-build/deliverables/Nuvio-One-TV-arm64-v8a.apk
             ${{ runner.temp }}/nuvio-one-tv-build/deliverables/Nuvio-One-TV-armeabi-v7a.apk
           if-no-files-found: error
-          retention-days: 14
-          if-no-files-found: ignore
           retention-days: 14
