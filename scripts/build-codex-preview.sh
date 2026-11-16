@@ -62,7 +62,8 @@ run_preview_gradle :app:testFullReleaseUnitTest \
     --tests 'com.nuvio.tv.data.simkl.SimklLocalReimportServiceTest' \
     --tests 'com.nuvio.tv.data.simkl.SimklSyncRepositoryStorageTest' \
     --tests 'com.nuvio.tv.data.repository.TraktOAuthContractTest' \
-    --tests 'com.nuvio.tv.data.mdblist.MdbListAuthRepositoryTest'
+    --tests 'com.nuvio.tv.data.mdblist.MdbListAuthRepositoryTest' \
+    --tests 'com.nuvio.tv.core.image.ImageWorkBudgetTest'
 run_preview_gradle :app:assembleFullRelease
 mkdir -p "$CODEX_ANDROID_WORK_DIR/deliverables"
 for abi in arm64-v8a armeabi-v7a; do

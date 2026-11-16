@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.StrictMode
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
+import com.nuvio.tv.core.image.imageWorkBudgetFor
 import com.nuvio.tv.core.image.CustomPosterFallbackInterceptor
 import coil3.disk.DiskCache
 import coil3.memory.MemoryCache
@@ -101,11 +102,18 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
 
     @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     override fun newImageLoader(context: android.content.Context): ImageLoader {
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val memoryInfo = ActivityManager.MemoryInfo().also(activityManager::getMemoryInfo)
+        val imageWorkBudget = imageWorkBudgetFor(
+            physicalRamBytes = memoryInfo.totalMem,
+            lowHeapTier = MemoryBudget.isLowRamTier,
+            lowRamDevice = activityManager.isLowRamDevice
+        )
         val imageOkHttpClient by lazy {
             val imageDispatcher = okhttp3.Dispatcher().apply {
                 // Keep image work from competing with playback and focus handling on small TVs.
-                maxRequests = if (MemoryBudget.isLowRamTier) 8 else 32
-                maxRequestsPerHost = if (MemoryBudget.isLowRamTier) 4 else 16
+                maxRequests = imageWorkBudget.maxRequests
+                maxRequestsPerHost = imageWorkBudget.maxRequestsPerHost
             }
             OkHttpClient.Builder()
                 .dispatcher(imageDispatcher)
@@ -152,9 +160,6 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
                 )
             }
             .memoryCache {
-                val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-                val memoryInfo = ActivityManager.MemoryInfo()
-                activityManager.getMemoryInfo(memoryInfo)
                 val totalRamMb = memoryInfo.totalMem / (1024 * 1024)
                 // Low-RAM devices (≤2GB): use 0.15 — larger cache reduces GC pressure
                 // from rapid bitmap eviction during scrolling.
@@ -188,7 +193,7 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
             .precision(coil3.size.Precision.INEXACT)
             .allowHardware(false)
             .allowRgb565(imagePerformancePreferences.rgb565Enabled)
-            .bitmapFactoryMaxParallelism(if (MemoryBudget.isLowRamTier) 2 else 4)
+            .bitmapFactoryMaxParallelism(imageWorkBudget.decodeParallelism)
             .build()
     }
 }

@@ -90,3 +90,9 @@ https://github.com/trakt/trakt-api/blob/master/projects/api/src/contracts/oauth/
 Existing APKs require an update to gain these changes and app identifiers.
 The build runs OAuth request-contract and MDBList authorization tests as well
 as the guarded Simkl reimport tests before packaging the optimized APKs.
+
+Image work scheduling uses physical RAM and Android's low-RAM flag in addition to
+heap limits. TVs with up to 3 GB RAM use at most 8 asynchronous image requests,
+4 per host and 2 bitmap decode workers, even when Android grants a 512 MB or
+larger Java heap. This preserves image quality, cache sizes, playback budgets
+and features while reducing competing image work during navigation.
