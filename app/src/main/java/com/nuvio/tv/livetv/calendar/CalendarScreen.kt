@@ -221,7 +221,7 @@ fun CalendarScreen(
     val tabFocus = remember { FocusRequester() }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     // Back: deep in the cards, back to the first one (or today); from there, the side menu.
-    var resetKey by remember { mutableStateOf(0) }
+    var resetKey by remember { androidx.compose.runtime.mutableIntStateOf(0) }
     var atHome by remember { mutableStateOf(true) }
     var inContent by remember { mutableStateOf(false) }
     // Anything on this page has the highlight (false: it was lost, e.g. its card went away).
@@ -918,7 +918,7 @@ private fun DayRows(
     // Holding Up/Down: one row at a steady pace (the remote repeats far faster than the rows can
     // scroll and draw), and the big picture up top waits until the highlight rests.
     var held by remember { mutableStateOf(false) }
-    var lastStep by remember { mutableStateOf(0L) }
+    var lastStep by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
     var resting by remember { mutableStateOf<CalendarEntry?>(null) }
     LaunchedEffect(resting, held) {
         val e = resting ?: return@LaunchedEffect

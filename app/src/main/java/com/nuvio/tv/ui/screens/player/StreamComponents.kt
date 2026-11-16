@@ -305,7 +305,7 @@ internal fun AddonFilterChips(
 
     var chipRowHasFocus by remember { mutableStateOf(false) }
     var refreshHasFocus by remember { mutableStateOf(false) }
-    var focusedChipIndex by remember { mutableStateOf(
+    var focusedChipIndex by remember { androidx.compose.runtime.mutableIntStateOf(
         if (hasRefresh) {
             if (selectedAddon == null) 1 else (orderedNames.indexOf(selectedAddon) + 2).coerceAtLeast(1)
         } else {

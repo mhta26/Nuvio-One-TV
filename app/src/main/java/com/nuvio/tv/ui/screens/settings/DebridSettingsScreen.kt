@@ -1232,7 +1232,7 @@ private fun DebridDeviceAuthDialog(
     onDismiss: () -> Unit
 ) {
     val isConnected = currentValue.isNotBlank()
-    var restartNonce by remember(provider.id) { mutableStateOf(0) }
+    var restartNonce by remember(provider.id) { androidx.compose.runtime.mutableIntStateOf(0) }
     var session by remember(provider.id, restartNonce, isConnected) { mutableStateOf<DebridDeviceAuthorization?>(null) }
     var isStarting by remember(provider.id, restartNonce, isConnected) { mutableStateOf(!isConnected) }
     var isPolling by remember(provider.id, restartNonce, isConnected) { mutableStateOf(false) }

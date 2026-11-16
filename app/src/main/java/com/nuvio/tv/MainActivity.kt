@@ -1677,7 +1677,7 @@ private fun LegacySidebarScaffold(
     var pendingSidebarFocusRequest by remember { mutableStateOf(false) }
     // Bumped on every key event the drawer sees so the auto-collapse timer
     // resets while the user navigates between drawer items.
-    var legacyDrawerInteractionVersion by remember { mutableStateOf(0) }
+    var legacyDrawerInteractionVersion by remember { androidx.compose.runtime.mutableIntStateOf(0) }
 
     LaunchedEffect(currentRoute) {
         longPressBackHeld.value = false
@@ -2214,7 +2214,7 @@ private fun ModernSidebarScaffold(
     var sidebarCollapsePending by remember { mutableStateOf(false) }
     var pendingContentFocusTransfer by remember { mutableStateOf(false) }
     var pendingSidebarFocusRequest by remember { mutableStateOf(false) }
-    var focusedDrawerIndex by remember { mutableStateOf(-1) }
+    var focusedDrawerIndex by remember { androidx.compose.runtime.mutableIntStateOf(-1) }
     var isFloatingPillIconOnly by remember { mutableStateOf(false) }
     var pillExpandRequestCount by remember { mutableIntStateOf(0) }
     val keepFloatingPillExpanded = false

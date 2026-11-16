@@ -174,6 +174,13 @@ fun YouTubeScreen(
     // Kept outside the collapsing band so the tab strip doesn't jump back to the start when the
     // header is shown again.
     val tabScrollState = rememberScrollState()
+    // Only the end-of-strip boundaries affect the arrows, not every scroll pixel.
+    val showLeftTabsCue by remember(tabScrollState) {
+        androidx.compose.runtime.derivedStateOf { tabScrollState.value > 0 }
+    }
+    val showRightTabsCue by remember(tabScrollState) {
+        androidx.compose.runtime.derivedStateOf { tabScrollState.value < tabScrollState.maxValue }
+    }
     // Keep focused tabs where they are when they're already fully visible. The default
     // bring-into-view spec centres them, which used to scroll Home off-screen just for pressing
     // Up on the first card.
@@ -576,10 +583,10 @@ fun YouTubeScreen(
                         }
                         // With every tab switched on the strip can be wider than the TV; the
                         // chevrons say there are more tabs that way instead of leaving them hidden.
-                        if (tabScrollState.value > 0) {
+                        if (showLeftTabsCue) {
                             RowScrollCue(Alignment.CenterStart, Icons.AutoMirrored.Filled.KeyboardArrowLeft)
                         }
-                        if (tabScrollState.value < tabScrollState.maxValue) {
+                        if (showRightTabsCue) {
                             RowScrollCue(Alignment.CenterEnd, Icons.AutoMirrored.Filled.KeyboardArrowRight)
                         }
                     }
@@ -736,7 +743,7 @@ private fun Content(
     // Grids follow the "Posters per row" setting; rows are 16:9 and get their own width so
     // about four cards fit on a 1080p TV, with the next one peeking in at the edge.
     val columnCount = YouTubeSettings.posterColumns(context)
-    val screenWidthDp = context.resources.configuration.screenWidthDp
+    val screenWidthDp = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp
     // The same "Posters per row" choice drives horizontal feed rows and grids. It used to
     // affect only grids, so changing it from 5 to 3 or 4 left the Home rows looking identical.
     val rowCardWidth = run {
@@ -748,7 +755,7 @@ private fun Content(
     var needsInitialFocus by remember { mutableStateOf(true) }
     // The row whose cards last held focus. Re-running the vertical animate-scroll for every
     // horizontal focus move made the whole feed bounce while browsing a row.
-    var lastFocusedRow by remember(state.tab, state.subTitle) { mutableStateOf(-1) }
+    var lastFocusedRow by remember(state.tab, state.subTitle) { androidx.compose.runtime.mutableIntStateOf(-1) }
     val canRequestInitialFocus = needsInitialFocus && !com.nuvio.tv.LocalSidebarExpanded.current
     val restoreId = viewModel.lastPlayedVideoId
     val firstRowWithVideo = state.rows.indexOfFirst { row -> row.items.any { it.kind == YtKind.VIDEO } }

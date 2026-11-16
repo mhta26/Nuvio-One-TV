@@ -66,7 +66,7 @@ internal fun ThemeColorPicker(
     modifier: Modifier = Modifier
 ) {
     var hsv by remember(colorIndex) { mutableStateOf(color.toHsv()) }
-    var emittedColor by remember(colorIndex) { mutableStateOf(color) }
+    var emittedColor by remember(colorIndex) { androidx.compose.runtime.mutableIntStateOf(color) }
 
     LaunchedEffect(color, colorIndex) {
         if (color != emittedColor) {

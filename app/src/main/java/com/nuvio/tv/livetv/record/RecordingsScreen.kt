@@ -233,7 +233,7 @@ fun RecordingsScreen(
     val art by viewModel.art.collectAsStateWithLifecycle()
     var scheduleMenu by remember { mutableStateOf<RecordingSchedule?>(null) }
     // Back from the player: read where you got to again (the progress bars).
-    var resumeTick by remember { mutableStateOf(0) }
+    var resumeTick by remember { androidx.compose.runtime.mutableIntStateOf(0) }
     val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
         val obs = androidx.lifecycle.LifecycleEventObserver { _, e -> if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) resumeTick++ }
@@ -241,7 +241,7 @@ fun RecordingsScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(obs) }
     }
     // The clock, for "recording until" bars (moves on every few seconds).
-    var nowMs by remember { mutableStateOf(System.currentTimeMillis()) }
+    var nowMs by remember { androidx.compose.runtime.mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
         while (true) { kotlinx.coroutines.delay(5_000); nowMs = System.currentTimeMillis() }
     }

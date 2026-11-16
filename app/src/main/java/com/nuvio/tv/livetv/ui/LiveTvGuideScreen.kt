@@ -331,11 +331,11 @@ private fun LiveTvGuideScreenBody(
     var upTopFired by remember { mutableStateOf(false) }
     var upTopJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     // Holding Up down the list: when it gets to the top it stops there; held on a moment, it goes to the ⚙.
-    var heldTopSince by remember { mutableStateOf(0L) }
-    var lastVerticalAt by remember { mutableStateOf(0L) }
+    var heldTopSince by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
+    var lastVerticalAt by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
     var okHoldJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     var okDuringScroll by remember { mutableStateOf(false) }
-    var lastHeldLeftAt by remember { mutableStateOf(0L) }
+    var lastHeldLeftAt by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
     // "Browse by channel name": the highlight is on the channel name itself (OK plays it,
     // Right steps into its shows, Left opens the groups).
     var nameFocus by remember { mutableStateOf(false) }
@@ -944,7 +944,7 @@ private fun LiveTvGuideScreenBody(
     var backPressStartedHere by remember { mutableStateOf(false) }
     // Guide left alone for 2 minutes while a channel plays in the preview, with the guide itself
     // on screen (not a menu, a dialog or the side menu): back to full screen.
-    var lastKeyAt by remember { mutableStateOf(System.currentTimeMillis()) }
+    var lastKeyAt by remember { androidx.compose.runtime.mutableLongStateOf(System.currentTimeMillis()) }
     var guideHasFocus by remember { mutableStateOf(false) }
     val windowFocused = androidx.compose.ui.platform.LocalWindowInfo.current.isWindowFocused
     val idleMinutes = GUIDE_IDLE_FULL_SCREEN_MINUTES

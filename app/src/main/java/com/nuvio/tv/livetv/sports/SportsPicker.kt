@@ -118,7 +118,7 @@ fun SportsPicker(viewModel: SportsViewModel, onClose: () -> Unit) {
         runCatching { leagueReq(id).requestFocus() }
     }
     // OK on a sport: the highlight goes over to its first league.
-    var toLeagues by remember { mutableStateOf(0) }
+    var toLeagues by remember { androidx.compose.runtime.mutableIntStateOf(0) }
     LaunchedEffect(toLeagues) {
         if (toLeagues == 0) return@LaunchedEffect
         delay(90)

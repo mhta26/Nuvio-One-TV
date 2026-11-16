@@ -46,7 +46,7 @@ fun DiscoverScreen(
     val watchedSeriesIds by viewModel.watchedSeriesIds.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
     val discoverFirstItemFocusRequester = remember { FocusRequester() }
-    var discoverFocusedItemIndex by rememberSaveable { mutableStateOf(0) }
+    var discoverFocusedItemIndex by rememberSaveable { androidx.compose.runtime.mutableIntStateOf(0) }
     var restoreDiscoverFocus by rememberSaveable { mutableStateOf(false) }
     var pendingDiscoverRestoreOnResume by rememberSaveable { mutableStateOf(false) }
 

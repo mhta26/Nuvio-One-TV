@@ -53,7 +53,7 @@ internal fun YouTubeSettingsContent(
     val context = LocalContext.current
     var sponsorOn by remember { mutableStateOf(YouTubeSettings.sponsorBlockEnabled(context)) }
     var categories by remember { mutableStateOf(YouTubeSettings.sponsorCategoriesOn(context)) }
-    var quality by remember { mutableStateOf(YouTubeSettings.preferredHeight(context)) }
+    var quality by remember { androidx.compose.runtime.mutableIntStateOf(YouTubeSettings.preferredHeight(context)) }
     var hiddenTabs by remember { mutableStateOf(YouTubeSettings.hiddenTabs(context)) }
     var autoplay by remember { mutableStateOf(YouTubeSettings.autoplayNext(context)) }
     var autoSubtitles by remember { mutableStateOf(YouTubeSettings.autoSubtitles(context)) }
@@ -76,7 +76,7 @@ internal fun YouTubeSettingsContent(
     var compatibility by remember { mutableStateOf(YouTubeSettings.compatibilityMode(context)) }
     var contentRegion by remember { mutableStateOf(YouTubeSettings.contentRegion(context)) }
     var showContentRegion by remember { mutableStateOf(false) }
-    var posterColumns by remember { mutableStateOf(YouTubeSettings.posterColumns(context)) }
+    var posterColumns by remember { androidx.compose.runtime.mutableIntStateOf(YouTubeSettings.posterColumns(context)) }
     var clockOn by remember { mutableStateOf(YouTubeSettings.showClock(context)) }
 
     Column(

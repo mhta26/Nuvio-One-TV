@@ -96,6 +96,7 @@ internal class ParallelRangeDataSource(
 
         private val activeInstances = java.util.concurrent.atomic.AtomicInteger(0)
         private val globalBufferPool = ConcurrentHashMap<Long, ConcurrentLinkedDeque<PooledBuffer>>()
+        private val bufferPoolLock = Any()
 
         private fun freeDirectBuffer(buffer: ByteBuffer) {
             if (!buffer.isDirect) return
@@ -272,11 +273,15 @@ internal class ParallelRangeDataSource(
         }
 
         private fun recycleBuffer(buffer: PooledBuffer, chunkSz: Long, poolCap: Int) {
-            if (poolCap > 0) {
-                val pool = globalBufferPool.computeIfAbsent(chunkSz) { ConcurrentLinkedDeque() }
-                if (pool.size < poolCap) {
-                    pool.offerLast(buffer)
-                    return
+            // Queue lookup + insertion must be atomic with clearing the map. Otherwise a
+            // downloader can return memory into a detached queue after its last drain.
+            synchronized(bufferPoolLock) {
+                if (poolCap > 0) {
+                    val pool = globalBufferPool.computeIfAbsent(chunkSz) { ConcurrentLinkedDeque() }
+                    if (pool.size < poolCap) {
+                        pool.offerLast(buffer)
+                        return
+                    }
                 }
             }
             freeBuffer(buffer)
@@ -306,12 +311,16 @@ internal class ParallelRangeDataSource(
         }
 
         private fun teardownSessionLocked(session: ChunkSession, poolCap: Int) {
-            session.abandoned.set(true)
+            // Pair this barrier with registration: no future may be published after the
+            // teardown snapshot, including a completed download holding native memory.
+            val indices = synchronized(session) {
+                session.abandoned.set(true)
+                session.futures.keys.toList()
+            }
             session.activeSources.forEach { ds ->
                 try { ds.close() } catch (_: Exception) {}
             }
             session.activeSources.clear()
-            val indices = session.futures.keys.toList()
             for (index in indices) {
                 evictFuture(session, index, poolCap)
             }
@@ -439,9 +448,11 @@ internal class ParallelRangeDataSource(
         }
 
         internal fun drainIdleBuffers(chunkSize: Long) {
-            val pool = globalBufferPool[chunkSize] ?: return
-            while (true) {
-                freeBuffer(pool.pollLast() ?: break)
+            synchronized(bufferPoolLock) {
+                val pool = globalBufferPool[chunkSize] ?: return
+                while (true) {
+                    freeBuffer(pool.pollLast() ?: break)
+                }
             }
         }
 
@@ -472,18 +483,16 @@ internal class ParallelRangeDataSource(
         }
 
         private fun clearGlobalPool() {
-            globalBufferPool.values.forEach { pool ->
-                while (true) {
-                    freeBuffer(pool.pollFirst() ?: break)
+            synchronized(bufferPoolLock) {
+                globalBufferPool.values.forEach { pool ->
+                    while (true) {
+                        freeBuffer(pool.pollFirst() ?: break)
+                    }
                 }
+                globalBufferPool.clear()
             }
-            globalBufferPool.clear()
             Log.d(TAG, "Cleared global buffer pool as all ParallelRangeDataSource instances are closed")
         }
-    }
-
-    init {
-        activeInstances.incrementAndGet()
     }
 
     // Readers lease the memory per copy; it is recycled once, after release and the last lease.
@@ -545,7 +554,8 @@ internal class ParallelRangeDataSource(
     private var totalFileLength: Long = C.LENGTH_UNSET.toLong()
     private var position: Long = 0
     private var bytesRemaining: Long = C.LENGTH_UNSET.toLong()
-    private val closed = AtomicBoolean(false)
+    private val closed = AtomicBoolean(true)
+    private val lifecycleLock = Any()
 
     private val effectivePrefetchDepth: Int =
         prefetchDepthChunks.coerceAtLeast(parallelConnections + 1)
@@ -576,9 +586,11 @@ internal class ParallelRangeDataSource(
         if (com.nuvio.tv.ui.screens.settings.MemoryBudget.isLowRamTier) 2 else 4
 
     override fun open(dataSpec: DataSpec): Long {
+        val wasClosed = synchronized(lifecycleLock) {
+            closed.getAndSet(false).also { if (it) activeInstances.incrementAndGet() }
+        }
         val isSubtitle = dataSpec.uri.getQueryParameter("nuvio_type") == "subtitle"
         if (isSubtitle) {
-            closed.set(false)
             resetLocalReadState()
 
             val cleanedUri = dataSpec.uri.buildUpon().clearQuery().let { builder ->
@@ -606,15 +618,12 @@ internal class ParallelRangeDataSource(
             return openLength
         }
 
-        val wasClosed = closed.get()
         val isReopen = !wasClosed &&
                        fallbackSource == null &&
                        originalDataSpec != null &&
                        originalDataSpec?.uri == dataSpec.uri &&
                        position == dataSpec.position &&
                        totalFileLength != C.LENGTH_UNSET.toLong()
-
-        closed.set(false)
 
         if (isReopen) {
             position = dataSpec.position
@@ -981,17 +990,6 @@ internal class ParallelRangeDataSource(
         Log.d(TAG, "Continuation open at $position, $length bytes to boundary $end")
     }
 
-    private fun releaseInFlightBuffer(
-        activeSession: ChunkSession,
-        chunkIndex: Long,
-        inFlight: InFlightChunk,
-        buffer: PooledBuffer
-    ) {
-        inFlight.buffer = null
-        activeSession.inFlight.remove(chunkIndex, inFlight)
-        releaseBuffer(buffer)
-    }
-
     private fun escalateReaderBlockedChunk(
         activeSession: ChunkSession,
         chunkIndex: Long,
@@ -1142,33 +1140,36 @@ internal class ParallelRangeDataSource(
         val activeSession = session ?: return
 
         enforceSessionCap(activeSession, protectIndex = chunkIndex, poolCap = maxPoolSize)
-        activeSession.futures.computeIfAbsent(chunkIndex) {
-            val future = CompletableFuture<DownloadedChunk>()
-            activeSession.touch(chunkIndex)
-            Log.d(TAG, "Scheduling chunk $chunkIndex")
-            sharedExecutor.execute {
-                try {
-                    if (!future.isCancelled && !activeSession.abandoned.get()) {
-                        val result = downloadChunk(activeSession, chunkIndex, future)
-                        if (!future.complete(result)) {
-                            releaseBuffer(result.buffer)
+        synchronized(activeSession) {
+            if (activeSession.abandoned.get()) return
+            activeSession.futures.computeIfAbsent(chunkIndex) {
+                val future = CompletableFuture<DownloadedChunk>()
+                activeSession.touch(chunkIndex)
+                Log.d(TAG, "Scheduling chunk $chunkIndex")
+                sharedExecutor.execute {
+                    try {
+                        if (!future.isCancelled && !activeSession.abandoned.get()) {
+                            val result = downloadChunk(activeSession, chunkIndex, future)
+                            if (!future.complete(result)) {
+                                releaseBuffer(result.buffer)
+                            }
+                        } else if (future.isCancelled) {
+
+                        } else {
+                            future.completeExceptionally(IOException("Session abandoned"))
                         }
-                    } else if (future.isCancelled) {
+                    } catch (e: Exception) {
+                        future.completeExceptionally(e)
+                    } catch (e: OutOfMemoryError) {
 
-                    } else {
-                        future.completeExceptionally(IOException("Session abandoned"))
+                        drainIdleBuffers(activeSession.chunkSize)
+                        future.completeExceptionally(
+                            IOException("Native chunk buffer allocation failed (out of memory)", e)
+                        )
                     }
-                } catch (e: Exception) {
-                    future.completeExceptionally(e)
-                } catch (e: OutOfMemoryError) {
-
-                    drainIdleBuffers(activeSession.chunkSize)
-                    future.completeExceptionally(
-                        IOException("Native chunk buffer allocation failed (out of memory)", e)
-                    )
                 }
+                future
             }
-            future
         }
     }
 
@@ -1373,111 +1374,126 @@ internal class ParallelRangeDataSource(
         expectedBytes: Long,
         allowStallRestart: Boolean = true
     ): DownloadedChunk {
+        if (activeSession.abandoned.get() || future.isCancelled) throw IOException("Session abandoned or cancelled")
         val buffer = acquireBuffer()
-
-        val inFlight = InFlightChunk(buffer)
-        activeSession.inFlight[chunkIndex] = inFlight
-        val tempArray = readBufferLocal.get()!!
-        var totalRead = 0
-        var consecutiveZeroReads = 0
-
-        if (obsAnnounced.compareAndSet(false, true)) {
-            Log.w(TAG, "OBS_ACTIVE build=hedge-3a minOpenMs=$HEDGE_MIN_OPEN_MS " +
-                "windowMs=$HEDGE_WINDOW_MS stallRateBps=$HEDGE_STALL_RATE_BPS " +
-                "maxRestarts=$HEDGE_MAX_RESTARTS")
-        }
-
-        val hedgeChunkT0 = SystemClock.elapsedRealtime()
-        var hedgeLastCheckT0 = hedgeChunkT0
-        var hedgeLastCheckBytes = 0
-
-        val hedgeIsUsenet = activeSession.resolvedUri?.path?.contains("/usenet/") == true
-        val hedgeStallRateBps = if (hedgeIsUsenet) HEDGE_STALL_RATE_USENET else HEDGE_STALL_RATE_CDN
-        val hedgeWindowsRequired = if (hedgeIsUsenet) HEDGE_WINDOWS_USENET else HEDGE_WINDOWS_CDN
-        var hedgeConsecutiveStalled = 0
+        var ownedView: InFlightChunk? = null
+        var transferred = false
+        // The download owns this buffer until a completed result can take ownership.
+        // Also cover Errors and allocations during setup/result creation, not only IOExceptions.
         try {
-            val byteBufferReader = if (useNativeMemory && ds is androidx.media3.common.ByteBufferDataReader && ds.supportsByteBufferRead()) {
-                ds
-            } else {
-                null
+            val inFlight = InFlightChunk(buffer).also { ownedView = it }
+            activeSession.inFlight[chunkIndex] = inFlight
+            val tempArray = readBufferLocal.get()!!
+            var totalRead = 0
+            var consecutiveZeroReads = 0
+
+            if (obsAnnounced.compareAndSet(false, true)) {
+                Log.w(TAG, "OBS_ACTIVE build=hedge-3a minOpenMs=$HEDGE_MIN_OPEN_MS " +
+                    "windowMs=$HEDGE_WINDOW_MS stallRateBps=$HEDGE_STALL_RATE_BPS " +
+                    "maxRestarts=$HEDGE_MAX_RESTARTS")
             }
 
-            while (!activeSession.abandoned.get()) {
-                if (future.isCancelled) {
-                    throw IOException("Chunk download cancelled")
-                }
-                val maxRead = minOf(buffer.byteBuffer.capacity() - totalRead, READ_BUFFER_SIZE)
-                if (maxRead <= 0) break
+            val hedgeChunkT0 = SystemClock.elapsedRealtime()
+            var hedgeLastCheckT0 = hedgeChunkT0
+            var hedgeLastCheckBytes = 0
 
-                val read = if (byteBufferReader != null) {
-                    buffer.byteBuffer.position(totalRead)
-                    byteBufferReader.read(buffer.byteBuffer, maxRead)
+            val hedgeIsUsenet = activeSession.resolvedUri?.path?.contains("/usenet/") == true
+            val hedgeStallRateBps = if (hedgeIsUsenet) HEDGE_STALL_RATE_USENET else HEDGE_STALL_RATE_CDN
+            val hedgeWindowsRequired = if (hedgeIsUsenet) HEDGE_WINDOWS_USENET else HEDGE_WINDOWS_CDN
+            var hedgeConsecutiveStalled = 0
+            try {
+                val byteBufferReader = if (useNativeMemory && ds is androidx.media3.common.ByteBufferDataReader && ds.supportsByteBufferRead()) {
+                    ds
                 } else {
-                    val r = ds.read(tempArray, 0, maxRead)
-                    if (r != C.RESULT_END_OF_INPUT) {
+                    null
+                }
+
+                while (!activeSession.abandoned.get()) {
+                    if (future.isCancelled) {
+                        throw IOException("Chunk download cancelled")
+                    }
+                    val maxRead = minOf(buffer.byteBuffer.capacity() - totalRead, READ_BUFFER_SIZE)
+                    if (maxRead <= 0) break
+
+                    val read = if (byteBufferReader != null) {
                         buffer.byteBuffer.position(totalRead)
-                        buffer.byteBuffer.put(tempArray, 0, r)
+                        byteBufferReader.read(buffer.byteBuffer, maxRead)
+                    } else {
+                        val r = ds.read(tempArray, 0, maxRead)
+                        if (r != C.RESULT_END_OF_INPUT) {
+                            buffer.byteBuffer.position(totalRead)
+                            buffer.byteBuffer.put(tempArray, 0, r)
+                        }
+                        r
                     }
-                    r
+
+                    if (read == C.RESULT_END_OF_INPUT) break
+
+                    if (read == 0) {
+                        if (++consecutiveZeroReads >= MAX_CONSECUTIVE_ZERO_READS) {
+                            throw IOException(
+                                "No read progress after $MAX_CONSECUTIVE_ZERO_READS attempts " +
+                                    "(read $totalRead of $expectedBytes bytes)"
+                            )
+                        }
+                    } else {
+                        consecutiveZeroReads = 0
+                    }
+                    totalRead += read
+
+                    inFlight.watermark = totalRead
+
+                    val hedgeNowMs = SystemClock.elapsedRealtime()
+                    if (hedgeNowMs - hedgeChunkT0 >= HEDGE_MIN_OPEN_MS &&
+                        hedgeNowMs - hedgeLastCheckT0 >= HEDGE_WINDOW_MS) {
+                        val hedgeWindowMs = hedgeNowMs - hedgeLastCheckT0
+                        val hedgeWindowBytes = totalRead - hedgeLastCheckBytes
+                        val hedgeRateBps = if (hedgeWindowMs > 0L)
+                            hedgeWindowBytes.toLong() * 1000L / hedgeWindowMs else Long.MAX_VALUE
+                        val hedgeStalled = hedgeRateBps < hedgeStallRateBps
+                        if (hedgeStalled) hedgeConsecutiveStalled++ else hedgeConsecutiveStalled = 0
+                        Log.w(TAG, "HEDGE_SAMPLE chunk=$chunkIndex watermark=$totalRead " +
+                            "windowBytes=$hedgeWindowBytes windowMs=$hedgeWindowMs " +
+                            "rateBps=$hedgeRateBps stalled=$hedgeStalled " +
+                            "consec=$hedgeConsecutiveStalled/$hedgeWindowsRequired " +
+                            "usenet=$hedgeIsUsenet clamp=$hudClampLatched " +
+                            "restartable=$allowStallRestart")
+                        if (hedgeConsecutiveStalled >= hedgeWindowsRequired &&
+                            allowStallRestart && !hudClampLatched) {
+
+                            throw StalledChunkException(chunkIndex, totalRead, hedgeRateBps)
+                        }
+                        hedgeLastCheckT0 = hedgeNowMs
+                        hedgeLastCheckBytes = totalRead
+                    }
                 }
 
-                if (read == C.RESULT_END_OF_INPUT) break
-
-                if (read == 0) {
-                    if (++consecutiveZeroReads >= MAX_CONSECUTIVE_ZERO_READS) {
-                        throw IOException(
-                            "No read progress after $MAX_CONSECUTIVE_ZERO_READS attempts " +
-                                "(read $totalRead of $expectedBytes bytes)"
-                        )
-                    }
-                } else {
-                    consecutiveZeroReads = 0
+                if (expectedBytes > 0L && totalRead < expectedBytes && !activeSession.abandoned.get()) {
+                    throw IOException("Short chunk: read $totalRead of $expectedBytes bytes")
                 }
-                totalRead += read
-
-                inFlight.watermark = totalRead
-
-                val hedgeNowMs = SystemClock.elapsedRealtime()
-                if (hedgeNowMs - hedgeChunkT0 >= HEDGE_MIN_OPEN_MS &&
-                    hedgeNowMs - hedgeLastCheckT0 >= HEDGE_WINDOW_MS) {
-                    val hedgeWindowMs = hedgeNowMs - hedgeLastCheckT0
-                    val hedgeWindowBytes = totalRead - hedgeLastCheckBytes
-                    val hedgeRateBps = if (hedgeWindowMs > 0L)
-                        hedgeWindowBytes.toLong() * 1000L / hedgeWindowMs else Long.MAX_VALUE
-                    val hedgeStalled = hedgeRateBps < hedgeStallRateBps
-                    if (hedgeStalled) hedgeConsecutiveStalled++ else hedgeConsecutiveStalled = 0
-                    Log.w(TAG, "HEDGE_SAMPLE chunk=$chunkIndex watermark=$totalRead " +
-                        "windowBytes=$hedgeWindowBytes windowMs=$hedgeWindowMs " +
-                        "rateBps=$hedgeRateBps stalled=$hedgeStalled " +
-                        "consec=$hedgeConsecutiveStalled/$hedgeWindowsRequired " +
-                        "usenet=$hedgeIsUsenet clamp=$hudClampLatched " +
-                        "restartable=$allowStallRestart")
-                    if (hedgeConsecutiveStalled >= hedgeWindowsRequired &&
-                        allowStallRestart && !hudClampLatched) {
-
-                        throw StalledChunkException(chunkIndex, totalRead, hedgeRateBps)
-                    }
-                    hedgeLastCheckT0 = hedgeNowMs
-                    hedgeLastCheckBytes = totalRead
-                }
+            } catch (e: Exception) {
+                if (activeSession.abandoned.get()) throw IOException("Session abandoned")
+                throw e
+            }
+            if (activeSession.abandoned.get()) {
+                throw IOException("Session abandoned")
             }
 
-            if (expectedBytes > 0L && totalRead < expectedBytes && !activeSession.abandoned.get()) {
-                throw IOException("Short chunk: read $totalRead of $expectedBytes bytes")
+            activeSession.inFlight.remove(chunkIndex, inFlight)
+            buffer.byteBuffer.flip()
+            return DownloadedChunk(buffer, totalRead).also { transferred = true }
+        } finally {
+            if (!transferred) {
+                try {
+                    ownedView?.let { view ->
+                        view.buffer = null
+                        activeSession.inFlight.remove(chunkIndex, view)
+                    }
+                } finally {
+                    releaseBuffer(buffer)
+                }
             }
-        } catch (e: Exception) {
-            releaseInFlightBuffer(activeSession, chunkIndex, inFlight, buffer)
-            if (activeSession.abandoned.get()) throw IOException("Session abandoned")
-            throw e
         }
-        if (activeSession.abandoned.get()) {
-            releaseInFlightBuffer(activeSession, chunkIndex, inFlight, buffer)
-            throw IOException("Session abandoned")
-        }
-
-        activeSession.inFlight.remove(chunkIndex, inFlight)
-        buffer.byteBuffer.flip()
-        return DownloadedChunk(buffer, totalRead)
     }
 
     private fun parseContentRangeTotal(headers: Map<String, List<String>>): Long {
@@ -1513,18 +1529,30 @@ internal class ParallelRangeDataSource(
     }
 
     private fun acquireBuffer(): PooledBuffer {
-        val pool = globalBufferPool.computeIfAbsent(chunkSize) { ConcurrentLinkedDeque() }
-        val idle = pool.pollLast()
+        val idle = synchronized(bufferPoolLock) {
+            globalBufferPool.computeIfAbsent(chunkSize) { ConcurrentLinkedDeque() }.pollLast()
+        }
         if (idle != null) {
-            idle.byteBuffer.clear()
-            return PooledBuffer(idle.allocation, idle.byteBuffer)
+            try {
+                idle.byteBuffer.clear()
+                return PooledBuffer(idle.allocation, idle.byteBuffer)
+            } catch (failure: Throwable) {
+                // A failed wrapper allocation must not orphan the popped native allocation.
+                freeBuffer(idle)
+                throw failure
+            }
         }
         // Native memory in every engine mode. Chunks on the Java heap fill small heaps and stall
         // playback on blocking GC; Android's allocateDirect is heap memory too.
         val allocation = allocateChunk(chunkSize.toInt())
         val allocBuffer = allocation?.buffer
         return if (allocation != null && allocBuffer != null) {
-            PooledBuffer(allocation, allocBuffer)
+            try {
+                PooledBuffer(allocation, allocBuffer)
+            } catch (failure: Throwable) {
+                freeChunk(allocation)
+                throw failure
+            }
         } else {
             PooledBuffer(null, ByteBuffer.allocate(chunkSize.toInt()))
         }
@@ -1544,21 +1572,24 @@ internal class ParallelRangeDataSource(
     }
 
     override fun close() {
-        if (closed.compareAndSet(false, true)) {
-            fallbackSource?.close()
+        val wasOpen = synchronized(lifecycleLock) {
+            closed.compareAndSet(false, true).also { if (it) activeInstances.decrementAndGet() }
+        }
+        if (!wasOpen) return
+        try {
+            try {
+                fallbackSource?.close()
+            } finally {
+                continuationSource?.close()
+            }
+        } finally {
             fallbackSource = null
-            continuationSource?.close()
             continuationSource = null
             continuationEndPositionExclusive = C.TIME_UNSET
             pendingContinuationOpen = false
-
             resetLocalReadState()
             session = null
-
-            val active = activeInstances.decrementAndGet()
-            if (active <= 0) {
-                clearGlobalPool()
-            }
+            if (activeInstances.get() == 0) clearGlobalPool()
         }
     }
 

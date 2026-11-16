@@ -122,7 +122,7 @@ fun PauseOverlay(
 
 @Composable
 private fun PauseOverlayClock(modifier: Modifier = Modifier) {
-    var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+    var nowMillis by remember { androidx.compose.runtime.mutableLongStateOf(System.currentTimeMillis()) }
     val context = LocalContext.current
     val formatter = remember(context) { DateFormat.getTimeFormat(context) }
 

@@ -166,10 +166,10 @@ fun LiveTvPlayerScreen(
     // (where it opened the channel full screen again, and the guide only flashed up).
     var guideOnOkUp by remember { mutableStateOf(false) }
     // Holding Right (live): back to the channel you were watching before.
-    var rightDownAt by remember { mutableStateOf(0L) }
+    var rightDownAt by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
     var rightHoldDone by remember { mutableStateOf(false) }
     // Right twice in a row: the backup channels flyout (when the last Right press was a moment ago).
-    var lastRightTapAt by remember { mutableStateOf(0L) }
+    var lastRightTapAt by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
     // The full panel (OK): timeline, buttons and options. Changing channels shows the compact one.
     var panelFull by remember { mutableStateOf(false) }
     // Opened with the bar hidden (a long press in full screen): the full bar comes up with the
@@ -227,7 +227,7 @@ fun LiveTvPlayerScreen(
     // Channel surfing (Settings → Live TV → Watching): the channel being looked at on the info
     // bar while the one playing carries on, or null when not browsing.
     var browseKey by remember { mutableStateOf<String?>(null) }
-    var lastBrowseStepAt by remember { mutableStateOf(0L) }
+    var lastBrowseStepAt by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
     // OK picked a channel: its release mustn't also open the full panel.
     var swallowOkUp by remember { mutableStateOf(false) }
     LaunchedEffect(bannerVisible) { if (!bannerVisible) browseKey = null }
@@ -251,9 +251,9 @@ fun LiveTvPlayerScreen(
     LaunchedEffect(playback.channelKey, bannerVisible) { captionsOn = viewModel.playback.captionsOn() }
 
     // Picture quality (for the guide's badges) and frame rate (for Match frame rate).
-    var videoFps by remember { mutableStateOf(-1f) }
+    var videoFps by remember { androidx.compose.runtime.mutableFloatStateOf(-1f) }
     // For the info bar: this channel's frame rate (not the last channel's while it starts).
-    var shownFps by remember { mutableStateOf(-1f) }
+    var shownFps by remember { androidx.compose.runtime.mutableFloatStateOf(-1f) }
     LaunchedEffect(playback.channelKey, playback.catchupTitle, settings.matchFrameRate) {
         val frameRateStabilizer = LiveFrameRateStabilizer()
         val startedAt = android.os.SystemClock.elapsedRealtime()
@@ -317,7 +317,7 @@ fun LiveTvPlayerScreen(
     val catchupSession by viewModel.catchup.collectAsStateWithLifecycle()
     var scrubTargetMs by remember { mutableStateOf<Long?>(null) }
     var scrubToken by remember { mutableIntStateOf(0) }
-    var positionMs by remember { mutableStateOf(0L) }
+    var positionMs by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
     // How far you can seek without waiting (saved on the box, or loaded ahead): the bar's lighter part.
     var readyUntilMs by remember { mutableStateOf<Long?>(null) }
     LaunchedEffect(playback.catchupTitle, catchupSession) {
@@ -887,7 +887,7 @@ fun LiveTvPlayerScreen(
         ) {
             browseChannel?.let { b ->
                 val use24h = settings.use24HourClock
-                var tick by remember { mutableStateOf(System.currentTimeMillis()) }
+                var tick by remember { androidx.compose.runtime.mutableLongStateOf(System.currentTimeMillis()) }
                 // Live only (minutes left, a time bar over an hour or so): every 5 seconds is plenty,
                 // and redraws the panel a fifth as often on slower boxes.
                 LaunchedEffect(Unit) { while (true) { delay(5_000L - System.currentTimeMillis() % 5_000L); tick = System.currentTimeMillis() } }
@@ -970,7 +970,7 @@ fun LiveTvPlayerScreen(
                 val about = if (!archive) rememberChannelAbout(ch, nowProgram) else null
                 val showProgram = if (archive) cs?.program else nowProgram
                 // Ticks while visible, so the timeline moves.
-                var tick by remember { mutableStateOf(System.currentTimeMillis()) }
+                var tick by remember { androidx.compose.runtime.mutableLongStateOf(System.currentTimeMillis()) }
                 // Seconds show in catch-up and paused live ("12:04 / 58:00"); live only needs minutes,
                 // so it ticks every 5 seconds there (a fifth of the redraws on slower boxes).
                 LaunchedEffect(mode) {

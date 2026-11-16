@@ -216,9 +216,9 @@ internal fun SubtitleSelectionOverlay(
     var revealStyleRail by remember(visible) {
         mutableStateOf(sessionInitialSelectedOptionId != null)
     }
-    var languageFocusToken by remember(visible) { mutableStateOf(0) }
-    var optionFocusToken by remember(visible) { mutableStateOf(0) }
-    var styleFocusToken by remember(visible) { mutableStateOf(0) }
+    var languageFocusToken by remember(visible) { androidx.compose.runtime.mutableIntStateOf(0) }
+    var optionFocusToken by remember(visible) { androidx.compose.runtime.mutableIntStateOf(0) }
+    var styleFocusToken by remember(visible) { androidx.compose.runtime.mutableIntStateOf(0) }
     var pendingLanguageFocusKey by remember(visible) { mutableStateOf<String?>(null) }
     var pendingOptionFocusId by remember(visible) { mutableStateOf<String?>(null) }
     var pendingOptionFocusLanguageKey by remember(visible) { mutableStateOf<String?>(null) }

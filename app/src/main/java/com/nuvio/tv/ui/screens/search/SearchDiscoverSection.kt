@@ -511,7 +511,7 @@ internal fun DiscoverGrid(
             previousFilterKey = filterKey
         }
     }
-    var localRestoreFocusedItemIndex by remember { mutableStateOf(-1) }
+    var localRestoreFocusedItemIndex by remember { androidx.compose.runtime.mutableIntStateOf(-1) }
     var localShouldRestoreFocusedItem by remember { mutableStateOf(false) }
     val effectiveFocusedItemIndex = if (localShouldRestoreFocusedItem) {
         localRestoreFocusedItemIndex
@@ -575,12 +575,15 @@ internal fun DiscoverGrid(
 
     // Infinite scroll: auto-load more when the user scrolls near the end.
     val shouldAutoLoad = canLoadMore && !isLoadingMore && items.isNotEmpty()
-    LaunchedEffect(gridState.firstVisibleItemIndex, items.size, shouldAutoLoad) {
-        if (!shouldAutoLoad) return@LaunchedEffect
-        val lastVisible = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: return@LaunchedEffect
-        if (lastVisible >= items.size - 6) {
-            onLoadMore()
+    val autoLoadThreshold = items.size - 6
+    val nearGridEnd by remember(gridState, autoLoadThreshold) {
+        androidx.compose.runtime.derivedStateOf {
+            val lastVisible = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+            lastVisible != null && lastVisible >= autoLoadThreshold
         }
+    }
+    LaunchedEffect(nearGridEnd, items.size, shouldAutoLoad) {
+        if (shouldAutoLoad && nearGridEnd) onLoadMore()
     }
 
     // Per-item FocusRequesters for focusRestorer on the grid.

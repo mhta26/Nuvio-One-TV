@@ -30,7 +30,7 @@ import kotlinx.coroutines.delay
 @Composable
 internal fun BoxScope.OnScreenClock(settings: LiveTvSettings, visible: Boolean) {
     if (settings.clockMode != "always" || !visible) return
-    var now by remember { mutableStateOf(System.currentTimeMillis()) }
+    var now by remember { androidx.compose.runtime.mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
         while (true) {
             now = System.currentTimeMillis()

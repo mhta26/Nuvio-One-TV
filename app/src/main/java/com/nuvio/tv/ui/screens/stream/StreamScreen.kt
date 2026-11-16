@@ -152,7 +152,7 @@ fun StreamScreen(
     )
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
-    var focusedStreamIndex by rememberSaveable { mutableStateOf(0) }
+    var focusedStreamIndex by rememberSaveable { androidx.compose.runtime.mutableIntStateOf(0) }
     var restoreFocusedStream by rememberSaveable { mutableStateOf(false) }
     var pendingRestoreOnResume by rememberSaveable { mutableStateOf(false) }
     var showPlayerChoiceDialog by remember { mutableStateOf(false) }
@@ -786,7 +786,7 @@ private fun RightStreamSection(
 ) {
     val isRtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     var enter by remember { mutableStateOf(false) }
-    var firstStreamFocusRequestId by remember { mutableStateOf(0) }
+    var firstStreamFocusRequestId by remember { androidx.compose.runtime.mutableIntStateOf(0) }
     var listHasFocus by remember { mutableStateOf(false) }
     var focusedStreamKeyInList by remember { mutableStateOf<String?>(null) }
     var userMovedFromFirstResult by remember { mutableStateOf(shouldRestoreFocusedStream) }

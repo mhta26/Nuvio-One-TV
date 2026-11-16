@@ -408,7 +408,7 @@ private fun LinksDialog(s: SportsSettings, viewModel: SportsViewModel, onForgetA
     val requesters = remember(links) { links.map { FocusRequester() } }
     val forgetAll = remember { FocusRequester() }
     // Where focus goes after a removal (the row that took its place), or -1 on opening.
-    var focusAt by remember { mutableStateOf(-1) }
+    var focusAt by remember { androidx.compose.runtime.mutableIntStateOf(-1) }
     LiveDialog(onDismiss = onDismiss, width = 620.dp) {
         LiveText("Your channel links", size = 20.sp, weight = FontWeight.Bold)
         LiveText(

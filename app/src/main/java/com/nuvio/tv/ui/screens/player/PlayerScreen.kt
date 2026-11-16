@@ -4244,7 +4244,7 @@ private fun PlayerClockOverlay(
     playbackSpeed: Float,
     isLive: Boolean = false
 ) {
-    var nowMs by remember { mutableStateOf(System.currentTimeMillis()) }
+    var nowMs by remember { androidx.compose.runtime.mutableLongStateOf(System.currentTimeMillis()) }
     val context = LocalContext.current
     val timeFormatter = remember(context) { DateFormat.getTimeFormat(context) }
 

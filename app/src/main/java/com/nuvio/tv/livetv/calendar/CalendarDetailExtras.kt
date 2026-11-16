@@ -150,7 +150,7 @@ fun CalendarNextLine(meta: Meta, onFocused: () -> Unit = {}) {
     if (!series && !meta.isMovieMeta()) return
     var line by remember(meta.id) { mutableStateOf<String?>(null) }
     var entry by remember(meta.id) { mutableStateOf<CalendarEntry?>(null) }
-    var reload by remember(meta.id) { mutableStateOf(0) }
+    var reload by remember(meta.id) { androidx.compose.runtime.mutableIntStateOf(0) }
     LaunchedEffect(meta.id, reload) {
         val imdb = meta.imdbOrNull()
         if (series) {

@@ -217,7 +217,7 @@ internal fun RecordedShowPage(
     // to watch at first), and back to the button you were last on (Play at first). Left to the
     // TV, a button with no episode level with it needed several presses (or did nothing).
     val buttons = remember { List(4) { FocusRequester() } }
-    var lastButton by remember { mutableStateOf(0) }
+    var lastButton by remember { androidx.compose.runtime.mutableIntStateOf(0) }
     val episodeFocus = remember(show) { show.episodes.associate { it.id to FocusRequester() } }
     var lastEpisodeId by remember(show) { mutableStateOf(next.id) }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()

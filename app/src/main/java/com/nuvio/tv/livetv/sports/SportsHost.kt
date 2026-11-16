@@ -273,7 +273,7 @@ private fun ReminderDialog(
 /** Ten seconds before switching to the game: Switch now, or Cancel. */
 @Composable
 private fun SwitchCountdown(ev: SportsEvent, match: ChannelMatch, onSwitch: () -> Unit, onCancel: () -> Unit) {
-    var left by remember(ev.id) { mutableStateOf(10) }
+    var left by remember(ev.id) { androidx.compose.runtime.mutableIntStateOf(10) }
     val first = remember(ev.id) { FocusRequester() }
     LaunchedEffect(ev.id) {
         while (left > 0) { delay(1_000); left-- }

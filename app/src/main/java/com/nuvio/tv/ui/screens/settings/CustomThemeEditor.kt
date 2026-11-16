@@ -103,7 +103,7 @@ internal fun CustomThemeEditor(
 ) {
     var draftColors by remember { mutableStateOf(initialColors) }
     val colors = if (gradientEnabled) draftColors else CustomThemeColors.solid(draftColors.second)
-    var selectedIndex by remember(gradientEnabled) { mutableStateOf(0) }
+    var selectedIndex by remember(gradientEnabled) { androidx.compose.runtime.mutableIntStateOf(0) }
     var showHexEditor by remember(gradientEnabled) { mutableStateOf(false) }
     var restoreHexFocus by remember(gradientEnabled) { mutableStateOf(false) }
     val firstColorFocusRequester = remember { FocusRequester() }

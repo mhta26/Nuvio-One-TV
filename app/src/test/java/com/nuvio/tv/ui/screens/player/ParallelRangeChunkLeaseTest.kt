@@ -370,6 +370,149 @@ class ParallelRangeChunkLeaseTest {
         assertAllMemoryReturned()
     }
 
+    private fun awaitBlockedOrFinished(thread: Thread) {
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
+        while (thread.isAlive && thread.state != Thread.State.BLOCKED && System.nanoTime() < deadline) {
+            Thread.yield()
+        }
+        assertTrue("cleanup did not reach its barrier: ${thread.state}",
+            !thread.isAlive || thread.state == Thread.State.BLOCKED)
+    }
+
+    @Test
+    @Suppress("UNCHECKED_CAST")
+    fun `regression clearing pool cannot detach a concurrent buffer return`() {
+        val buffer = pooledBuffer(memory.allocate(CHUNK.toInt()))
+        val entered = CountDownLatch(1)
+        val resume = CountDownLatch(1)
+        val failure = AtomicReference<Throwable>()
+        val pool = object : java.util.concurrent.ConcurrentLinkedDeque<Any>() {
+            override fun offerLast(value: Any): Boolean {
+                entered.countDown()
+                check(resume.await(10, TimeUnit.SECONDS))
+                return super.offerLast(value)
+            }
+        }
+        val pools = ParallelRangeDataSource::class.java.getDeclaredField("globalBufferPool")
+            .apply { isAccessible = true }.get(null) as MutableMap<Long, java.util.concurrent.ConcurrentLinkedDeque<Any>>
+        pools[CHUNK] = pool
+        val returning = Thread {
+            try { releaseSessionBuffer(buffer, 4) } catch (t: Throwable) { failure.set(t) }
+        }
+        val clearing = Thread {
+            try { call(ParallelRangeDataSource.Companion, "clearGlobalPool") }
+            catch (t: Throwable) { failure.set(t) }
+        }
+        returning.start()
+        try {
+            assertTrue(entered.await(5, TimeUnit.SECONDS))
+            clearing.start()
+            awaitBlockedOrFinished(clearing)
+        } finally {
+            resume.countDown()
+            returning.join(5_000)
+            clearing.join(5_000)
+        }
+        failure.get()?.let { throw it }
+        assertFalse(returning.isAlive || clearing.isAlive)
+        drainPool()
+        assertEquals("a returned chunk must remain reachable during pool cleanup", 1, memory.freed.get())
+        assertEquals(0, memory.badFrees.get())
+    }
+
+    @Test
+    fun `regression session teardown cannot miss a future during registration`() {
+        serve()
+        val dataSource = source()
+        val sessionClass = (ParallelRangeDataSource::class.java.declaredClasses.toList() +
+            ParallelRangeDataSource.Companion.javaClass.declaredClasses.toList())
+            .single { it.simpleName == "ChunkSession" }
+        val session = sessionClass.declaredConstructors.single().apply { isAccessible = true }
+            .newInstance(fileUri, emptyMap<String, String>(), CHUNK, 8, 4)
+        val readyToPublish = CountDownLatch(1)
+        val resume = CountDownLatch(1)
+        val failure = AtomicReference<Throwable>()
+        val futures = object : ConcurrentHashMap<Long, CompletableFuture<Any>>() {
+            override fun computeIfAbsent(
+                key: Long,
+                mappingFunction: java.util.function.Function<in Long, out CompletableFuture<Any>>
+            ): CompletableFuture<Any> {
+                val future = mappingFunction.apply(key)
+                // Finish a real HTTP download before publishing the owning future.
+                future.get(10, TimeUnit.SECONDS)
+                readyToPublish.countDown()
+                check(resume.await(10, TimeUnit.SECONDS))
+                return putIfAbsent(key, future) ?: future
+            }
+        }
+        sessionClass.getDeclaredField("futures").apply { isAccessible = true }.set(session, futures)
+        dataSource.javaClass.getDeclaredField("session").apply { isAccessible = true }.set(dataSource, session)
+        ParallelRangeDataSource::class.java.getDeclaredField("currentChunkSession")
+            .apply { isAccessible = true }.set(null, session)
+        val registering = Thread {
+            try { call(dataSource, "ensureChunkScheduled", 0L) } catch (t: Throwable) { failure.set(t) }
+        }
+        val tearingDown = Thread {
+            try { teardownSessions() } catch (t: Throwable) { failure.set(t) }
+        }
+        registering.start()
+        try {
+            assertTrue("download did not reach publication: ${failure.get()}", readyToPublish.await(10, TimeUnit.SECONDS))
+            tearingDown.start()
+            awaitBlockedOrFinished(tearingDown)
+        } finally {
+            resume.countDown()
+            registering.join(5_000)
+            tearingDown.join(5_000)
+        }
+        failure.get()?.let { throw it }
+        assertFalse(registering.isAlive || tearingDown.isAlive)
+        drainPool()
+        assertEquals("teardown must release a download completed during registration", 1, memory.freed.get())
+        assertEquals(0, memory.badFrees.get())
+    }
+
+    @Test
+    fun `regression open close cycles balance active instance count`() {
+        serve()
+        val instances = ParallelRangeDataSource::class.java.getDeclaredField("activeInstances")
+            .apply { isAccessible = true }.get(null) as AtomicInteger
+        val baseline = instances.get()
+        val dataSource = source()
+        assertEquals("an unopened source is not active", baseline, instances.get())
+        repeat(3) {
+            dataSource.open(spec(0))
+            assertEquals(baseline + 1, instances.get())
+            dataSource.close()
+            assertEquals("reopening must balance the next close", baseline, instances.get())
+        }
+        assertAllMemoryReturned()
+    }
+
+    @Test
+    fun `regression failed read returns its buffer even for out of memory errors`() {
+        val dataSource = source()
+        val sessionClass = (ParallelRangeDataSource::class.java.declaredClasses.toList() +
+            ParallelRangeDataSource.Companion.javaClass.declaredClasses.toList())
+            .single { it.simpleName == "ChunkSession" }
+        val session = sessionClass.declaredConstructors.single().apply { isAccessible = true }
+            .newInstance(uriOf("https://example.invalid/file"), emptyMap<String, String>(), CHUNK, 8, 4)
+        val upstream = mockk<androidx.media3.datasource.DataSource>()
+        every { upstream.read(any<ByteArray>(), any(), any()) } throws OutOfMemoryError("simulated read allocation failure")
+        val error = try {
+            call(dataSource, "readIntoChunk", session, 0L, upstream, CompletableFuture<Any>(), CHUNK, true)
+            null
+        } catch (wrapped: java.lang.reflect.InvocationTargetException) {
+            wrapped.cause
+        }
+        assertTrue("the original read failure must propagate", error is OutOfMemoryError)
+        assertTrue("a chunk must have been allocated", memory.allocated.get() > 0)
+        drainPool()
+        assertEquals("failed reads must return all owned memory", memory.allocated.get(), memory.freed.get())
+        assertTrue((field(session, "inFlight") as Map<*, *>).isEmpty())
+        assertEquals(0, memory.badFrees.get())
+    }
+
     private companion object {
         const val CHUNK = 64L * 1024L
         const val POISON: Byte = 0x5A

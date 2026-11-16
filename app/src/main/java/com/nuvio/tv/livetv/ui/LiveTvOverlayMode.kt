@@ -139,8 +139,8 @@ private fun OverlayModeContent(
 
     var level by remember { mutableStateOf(OverlayLevel.CHANNELS) }
     // Widths of the whole overlay and of its panels, for sizing the show card beside them.
-    var overlayWidthPx by remember { mutableStateOf(0) }
-    var panelsWidthPx by remember { mutableStateOf(0) }
+    var overlayWidthPx by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    var panelsWidthPx by remember { androidx.compose.runtime.mutableIntStateOf(0) }
     var chIndex by remember { mutableIntStateOf(channels.indexOfFirst { it.key == playback.channelKey }.coerceAtLeast(0)) }
     var groupIndex by remember { mutableIntStateOf(groups.indexOfFirst { it.id == ui.selectedGroupId }.coerceAtLeast(0)) }
     // Group by Playlist (more than one playlist): playlist headings in the group list, which

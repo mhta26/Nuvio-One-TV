@@ -238,7 +238,7 @@ fun FolderEditorContent(
 
         val catalogFocusRequesters = remember { mutableMapOf<String, FocusRequester>() }
         val sourceKeys = remember(folder.sources) { collectionSourceKeys(folder.sources) }
-        var pendingFocusIndex by remember { mutableStateOf(-1) }
+        var pendingFocusIndex by remember { androidx.compose.runtime.mutableIntStateOf(-1) }
 
         LaunchedEffect(pendingFocusIndex, folder.sources.size) {
             if (pendingFocusIndex >= 0) {

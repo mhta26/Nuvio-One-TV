@@ -257,7 +257,7 @@ private fun PartyDetailsList(
             .padding(bottom = NuvioTheme.spacing.xl),
         verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.sidePanel.inner),
     ) {
-        var lastBehindMs by remember { mutableStateOf(0L) }
+        var lastBehindMs by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
         if (behindMs != null) lastBehindMs = behindMs
         AnimatedVisibility(
             visible = behindMs != null,

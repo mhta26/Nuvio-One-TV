@@ -139,7 +139,7 @@ internal fun MyTeamsRows(
     fun playing(ev: SportsEvent) = playingKey != null && matches[ev.id]?.any { it.channel.key == playingKey } == true
     fun channelOf(ev: SportsEvent) = matches[ev.id]?.firstOrNull()?.channel?.name ?: ev.broadcasts.firstOrNull()
     val heroes = page.heroes
-    var heroIndex by remember { mutableStateOf(0) }
+    var heroIndex by remember { androidx.compose.runtime.mutableIntStateOf(0) }
     val heroAt = heroIndex.coerceIn(0, (heroes.size - 1).coerceAtLeast(0))
     val hero = heroes.getOrNull(heroAt)
     val heroReq = requesterFor("hero")
