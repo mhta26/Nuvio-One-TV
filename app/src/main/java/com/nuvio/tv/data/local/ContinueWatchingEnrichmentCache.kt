@@ -114,7 +114,9 @@ class ContinueWatchingEnrichmentCache @Inject constructor(
         return File(dir, "nextup_${profileId}.json")
     }
 
-    suspend fun getNextUpSnapshot(profileId: Int = profileManager.activeProfileId.value): List<CachedNextUpItem> = withContext(Dispatchers.IO) {
+    suspend fun getNextUpSnapshot(): List<CachedNextUpItem> = getNextUpSnapshot(profileManager.activeProfileId.value)
+
+    suspend fun getNextUpSnapshot(profileId: Int): List<CachedNextUpItem> = withContext(Dispatchers.IO) {
         mutex.withLock {
             try {
                 val file = nextUpFile(profileId)
@@ -135,7 +137,10 @@ class ContinueWatchingEnrichmentCache @Inject constructor(
     /**
      * @param force bypass throttle and content-change check (use at end of pipeline or for clears)
      */
-    suspend fun saveNextUpSnapshot(allItems: List<CachedNextUpItem>, force: Boolean = false, profileId: Int = profileManager.activeProfileId.value) = withContext(Dispatchers.IO) {
+    suspend fun saveNextUpSnapshot(allItems: List<CachedNextUpItem>, force: Boolean = false) =
+        saveNextUpSnapshot(allItems, force, profileManager.activeProfileId.value)
+
+    suspend fun saveNextUpSnapshot(allItems: List<CachedNextUpItem>, force: Boolean = false, profileId: Int) = withContext(Dispatchers.IO) {
         // Live TV fork: the Calendar's cards aren't kept (the Calendar puts them in again).
         val items = allItems.filterNot { com.nuvio.tv.livetv.calendar.CalendarHomeFeed.isInjected(it.contentId, it.videoId) }
         val contentHash = items.hashCode()
@@ -164,7 +169,9 @@ class ContinueWatchingEnrichmentCache @Inject constructor(
         return File(dir, "inprogress_${profileId}.json")
     }
 
-    suspend fun getInProgressSnapshot(profileId: Int = profileManager.activeProfileId.value): List<CachedInProgressItem> = withContext(Dispatchers.IO) {
+    suspend fun getInProgressSnapshot(): List<CachedInProgressItem> = getInProgressSnapshot(profileManager.activeProfileId.value)
+
+    suspend fun getInProgressSnapshot(profileId: Int): List<CachedInProgressItem> = withContext(Dispatchers.IO) {
         mutex.withLock {
             try {
                 val file = inProgressFile(profileId)
@@ -184,7 +191,10 @@ class ContinueWatchingEnrichmentCache @Inject constructor(
     /**
      * @param force bypass throttle and content-change check (use at end of pipeline or for clears)
      */
-    suspend fun saveInProgressSnapshot(allItems: List<CachedInProgressItem>, force: Boolean = false, profileId: Int = profileManager.activeProfileId.value) = withContext(Dispatchers.IO) {
+    suspend fun saveInProgressSnapshot(allItems: List<CachedInProgressItem>, force: Boolean = false) =
+        saveInProgressSnapshot(allItems, force, profileManager.activeProfileId.value)
+
+    suspend fun saveInProgressSnapshot(allItems: List<CachedInProgressItem>, force: Boolean = false, profileId: Int) = withContext(Dispatchers.IO) {
         // Live TV fork: the Calendar's movie cards aren't kept (the Calendar puts them in again).
         val items = allItems.filterNot { com.nuvio.tv.livetv.calendar.CalendarHomeFeed.isInjectedMovie(it.contentId) }
         val contentHash = items.hashCode()
@@ -208,7 +218,9 @@ class ContinueWatchingEnrichmentCache @Inject constructor(
     /**
      * Deletes all CW enrichment cache files for the active profile.
      */
-    suspend fun clearAll(profileId: Int = profileManager.activeProfileId.value) = withContext(Dispatchers.IO) {
+    suspend fun clearAll() = clearAll(profileManager.activeProfileId.value)
+
+    suspend fun clearAll(profileId: Int) = withContext(Dispatchers.IO) {
         mutex.withLock {
             try {
                 nextUpFile(profileId).delete()
