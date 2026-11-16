@@ -2,11 +2,11 @@
 
 # Nuvio One TV
 
-**[تحميل ARM 64-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/tv-preview-43743792299/Nuvio-One-TV-arm64-v8a.apk)** · **[تحميل ARM 32-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/tv-preview-43743792299/Nuvio-One-TV-armeabi-v7a.apk)**
+**[تحميل ARM 64-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/tv-preview-43817341064/Nuvio-One-TV-arm64-v8a.apk)** · **[تحميل ARM 32-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/tv-preview-43817341064/Nuvio-One-TV-armeabi-v7a.apk)**
 
 [جميع الإصدارات التجريبية / Releases](https://github.com/mhta26/Nuvio-One-TV/releases) · Android TV 7+ · ARM 32/64
 
-اختر ملفًا واحدًا يناسب معمارية جهازك. بناء Release محسّن وغير قابل للتصحيح، مع تقليص الكود والموارد وتصحيح انتظار إعدادات التشخيص عند الإقلاع. يتضمن إعدادات تسجيل الدخول إلى Nuvio. حدّث النسخة التجريبية السابقة مباشرة دون حذف بياناتها؛ وتُثبت النسخة التجريبية بجانب التطبيق الأصلي.
+اختر ملفًا واحدًا يناسب معمارية جهازك. بناء Release محسّن وغير قابل للتصحيح، مع تقليص الكود والموارد وتصحيح انتظار إعدادات التشخيص عند الإقلاع. يضبط حمل الصور بحسب RAM الفعلية للتلفزيون، ويتضمن إعدادات ربط Nuvio وTrakt وMDBList وSimkl. حدّث النسخة التجريبية السابقة مباشرة دون حذف بياناتها؛ وتُثبت النسخة التجريبية بجانب التطبيق الأصلي.
 
 **Personal Nuvio One TV fork for Android TV, Google TV and Fire TV.**
 
