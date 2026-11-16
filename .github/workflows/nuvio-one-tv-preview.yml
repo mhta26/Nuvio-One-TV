@@ -6,7 +6,7 @@ on:
       app_version:
         description: 'Stable release version (major.minor.patch)'
         required: false
-        default: '1.1.0'
+        default: '1.1.1'
         type: string
       simkl_client_id:
         description: 'Optional public Simkl Client ID (not an account token or Client Secret)'
@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
-      NUVIO_ONE_TV_VERSION: ${{ inputs.app_version || vars.NUVIO_ONE_TV_VERSION || '1.1.0' }}
+      NUVIO_ONE_TV_VERSION: ${{ inputs.app_version || vars.NUVIO_ONE_TV_VERSION || '1.1.1' }}
       CODEX_GRADLE_HEAP_MB: '6144'
       CODEX_GRADLE_METASPACE_MB: '1024'
       SIMKL_CLIENT_ID: ${{ inputs.simkl_client_id || vars.SIMKL_CLIENT_ID || secrets.SIMKL_CLIENT_ID }}

@@ -135,14 +135,13 @@ class LiveTvRepository @Inject constructor(
     private val _status = MutableStateFlow(LiveTvStatus())
     val status: StateFlow<LiveTvStatus> = _status.asStateFlow()
 
-    private var initialized = false
+    private val initialized = java.util.concurrent.atomic.AtomicBoolean(false)
     /** The start-up update check has run (later checks may start). */
     @Volatile private var firstCheckDone = false
 
     /** Loads cached data immediately, then refreshes anything older than the configured interval. */
     fun ensureLoaded(updateCheckDelayMs: Long = 0L) {
-        if (initialized) return
-        initialized = true
+        if (!initialized.compareAndSet(false, true)) return
         scope.launch {
             // Saved channels and guide first: reading them only uses the device's storage.
             loadFromCache()

@@ -1,5 +1,6 @@
 package com.nuvio.tv.livetv.ui
 
+import com.nuvio.tv.livetv.data.launchWhileObserved
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nuvio.tv.livetv.data.CatchupUrlBuilder
@@ -16,6 +17,8 @@ import com.nuvio.tv.livetv.model.ZapMode
 import com.nuvio.tv.livetv.player.LivePlaybackState
 import com.nuvio.tv.livetv.player.LiveTvPlaybackController
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -238,7 +241,7 @@ class LiveTvViewModel @Inject constructor(
         repository.ensureLoaded()
         // Coming back to Live TV after hours in the background: anything due is updated now.
         repository.refreshIfStale()
-        viewModelScope.launch {
+        viewModelScope.launchWhileObserved(_now.subscriptionCount) {
             while (true) {
                 // Nothing to keep up to date while a movie or episode plays in Nuvio's player.
                 com.nuvio.tv.livetv.data.BackgroundWork.awaitIdle()
@@ -967,7 +970,7 @@ class LiveTvViewModel @Inject constructor(
         }.flowOn(Dispatchers.Default).distinctUntilChanged()
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launchWhileObserved(_now.subscriptionCount) {
             combine(
                 uiState.map { it.channels.map { c -> c.key } }.distinctUntilChanged(),
                 userState.map { it.favorites }.distinctUntilChanged(),
@@ -980,7 +983,7 @@ class LiveTvViewModel @Inject constructor(
                 }
         }
         // The group you open: its listings straight away, if they aren't loaded yet.
-        viewModelScope.launch {
+        viewModelScope.launchWhileObserved(_now.subscriptionCount) {
             uiState.map { it.channels.take(400).map { c -> c.key } }.distinctUntilChanged().collect { keys ->
                 repository.loadChannelsNow(keys)
             }
@@ -990,11 +993,12 @@ class LiveTvViewModel @Inject constructor(
     init {
         // Posters for what's on now in the group on screen, fetched quietly one at a time in the
         // background, so they're already there as you move through the guide.
-        viewModelScope.launch {
+        viewModelScope.launchWhileObserved(_now.subscriptionCount) {
             uiState.map { it.channels.take(40) }.distinctUntilChanged().collectLatest { channels ->
                 delay(2_000)
                 if (!settings.value.showPosters) return@collectLatest
                 for (ch in channels) {
+                    currentCoroutineContext().ensureActive()
                     // Never while the video is full screen: that's when it needs the box most.
                     LiveTvFullscreen.active.first { !it }
                     com.nuvio.tv.livetv.data.BackgroundWork.awaitIdle()

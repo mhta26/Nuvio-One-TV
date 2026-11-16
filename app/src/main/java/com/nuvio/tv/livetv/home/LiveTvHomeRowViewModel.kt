@@ -1,5 +1,6 @@
 package com.nuvio.tv.livetv.home
 
+import com.nuvio.tv.livetv.data.launchWhileObserved
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nuvio.tv.livetv.data.LiveTvPreferences
@@ -92,9 +93,11 @@ class LiveTvHomeRowViewModel @Inject constructor(
     init {
         // Google Drive sync (if connected): pick up a newer setup from another TV.
         driveSync.start()
-        repository.ensureLoaded()
-        repository.refreshIfStale()
-        viewModelScope.launch {
+        viewModelScope.launchWhileObserved(_now.subscriptionCount) {
+            // Home's tucked-away row must not pull the full guide into the first-frame path.
+            com.nuvio.tv.livetv.startup.AppSettled.awaitSettled(5_000, 20_000)
+            repository.ensureLoaded()
+            repository.refreshIfStale()
             while (true) {
                 // Nothing to keep up to date while a movie or episode plays in Nuvio's player.
                 com.nuvio.tv.livetv.data.BackgroundWork.awaitIdle()
@@ -105,7 +108,8 @@ class LiveTvHomeRowViewModel @Inject constructor(
             }
         }
         // The row's channels: their listings straight away, if they aren't loaded yet.
-        viewModelScope.launch {
+        viewModelScope.launchWhileObserved(_now.subscriptionCount) {
+            com.nuvio.tv.livetv.startup.AppSettled.awaitSettled(5_000, 20_000)
             rowChannels.map { (list, s) -> list.take(if (s.homeRowLimit > 0) s.homeRowLimit * 3 else 200).map { it.key } }
                 .distinctUntilChanged()
                 .collectLatest { keys -> if (keys.isNotEmpty()) { delay(1_500); repository.loadChannelsNow(keys) } }

@@ -232,6 +232,9 @@ import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import com.nuvio.tv.livetv.record.recordingMenuState
+import com.nuvio.tv.livetv.record.recordingMenuStates
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -1155,13 +1158,20 @@ open class MainActivity : ComponentActivity() {
                     // Live TV fork: Recordings, in the menu once anything is recorded or set to record
                     // (switched off in Settings → Menu & Features it only leaves the menu: recording
                     // still works, and it's always in Live TV by the guide's ⚙).
-                    val allRecordings = liveTvRecorder.recordings.collectAsState().value
-                    val recordingNow = allRecordings.any {
-                        it.status == com.nuvio.tv.livetv.record.RecordingStatus.RECORDING
-                    }
-                    val recordingsInSidebar = liveTvSettingsNow.recordingsInSidebar && liveTvInSidebar && (allRecordings.isNotEmpty() ||
-                        liveTvRecordingScheduler.schedules.collectAsState().value.isNotEmpty() ||
-                        liveTvRecordingScheduler.series.collectAsState().value.isNotEmpty())
+                    // Project before collecting: byte/segment progress must not invalidate the
+                    // app shell and navigation. Recording screens still receive full progress.
+                    val recordingMenu = remember(liveTvRecorder) {
+                        liveTvRecorder.recordings.recordingMenuStates()
+                    }.collectAsState(initial = liveTvRecorder.recordings.value.recordingMenuState()).value
+                    val hasSchedules = remember(liveTvRecordingScheduler) {
+                        liveTvRecordingScheduler.schedules.map { it.isNotEmpty() }.distinctUntilChanged()
+                    }.collectAsState(initial = liveTvRecordingScheduler.schedules.value.isNotEmpty()).value
+                    val hasSeries = remember(liveTvRecordingScheduler) {
+                        liveTvRecordingScheduler.series.map { it.isNotEmpty() }.distinctUntilChanged()
+                    }.collectAsState(initial = liveTvRecordingScheduler.series.value.isNotEmpty()).value
+                    val recordingNow = recordingMenu.isRecording
+                    val recordingsInSidebar = liveTvSettingsNow.recordingsInSidebar && liveTvInSidebar &&
+                        (recordingMenu.hasRecordings || hasSchedules || hasSeries)
                     // Opened from the guide's ● button, Back goes back to the guide; from the menu it's a menu page.
                     val recordingsFromGuide = currentRoute == Screen.Recordings.route &&
                         navController.previousBackStackEntry?.destination?.route == Screen.LiveTv.route

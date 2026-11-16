@@ -1,6 +1,7 @@
 package com.nuvio.tv.livetv.startup
 
 import android.os.SystemClock
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -29,6 +30,11 @@ object AppSettled {
         val now = SystemClock.elapsedRealtime()
         val drawn = drawnAt.value
         return if (drawn > 0L) now - drawn >= afterMs else now - startedAt >= fallbackMs
+    }
+
+    /** Low-priority warm-up only. Direct user actions must never wait on this gate. */
+    suspend fun awaitSettled(afterMs: Long, fallbackMs: Long) {
+        while (!settledFor(afterMs, fallbackMs)) delay(250)
     }
 
     /** Waits until Home has been drawn, at most [maxWaitMs]. */

@@ -27,19 +27,17 @@ interface LiveTvStartupEntryPoint {
  * the guide is already there when you open it instead of loading only then.
  */
 object LiveTvPreload {
-    @Volatile private var started = false
+    private val started = java.util.concurrent.atomic.AtomicBoolean(false)
 
     suspend fun start(context: android.content.Context) {
-        if (started) return
-        started = true
+        if (!started.compareAndSet(false, true)) return
         clearOldBuffers(context.applicationContext, System.currentTimeMillis())
         val entry = dagger.hilt.android.EntryPointAccessors.fromApplication(
             context.applicationContext, LiveTvStartupEntryPoint::class.java
         )
-        // Reading the saved channel list and guide is quick and only uses storage, so it starts
-        // almost straight away, as the app opens. Checking for updates (network, heavy) waits
-        // until the app has settled.
-        kotlinx.coroutines.delay(300)
+        // A full cached guide can contain thousands of channels. Let the first screen draw
+        // before warming it. Opening Live TV still calls ensureLoaded directly without waiting.
+        AppSettled.awaitSettled(afterMs = 5_000, fallbackMs = 20_000)
         val prefs = entry.liveTvPreferences()
         val settings = prefs.settings.first()
         val playlists = prefs.playlists.first()
