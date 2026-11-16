@@ -15,6 +15,7 @@ import com.liskovsoft.youtubeapi.service.internal.MediaServiceData
 import com.nuvio.tv.ui.screens.player.seekpreview.YouTubeStoryboardCache
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -499,9 +500,9 @@ class YouTubeViewModel @Inject constructor(
                     var lastError: Throwable? = null
                     for (attempt in 0 until 3) {
                         try {
-                            source().blockingForEach { groups ->
+                            collectInterruptibleFeed(source) { groups ->
                                 val incoming = toRows(groups)
-                                if (incoming.isEmpty()) return@blockingForEach
+                                if (incoming.isEmpty()) return@collectInterruptibleFeed
                                 val batch = if (label == YtTab.HOME.title) orderedHomeRows(incoming) else incoming
                                 val firstEver = !got
                                 got = true
@@ -521,15 +522,17 @@ class YouTubeViewModel @Inject constructor(
                             }
                             lastError = null
                             break
+                        } catch (cancelled: CancellationException) {
+                            throw cancelled
                         } catch (e: Throwable) {
                             lastError = e
                             if (got) break // what's already shown stays
                             if (attempt == 0) runCatching { service.refreshCacheIfNeeded() }
-                            if (attempt < 2) Thread.sleep(1500L * (attempt + 1))
+                            if (attempt < 2) delay(1500L * (attempt + 1))
                         }
                     }
                     lastError?.let { if (!got) throw it }
-                }
+                }.onFailure { if (it is CancellationException) throw it }
             }
             result.onFailure { e ->
                 Log.e(TAG, "couldn't load $label", e)

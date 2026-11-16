@@ -629,7 +629,7 @@ internal fun HomeViewModel.loadContinueWatchingPipeline() {
                             }
                             runCatching {
                                 if (profileManager.activeProfileId.value == pipelineProfileId) {
-                                    cwEnrichmentCache.saveInProgressSnapshot(ipSnap)
+                                    cwEnrichmentCache.saveInProgressSnapshot(ipSnap, profileId = pipelineProfileId)
                                 }
                             }
                         }
@@ -1199,8 +1199,8 @@ internal fun HomeViewModel.loadContinueWatchingPipeline() {
                         )
                     }
                     if (profileManager.activeProfileId.value == pipelineProfileId) {
-                        runCatching { cwEnrichmentCache.saveNextUpSnapshot(nextUpSnap, force = true) }
-                        runCatching { cwEnrichmentCache.saveInProgressSnapshot(ipSnap, force = true) }
+                        runCatching { cwEnrichmentCache.saveNextUpSnapshot(nextUpSnap, force = true, profileId = pipelineProfileId) }
+                        runCatching { cwEnrichmentCache.saveInProgressSnapshot(ipSnap, force = true, profileId = pipelineProfileId) }
                     }
                 }
 

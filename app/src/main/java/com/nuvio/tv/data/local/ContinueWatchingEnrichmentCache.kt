@@ -93,10 +93,10 @@ class ContinueWatchingEnrichmentCache @Inject constructor(
 
     private val gson = Gson()
     private val mutex = Mutex()
-    @Volatile private var lastNextUpWriteMs = 0L
-    @Volatile private var lastInProgressWriteMs = 0L
-    @Volatile private var lastNextUpHash = 0
-    @Volatile private var lastInProgressHash = 0
+    private data class WriteState(val hash: Int, val writtenAtMs: Long)
+    // Protected by mutex; identical items in two profiles still need two cache files.
+    private val nextUpWrites = mutableMapOf<Int, WriteState>()
+    private val inProgressWrites = mutableMapOf<Int, WriteState>()
 
     /** Incremented when cache is cleared; observers can collect to trigger refresh. */
     private val _cacheCleared = kotlinx.coroutines.flow.MutableStateFlow(0)
@@ -108,17 +108,16 @@ class ContinueWatchingEnrichmentCache @Inject constructor(
 
     // --- Next Up snapshot cache ---
 
-    private fun nextUpFile(): File {
-        val profileId = profileManager.activeProfileId.value
+    private fun nextUpFile(profileId: Int): File {
         val dir = File(context.filesDir, "cw_enrichment")
         dir.mkdirs()
         return File(dir, "nextup_${profileId}.json")
     }
 
-    suspend fun getNextUpSnapshot(): List<CachedNextUpItem> = withContext(Dispatchers.IO) {
+    suspend fun getNextUpSnapshot(profileId: Int = profileManager.activeProfileId.value): List<CachedNextUpItem> = withContext(Dispatchers.IO) {
         mutex.withLock {
             try {
-                val file = nextUpFile()
+                val file = nextUpFile(profileId)
                 if (!file.exists()) return@withContext emptyList()
                 val items: List<CachedNextUpItem> =
                     gson.fromJson(file.readText(), object : TypeToken<List<CachedNextUpItem>>() {}.type)
@@ -136,21 +135,20 @@ class ContinueWatchingEnrichmentCache @Inject constructor(
     /**
      * @param force bypass throttle and content-change check (use at end of pipeline or for clears)
      */
-    suspend fun saveNextUpSnapshot(allItems: List<CachedNextUpItem>, force: Boolean = false) = withContext(Dispatchers.IO) {
+    suspend fun saveNextUpSnapshot(allItems: List<CachedNextUpItem>, force: Boolean = false, profileId: Int = profileManager.activeProfileId.value) = withContext(Dispatchers.IO) {
         // Live TV fork: the Calendar's cards aren't kept (the Calendar puts them in again).
         val items = allItems.filterNot { com.nuvio.tv.livetv.calendar.CalendarHomeFeed.isInjected(it.contentId, it.videoId) }
         val contentHash = items.hashCode()
-        if (!force) {
-            if (contentHash == lastNextUpHash) return@withContext
-            val now = System.currentTimeMillis()
-            if (now - lastNextUpWriteMs < THROTTLE_MS) return@withContext
-        }
         mutex.withLock {
+            val previous = nextUpWrites[profileId]
+            if (!force && previous != null &&
+                (contentHash == previous.hash || System.currentTimeMillis() - previous.writtenAtMs < THROTTLE_MS)) {
+                return@withLock
+            }
             try {
-                val file = nextUpFile()
+                val file = nextUpFile(profileId)
                 atomicWrite(file, gson.toJson(items))
-                lastNextUpWriteMs = System.currentTimeMillis()
-                lastNextUpHash = contentHash
+                nextUpWrites[profileId] = WriteState(contentHash, System.currentTimeMillis())
                 _snapshotVersion.value++
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to write next-up cache: ${e.message}")
@@ -160,17 +158,16 @@ class ContinueWatchingEnrichmentCache @Inject constructor(
 
     // --- In-progress snapshot cache ---
 
-    private fun inProgressFile(): File {
-        val profileId = profileManager.activeProfileId.value
+    private fun inProgressFile(profileId: Int): File {
         val dir = File(context.filesDir, "cw_enrichment")
         dir.mkdirs()
         return File(dir, "inprogress_${profileId}.json")
     }
 
-    suspend fun getInProgressSnapshot(): List<CachedInProgressItem> = withContext(Dispatchers.IO) {
+    suspend fun getInProgressSnapshot(profileId: Int = profileManager.activeProfileId.value): List<CachedInProgressItem> = withContext(Dispatchers.IO) {
         mutex.withLock {
             try {
-                val file = inProgressFile()
+                val file = inProgressFile(profileId)
                 if (!file.exists()) return@withContext emptyList()
                 val items: List<CachedInProgressItem> =
                     gson.fromJson(file.readText(), object : TypeToken<List<CachedInProgressItem>>() {}.type)
@@ -187,21 +184,20 @@ class ContinueWatchingEnrichmentCache @Inject constructor(
     /**
      * @param force bypass throttle and content-change check (use at end of pipeline or for clears)
      */
-    suspend fun saveInProgressSnapshot(allItems: List<CachedInProgressItem>, force: Boolean = false) = withContext(Dispatchers.IO) {
+    suspend fun saveInProgressSnapshot(allItems: List<CachedInProgressItem>, force: Boolean = false, profileId: Int = profileManager.activeProfileId.value) = withContext(Dispatchers.IO) {
         // Live TV fork: the Calendar's movie cards aren't kept (the Calendar puts them in again).
         val items = allItems.filterNot { com.nuvio.tv.livetv.calendar.CalendarHomeFeed.isInjectedMovie(it.contentId) }
         val contentHash = items.hashCode()
-        if (!force) {
-            if (contentHash == lastInProgressHash) return@withContext
-            val now = System.currentTimeMillis()
-            if (now - lastInProgressWriteMs < THROTTLE_MS) return@withContext
-        }
         mutex.withLock {
+            val previous = inProgressWrites[profileId]
+            if (!force && previous != null &&
+                (contentHash == previous.hash || System.currentTimeMillis() - previous.writtenAtMs < THROTTLE_MS)) {
+                return@withLock
+            }
             try {
-                val file = inProgressFile()
+                val file = inProgressFile(profileId)
                 atomicWrite(file, gson.toJson(items))
-                lastInProgressWriteMs = System.currentTimeMillis()
-                lastInProgressHash = contentHash
+                inProgressWrites[profileId] = WriteState(contentHash, System.currentTimeMillis())
                 _snapshotVersion.value++
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to write in-progress cache: ${e.message}")
@@ -212,14 +208,14 @@ class ContinueWatchingEnrichmentCache @Inject constructor(
     /**
      * Deletes all CW enrichment cache files for the active profile.
      */
-    suspend fun clearAll() = withContext(Dispatchers.IO) {
+    suspend fun clearAll(profileId: Int = profileManager.activeProfileId.value) = withContext(Dispatchers.IO) {
         mutex.withLock {
             try {
-                nextUpFile().delete()
-                inProgressFile().delete()
-                lastNextUpHash = 0
-                lastInProgressHash = 0
-                Log.d(TAG, "Cleared CW enrichment cache for profile ${profileManager.activeProfileId.value}")
+                nextUpFile(profileId).delete()
+                inProgressFile(profileId).delete()
+                nextUpWrites.remove(profileId)
+                inProgressWrites.remove(profileId)
+                Log.d(TAG, "Cleared CW enrichment cache for profile ${profileId}")
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to clear CW enrichment cache: ${e.message}")
             }

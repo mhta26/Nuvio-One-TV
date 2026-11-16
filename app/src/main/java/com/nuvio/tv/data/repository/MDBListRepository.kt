@@ -27,7 +27,7 @@ class MDBListRepository internal constructor(
         settingsDataStore: MDBListSettingsDataStore,
         tmdbService: TmdbService,
         @dagger.hilt.android.qualifiers.ApplicationContext context: android.content.Context
-    ) : this(api, settingsDataStore, tmdbService, MdbListRatingsLoader(api, MdbListRatingsDiskCache(context)))
+    ) : this(api, settingsDataStore, tmdbService, MdbListRatingsLoader(api, MdbListRatingsDiskCache(java.io.File(context.filesDir, "mdblist_cache"))))
 
     fun isAvailable(settings: MDBListSettings): Boolean = settings.enabled && api.credential(settings.apiKey) != null
 

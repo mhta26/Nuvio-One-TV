@@ -22,11 +22,17 @@ object LiveHttp {
             if (headers.keys.none { it.equals("User-Agent", true) }) {
                 c.setRequestProperty("User-Agent", com.nuvio.tv.livetv.data.LiveTvRepository.DEFAULT_UA)
             }
-            val code = c.responseCode
+            val code = try {
+                c.responseCode
+            } catch (error: Exception) {
+                c.disconnect()
+                throw error
+            }
             if (code in setOf(301, 302, 303, 307, 308) && hops < 8) {
                 val location = c.getHeaderField("Location")
+                // Keep the configured connection when the server omits Location.
+                if (location.isNullOrBlank()) return c
                 c.disconnect()
-                if (location.isNullOrBlank()) return URL(current).openConnection() as HttpURLConnection
                 current = runCatching { URL(URL(current), location).toString() }.getOrDefault(location)
                 hops++
                 continue
@@ -38,6 +44,6 @@ object LiveHttp {
     /** The text at [url], and where it was really served from (for links relative to it). */
     fun fetch(url: String, headers: Map<String, String>): Pair<String, String> {
         val c = open(url, headers)
-        return c.inputStream.use { it.readBytes().toString(Charsets.UTF_8) } to c.url.toString()
+        return readBoundedPlaylist(c)
     }
 }

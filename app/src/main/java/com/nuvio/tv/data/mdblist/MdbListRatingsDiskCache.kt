@@ -1,57 +1,68 @@
 package com.nuvio.tv.data.mdblist
 
-import android.content.Context
 import com.nuvio.tv.domain.model.MDBListRatings
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.json.JSONObject
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
+@OptIn(FlowPreview::class)
 internal class MdbListRatingsDiskCache(
-    private val context: Context,
+    private val cacheDirectory: File,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
-    private val now: () -> Long = System::currentTimeMillis
+    private val now: () -> Long = System::currentTimeMillis,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     private data class Entry(val ratings: MDBListRatings, val storedAtMs: Long)
 
     private val mutex = Mutex()
-    private var entries = mutableMapOf<String, Entry>()
-    private var loaded = false
-    private var dirty = false
-    private var writeJob: Job? = null
+    private val entries = ConcurrentHashMap<String, Entry>()
+    @Volatile private var loaded = false
+    private val revisions = MutableStateFlow(0L)
+    private var persistedRevision = 0L
 
-    private fun cacheFile(): File {
-        val dir = File(context.filesDir, "mdblist_cache")
-        dir.mkdirs()
-        return File(dir, "ratings_v1.json")
+    init {
+        // One debounced writer; bursts of rating updates do not create/cancel IO jobs.
+        scope.launch(ioDispatcher) {
+            revisions.filter { it > 0L }.debounce(SAVE_DEBOUNCE_MS).collect { persist() }
+        }
     }
 
-    suspend fun load() {
-        if (loaded) return
+    private fun cacheFile(): File {
+        cacheDirectory.mkdirs()
+        return File(cacheDirectory, "ratings_v1.json")
+    }
+
+    suspend fun load() = withContext(ioDispatcher) {
+        if (loaded) return@withContext
         mutex.withLock {
-            if (loaded) return
+            if (loaded) return@withLock
             try {
                 val file = cacheFile()
-                if (!file.exists()) { loaded = true; return }
-                val json = JSONObject(file.readText())
-                val map = mutableMapOf<String, Entry>()
-                val cutoff = now() - TTL_MS
-                for (key in json.keys()) {
-                    val obj = json.optJSONObject(key) ?: continue
-                    val storedAt = obj.optLong("t", 0L)
-                    if (storedAt < cutoff) continue
-                    map[key] = Entry(
-                        ratings = parseRatings(obj),
-                        storedAtMs = storedAt
-                    )
+                if (file.exists()) {
+                    val json = JSONObject(file.readText())
+                    val cutoff = now() - TTL_MS
+                    for (key in json.keys()) {
+                        val obj = json.optJSONObject(key) ?: continue
+                        val storedAt = obj.optLong("t", 0L)
+                        if (storedAt < cutoff) continue
+                        // A fresh network result arriving during load wins over disk data.
+                        entries.putIfAbsent(key, Entry(parseRatings(obj), storedAt))
+                    }
                 }
-                entries = map
             } catch (_: Exception) { }
             loaded = true
         }
@@ -61,7 +72,8 @@ internal class MdbListRatingsDiskCache(
         if (!loaded) load()
         val entry = entries[key] ?: return null
         if (now() - entry.storedAtMs > TTL_MS) {
-            entries.remove(key)
+            // Do not remove a concurrent replacement with a newer rating.
+            entries.remove(key, entry)
             return null
         }
         return entry.ratings
@@ -69,37 +81,35 @@ internal class MdbListRatingsDiskCache(
 
     fun put(key: String, ratings: MDBListRatings) {
         entries[key] = Entry(ratings, now())
-        scheduleSave()
-    }
-
-    private fun scheduleSave() {
-        dirty = true
-        writeJob?.cancel()
-        writeJob = scope.launch {
-            delay(SAVE_DEBOUNCE_MS)
-            if (!dirty) return@launch
-            persist()
-        }
+        revisions.update { it + 1L }
     }
 
     private suspend fun persist() {
-        mutex.withLock {
-            try {
-                val json = JSONObject()
-                val cutoff = now() - TTL_MS
-                for ((key, entry) in entries) {
-                    if (entry.storedAtMs < cutoff) continue
-                    json.put(key, serializeEntry(entry))
-                }
-                val file = cacheFile()
-                val tmp = File(file.parentFile, "${file.name}.tmp")
-                tmp.writeText(json.toString())
-                if (!tmp.renameTo(file)) {
-                    tmp.copyTo(file, overwrite = true)
-                    tmp.delete()
-                }
-                dirty = false
-            } catch (_: Exception) { }
+        load()
+        withContext(ioDispatcher) {
+            mutex.withLock {
+                val revision = revisions.value
+                if (revision == persistedRevision) return@withLock
+                try {
+                    val json = JSONObject()
+                    val cutoff = now() - TTL_MS
+                    entries.forEach { (key, entry) ->
+                        if (entry.storedAtMs < cutoff) entries.remove(key, entry)
+                    }
+                    for ((key, entry) in entries.toMap()) {
+                        json.put(key, serializeEntry(entry))
+                    }
+                    val file = cacheFile()
+                    val tmp = File(file.parentFile, "${file.name}.tmp")
+                    tmp.writeText(json.toString())
+                    if (!tmp.renameTo(file)) {
+                        tmp.copyTo(file, overwrite = true)
+                        tmp.delete()
+                    }
+                    // Newer puts remain dirty and the flow schedules a later write.
+                    persistedRevision = revision
+                } catch (_: Exception) { }
+            }
         }
     }
 
