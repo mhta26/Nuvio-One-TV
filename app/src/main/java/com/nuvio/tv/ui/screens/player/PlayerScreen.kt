@@ -1428,7 +1428,7 @@ fun PlayerScreen(
                         Text(
                             text = generatedYoutubeCaption.orEmpty(),
                             fontFamily = androidx.compose.ui.text.font.FontFamily(
-                                androidx.compose.ui.text.font.Font(R.font.ibm_plex_sans_arabic_medium)
+                                androidx.compose.ui.text.font.Font(R.font.nuvio_subtitle_arabic_medium)
                             ),
                             color = Color(captionStyle.textColor),
                             fontSize = (24f * captionStyle.size / 100f).sp,
@@ -2424,6 +2424,15 @@ private fun MpvPlayerSurface(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    // Prepare the native font on IO before mpv starts, so storage never blocks navigation.
+    val fontsReady by androidx.compose.runtime.produceState(false, context) {
+        withContext(Dispatchers.IO) {
+            runCatching { ExternalSubtitleFont.directory(context) }
+                .onFailure { Log.w("SubtitleFont", "Couldn't prepare native font file", it) }
+        }
+        value = true
+    }
+    if (!fontsReady) return
     val latestAspectMode by rememberUpdatedState(aspectMode)
     val latestSubtitleStyle by rememberUpdatedState(subtitleStyle)
     val latestMetricsCallback by rememberUpdatedState(onSubtitleTextMetricsChanged)

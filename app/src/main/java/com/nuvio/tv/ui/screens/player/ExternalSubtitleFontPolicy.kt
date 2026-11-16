@@ -2,9 +2,9 @@ package com.nuvio.tv.ui.screens.player
 
 /** Applied only to separately loaded subtitles; embedded tracks never enter this path. */
 internal object ExternalSubtitleFontPolicy {
-    // The static Medium TTF's legacy family name (name table ID 1), used by libass.
-    const val FAMILY = "IBM Plex Sans Arabic Medm"
-    const val FILE_NAME = "IBMPlexSansArabic-Medium.ttf"
+    // IBM Medium outlines plus missing symbol glyphs; renamed as required by the IBM OFL.
+    const val FAMILY = "Nuvio Subtitle Arabic"
+    const val FILE_NAME = "NuvioSubtitleArabic-Medium.ttf"
     private val inlineFont = Regex("""\\fn[^\\}]*""", RegexOption.IGNORE_CASE)
 
     private val overrideBlock = Regex("""\{[^}]*}""")

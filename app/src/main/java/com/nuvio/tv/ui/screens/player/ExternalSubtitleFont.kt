@@ -9,9 +9,11 @@ import java.io.File
 /** Loaded on demand at playback, with a single cached Typeface and font file. */
 internal object ExternalSubtitleFont {
     @Volatile private var cached: Typeface? = null
+    @Volatile private var preparedDirectory: File? = null
+    fun preparedDirectory(): File? = preparedDirectory
     fun typeface(context: Context, bold: Boolean = false): Typeface {
         val base = cached ?: synchronized(this) {
-            cached ?: requireNotNull(ResourcesCompat.getFont(context, R.font.ibm_plex_sans_arabic_medium))
+            cached ?: requireNotNull(ResourcesCompat.getFont(context, R.font.nuvio_subtitle_arabic_medium))
                 .also { cached = it }
         }
         return if (bold) Typeface.create(base, Typeface.BOLD) else base
@@ -22,7 +24,7 @@ internal object ExternalSubtitleFont {
     }
 
     fun bytes(context: Context): ByteArray = context.resources
-        .openRawResource(R.font.ibm_plex_sans_arabic_medium).use { it.readBytes() }
+        .openRawResource(R.font.nuvio_subtitle_arabic_medium).use { it.readBytes() }
 
     @Synchronized fun directory(context: Context): File {
         val dir = File(context.filesDir, "subtitle-fonts").also { it.mkdirs() }
@@ -32,6 +34,7 @@ internal object ExternalSubtitleFont {
             temp.writeBytes(bytes(context))
             check(temp.renameTo(font)) { "Couldn't prepare subtitle font" }
         }
+        preparedDirectory = dir
         return dir
     }
 }

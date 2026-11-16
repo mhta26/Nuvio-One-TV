@@ -87,8 +87,8 @@ jobs:
                   '. Set Actions repository variables or use the manual workflow inputs.')
           print('Simkl, Trakt and MDBList app identifiers are configured; values are not printed.')
           PYCONFIG
-      - name: Test account configuration
-        run: python3 -m unittest discover -s scripts/tests -p 'test_preview_backend.py'
+      - name: Test account configuration and packaged font coverage
+        run: PYTHONPATH=scripts python3 -m unittest discover -s scripts/tests -p 'test_*.py'
       - name: Run all release unit tests
         run: bash scripts/build-codex-preview.sh --test-only
       - name: Upload test results

@@ -764,7 +764,7 @@ class NuvioMpvSurfaceView @JvmOverloads constructor(
         // Preserve native ASS/SSA styling behavior on MPV.
         mpv.setOptionString("sub-ass-override", "no")
         mpv.setOptionString("sub-codepage", "auto:utf-8")
-        mpv.setOptionString("sub-fonts-dir", ExternalSubtitleFont.directory(context).absolutePath)
+        ExternalSubtitleFont.preparedDirectory()?.let { mpv.setOptionString("sub-fonts-dir", it.absolutePath) }
         mpv.setOptionString("sub-font", "Roboto")
         externalFontApplied = null
         mpv.setOptionString("sub-use-margins", "yes")
