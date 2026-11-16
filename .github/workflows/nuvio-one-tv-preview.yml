@@ -91,6 +91,14 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p 'test_preview_backend.py'
       - name: Run all release unit tests
         run: bash scripts/build-codex-preview.sh --test-only
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nuvio-One-TV-test-results
+          path: |
+            app/build/reports/tests/testFullReleaseUnitTest/
+            app/build/test-results/testFullReleaseUnitTest/
       - name: Run full Android Lint
         if: ${{ !cancelled() && steps.service_config.outcome == 'success' }}
         run: bash scripts/build-codex-preview.sh --lint-only
@@ -116,11 +124,5 @@ jobs:
             ${{ runner.temp }}/nuvio-one-tv-build/deliverables/Nuvio-One-TV-armeabi-v7a.apk
           if-no-files-found: error
           retention-days: 14
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Nuvio-One-TV-test-results
-          path: app/build/reports/tests/testFullReleaseUnitTest/
           if-no-files-found: ignore
           retention-days: 14
