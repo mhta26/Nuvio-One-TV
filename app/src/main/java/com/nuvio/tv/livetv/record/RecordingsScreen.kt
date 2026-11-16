@@ -772,7 +772,7 @@ private fun RecordingNowCard(
     var watchFocused by remember { mutableStateOf(false) }
     var stopFocused by remember { mutableStateOf(false) }
     val (bg, ring) = cardColors(watchFocused || stopFocused)
-    val time = SimpleDateFormat("h:mm a", Locale.getDefault())
+    val time = SimpleDateFormat("h:mm a", androidx.compose.ui.platform.LocalConfiguration.current.locales[0])
     val from = rec.programStartMs.takeIf { it > 0 } ?: rec.startedAtMs
     val to = rec.programStopMs.takeIf { it > 0 } ?: rec.stopAtMs
     // Catch-up downloads come faster than the show and have a long time limit: go by how much
@@ -1005,8 +1005,8 @@ internal fun RecordingActionDialog(
 private fun RecordingInfoDialog(rec: LiveTvRecording, savedOn: String, playlist: String?, onDismiss: () -> Unit) {
     val first = remember { FocusRequester() }
     LaunchedEffect(Unit) { kotlinx.coroutines.delay(80); runCatching { first.requestFocus() } }
-    val day = SimpleDateFormat("EEE d MMM", Locale.getDefault())
-    val time = SimpleDateFormat("h:mm a", Locale.getDefault())
+    val day = SimpleDateFormat("EEE d MMM", androidx.compose.ui.platform.LocalConfiguration.current.locales[0])
+    val time = SimpleDateFormat("h:mm a", androidx.compose.ui.platform.LocalConfiguration.current.locales[0])
     val aired = if (rec.programStartMs > 0 && rec.programStopMs > rec.programStartMs)
         day.format(Date(rec.programStartMs)) + ", " + time.format(Date(rec.programStartMs)) + " – " + time.format(Date(rec.programStopMs))
     else day.format(Date(rec.startedAtMs)) + ", " + time.format(Date(rec.startedAtMs))

@@ -57,6 +57,7 @@ internal fun MediaServerSettingsContent(
         return
     }
     val context = LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     val provider = viewModel.provider(connection)
     val providerName = provider?.displayName ?: connection.providerId
     var signIn by remember { mutableStateOf<ServerSignInRequest?>(null) }
@@ -142,7 +143,7 @@ internal fun MediaServerSettingsContent(
                             leadingIcon = Icons.Default.Sync,
                             onClick = {
                                 viewModel.refreshLibraries(connection.id) { failure ->
-                                    Toast.makeText(context, context.getString(failure.messageRes()), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, localizedResources.getString(failure.messageRes()), Toast.LENGTH_SHORT).show()
                                 }
                             }
                         )

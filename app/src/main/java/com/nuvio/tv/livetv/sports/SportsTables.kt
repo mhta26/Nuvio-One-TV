@@ -838,7 +838,7 @@ private fun CardGame(ev: SportsEvent, team: TeamInfo, hide: Boolean, now: Long, 
         val whenText = when (ev.state) {
             GameState.LIVE -> ev.status.orEmpty()
             GameState.PRE -> dayWord(ev.startMs, now) + " " + startLabel(ev, use24h)
-            else -> SimpleDateFormat("EEE d MMM", Locale.getDefault()).format(Date(ev.startMs))
+            else -> SimpleDateFormat("EEE d MMM", androidx.compose.ui.platform.LocalConfiguration.current.locales[0]).format(Date(ev.startMs))
         }
         LiveText("  ·  $whenText", color = SportsLook.Dim, size = 11.sp, modifier = Modifier.weight(1f))
         if (!hide && us?.score != null && them?.score != null && (ev.state == GameState.POST || ev.state == GameState.LIVE)) {

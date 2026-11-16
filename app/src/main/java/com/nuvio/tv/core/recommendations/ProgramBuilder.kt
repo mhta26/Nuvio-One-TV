@@ -1,3 +1,7 @@
+// Pinned AndroidX interop: TV provider builders / navigation stack expose
+// restricted members needed by this existing integration. Recheck when upgrading AndroidX.
+@file:android.annotation.SuppressLint("RestrictedApi")
+
 package com.nuvio.tv.core.recommendations
 
 import android.content.Context

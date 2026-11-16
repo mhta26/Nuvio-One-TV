@@ -97,7 +97,7 @@ internal fun ManualRecordingDialog(
         m % 60 == 0 -> "${m / 60} h"
         else -> "${m / 60} h ${m % 60} min"
     }
-    val defaultName = "${channel.name} — ${SimpleDateFormat("EEE", Locale.getDefault()).format(Date(startMs()))} ${timeFmt.format(Date(startMs()))}"
+    val defaultName = "${channel.name} — ${SimpleDateFormat("EEE", androidx.compose.ui.platform.LocalConfiguration.current.locales[0]).format(Date(startMs()))} ${timeFmt.format(Date(startMs()))}"
     val name = customName?.takeIf { it.isNotBlank() } ?: defaultName
 
     val first = remember { FocusRequester() }

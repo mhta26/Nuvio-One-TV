@@ -1,3 +1,7 @@
+// Pinned AndroidX interop: TV provider builders / navigation stack expose
+// restricted members needed by this existing integration. Recheck when upgrading AndroidX.
+@file:android.annotation.SuppressLint("RestrictedApi")
+
 @file:androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 
 package com.nuvio.tv.ui.navigation

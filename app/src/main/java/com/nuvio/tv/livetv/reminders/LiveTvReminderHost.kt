@@ -104,7 +104,7 @@ fun LiveTvReminderHost(navController: NavController) {
         )
         LiveText(r.title, size = 22.sp, weight = FontWeight.Bold, maxLines = 2)
         LiveText(
-            "${SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(r.startMs))} · ${r.channelName}",
+            "${SimpleDateFormat("h:mm a", androidx.compose.ui.platform.LocalConfiguration.current.locales[0]).format(Date(r.startMs))} · ${r.channelName}",
             color = NuvioTheme.colors.TextSecondary, size = 14.sp
         )
         Spacer(Modifier.height(14.dp))

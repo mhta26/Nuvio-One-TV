@@ -498,13 +498,14 @@ open class MainActivity : ComponentActivity() {
             val hasSeenAuthQrOnFirstLaunch by hasSeenAuthQrFlow.collectAsState(initial = null)
             val authState by authManager.authState.collectAsState()
             val context = LocalContext.current
+            val localizedResources = androidx.compose.ui.platform.LocalResources.current
 
             LaunchedEffect(authSessionNoticeDataStore, context) {
                 authSessionNoticeDataStore.pendingNotice.collect { notice ->
                     if (notice == StartupAuthNotice.NUVIO) {
                         Toast.makeText(
                             context,
-                            context.getString(R.string.auth_notice_nuvio_logged_out),
+                            localizedResources.getString(R.string.auth_notice_nuvio_logged_out),
                             Toast.LENGTH_LONG
                         ).show()
                         authSessionNoticeDataStore.consumeNotice(notice)
@@ -921,7 +922,7 @@ open class MainActivity : ComponentActivity() {
                         val url = pendingDeepLink ?: return@LaunchedEffect
                         val deepLink = DeepLinkParser.parse(url)
                         if (deepLink is AppDeepLink.AddonInstall && (needsEssentialAddonSetup || !layoutChosen)) {
-                            Toast.makeText(context, context.getString(R.string.addon_installing), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, localizedResources.getString(R.string.addon_installing), Toast.LENGTH_SHORT).show()
                             val installResult = deepLinkHandler.installAddon(deepLink.manifestUrl)
                             if (pendingDeepLinkUrl.value == url) {
                                 pendingDeepLinkUrl.value = null
@@ -1107,7 +1108,7 @@ open class MainActivity : ComponentActivity() {
                                 navController.navigate(Screen.AddonManager.route) {
                                     launchSingleTop = true
                                 }
-                                Toast.makeText(context, context.getString(R.string.addon_installing), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, localizedResources.getString(R.string.addon_installing), Toast.LENGTH_SHORT).show()
                                 val installResult = deepLinkHandler.installAddon(deepLink.manifestUrl)
                                 if (pendingDeepLinkUrl.value == url) {
                                     pendingDeepLinkUrl.value = null
@@ -1551,6 +1552,8 @@ open class MainActivity : ComponentActivity() {
         ambientIdleController.onInteraction()
     }
 
+    // TV remotes require key-up and held-Back handling before Compose dispatch.
+    @android.annotation.SuppressLint("RestrictedApi", "GestureBackNavigation")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         // Live TV fork: remember when the remote was last used (the home screen's Live TV row
         // only claims the first highlight while nobody has pressed anything yet).

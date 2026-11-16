@@ -1301,7 +1301,7 @@ private fun LiveTvGuideScreenBody(
                                 weight = FontWeight.Bold
                             )
                             if (showMidnight) {
-                                val dayName = java.text.SimpleDateFormat("EEE", java.util.Locale.getDefault()).format(java.util.Date(midnight))
+                                val dayName = java.text.SimpleDateFormat("EEE", androidx.compose.ui.platform.LocalConfiguration.current.locales[0]).format(java.util.Date(midnight))
                                 val isTomorrow = midnight - now in 0..(24 * 3_600_000L)
                                 LiveTag(
                                     if (isTomorrow) "TOMORROW · ${dayName.uppercase()}" else dayName.uppercase(),

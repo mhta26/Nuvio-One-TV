@@ -1956,7 +1956,7 @@ internal fun LiveTvSettingsContent(
         LiveDialog.Reminders -> ActionListDialog(
             title = if (user.reminders.isEmpty()) "No reminders" else "Reminders (select to remove)",
             actions = user.reminders.map { r ->
-                val whenText = java.text.SimpleDateFormat("EEE h:mm a", java.util.Locale.getDefault()).format(java.util.Date(r.startMs))
+                val whenText = java.text.SimpleDateFormat("EEE h:mm a", androidx.compose.ui.platform.LocalConfiguration.current.locales[0]).format(java.util.Date(r.startMs))
                 "$whenText · ${r.title} · ${r.channelName}" to { viewModel.removeReminder(r.channelKey, r.startMs); Unit }
             }.ifEmpty { listOf("Close" to close) },
             onDismiss = close

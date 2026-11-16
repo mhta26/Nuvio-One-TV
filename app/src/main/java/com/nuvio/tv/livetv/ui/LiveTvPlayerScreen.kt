@@ -137,6 +137,7 @@ fun LiveTvPlayerScreen(
     // Which page the ⚙ panel opens on ("" = the main one; "audio", "subs", "sleep", "size", "info").
     var gearStart by remember { mutableStateOf("") }
     val context = androidx.compose.ui.platform.LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     var numberBuffer by remember { mutableStateOf("") }
     var longPressFired by remember { mutableStateOf(false) }
     var okHoldJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
@@ -1102,7 +1103,7 @@ fun LiveTvPlayerScreen(
                     captionsOn = captionsOn,
                     audioLabel = remember(playback.channelKey, bannerVisible) { viewModel.playback.audioLabel() },
                     // The same words as the Screen size list (Fit, Crop, Cinema Zoom…).
-                    sizeLabel = context.getString(aspectModeOf(settings.aspectMode).labelResId),
+                    sizeLabel = localizedResources.getString(aspectModeOf(settings.aspectMode).labelResId),
                     sleepLabel = sleepAt?.let { at -> "Sleep " + ((at - tick).coerceAtLeast(0) / 60_000 + 1) + "m" },
                     clock = if (settings.clockMode == "never") "" else formatClock(tick, use24h),
                     // "1080p · 50 FPS": the frame rate rounded (23.976 -> 24, 59.94 -> 60).
@@ -1273,9 +1274,9 @@ fun LiveTvPlayerScreen(
                 recording = recordings.any { it.channelKey == ch.key && it.isRecording },
                 audioLabel = viewModel.playback.audioLabel(),
                 captionsOn = captionsOn,
-                sizeLabel = context.getString(aspectModeOf(settings.aspectMode).labelResId),
+                sizeLabel = localizedResources.getString(aspectModeOf(settings.aspectMode).labelResId),
                 sizeOptions = com.nuvio.tv.ui.screens.player.AspectMode.entries.map {
-                    context.getString(it.labelResId) to (it == aspectModeOf(settings.aspectMode))
+                    localizedResources.getString(it.labelResId) to (it == aspectModeOf(settings.aspectMode))
                 },
                 onPickSize = { i ->
                     // Remembered for every channel, until you change it again.
@@ -1399,11 +1400,11 @@ fun LiveTvPlayerScreen(
         )
         PlayerDialog.SCREEN_SIZE -> ScreenSizeDialog(
             selected = aspectModeOf(settings.aspectMode),
-            label = { context.getString(it.labelResId) },
+            label = { localizedResources.getString(it.labelResId) },
             onPick = { mode ->
                 // Remembered for every channel, until you change it again.
                 viewModel.updateSettings { it.copy(aspectMode = mode.name) }
-                toast = "Screen size: ${context.getString(mode.labelResId)}"
+                toast = "Screen size: ${localizedResources.getString(mode.labelResId)}"
                 dialog = PlayerDialog.NONE
                 scope.launch { delay(60); runCatching { rootFocus.requestFocus() } }
             },
@@ -1726,6 +1727,7 @@ private fun MatchFrameRate(
     resume: (Boolean) -> Unit = {}
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     val activity = remember(context) {
         var c: android.content.Context? = context
         while (c is android.content.ContextWrapper && c !is android.app.Activity) c = c.baseContext

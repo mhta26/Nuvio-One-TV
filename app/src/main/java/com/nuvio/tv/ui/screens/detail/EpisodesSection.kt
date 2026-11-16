@@ -1109,7 +1109,7 @@ private fun EpisodeCard(
                         )
                 ) {
                     Text(
-                        text = strUnavailable.uppercase(Locale.getDefault()),
+                        text = strUnavailable.uppercase(androidx.compose.ui.platform.LocalConfiguration.current.locales[0]),
                         style = episodeBadgeStyle,
                         maxLines = 1
                     )

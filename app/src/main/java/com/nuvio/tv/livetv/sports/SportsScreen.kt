@@ -1454,7 +1454,7 @@ private fun GamePage(
             // Too far off to have been looked for yet: say when it will be.
             ev.startMs - System.currentTimeMillis() > SportsMatcher.AHEAD_MS -> LiveText(
                 "Your channels are checked for this game from " +
-                    java.text.SimpleDateFormat(if (use24h) "EEE HH:mm" else "EEE h:mm a", java.util.Locale.getDefault())
+                    java.text.SimpleDateFormat(if (use24h) "EEE HH:mm" else "EEE h:mm a", androidx.compose.ui.platform.LocalConfiguration.current.locales[0])
                         .format(java.util.Date(ev.startMs - SportsMatcher.AHEAD_MS)) +
                     ". Know where it's on? Pick a channel now and it's remembered.",
                 color = SportsLook.Dim, size = 12.sp, maxLines = 3
@@ -1570,7 +1570,7 @@ private fun GamePage(
                     }
                     ev.state == GameState.PRE -> {
                         LiveText(
-                            SimpleDateFormat("EEEE d MMMM", Locale.getDefault()).format(Date(ev.startMs)) + " · " + startLabel(ev, use24h),
+                            SimpleDateFormat("EEEE d MMMM", androidx.compose.ui.platform.LocalConfiguration.current.locales[0]).format(Date(ev.startMs)) + " · " + startLabel(ev, use24h),
                             size = 14.sp, weight = FontWeight.Bold
                         )
                         if (ev.broadcasts.isNotEmpty()) LiveText("On TV: " + ev.broadcasts.joinToString(", "), color = SportsLook.Dim, size = 12.sp)

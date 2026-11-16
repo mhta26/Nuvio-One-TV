@@ -176,7 +176,7 @@ internal fun RecordedFolderCard(
         )
         LiveText(
             (if (watched >= show.episodes.size) "All watched" else "$watched of ${show.episodes.size} watched") +
-                " · latest " + shortDayLabel(airedMs(newest)).lowercase(Locale.getDefault()),
+                " · latest " + shortDayLabel(airedMs(newest)).lowercase(androidx.compose.ui.platform.LocalConfiguration.current.locales[0]),
             size = 13.sp,
             color = colors.TextSecondary
         )

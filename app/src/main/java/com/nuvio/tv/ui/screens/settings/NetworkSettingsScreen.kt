@@ -199,6 +199,7 @@ fun AdvancedSettingsContent(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     var showSimklReimportConfirmation by remember { mutableStateOf(false) }
     var showArtworkRefreshConfirmation by remember { mutableStateOf(false) }
     val globalStatsOverlay by GlobalStatsOverlaySettings.enabled.collectAsStateWithLifecycle()
@@ -291,7 +292,7 @@ fun AdvancedSettingsContent(
                 streamBaselineSpeed = baseline
 
                 if (baseline <= 0.0) {
-                    streamErrorMessage = context.getString(R.string.stream_test_error_connection)
+                    streamErrorMessage = localizedResources.getString(R.string.stream_test_error_connection)
                     streamTestState = "Error"
                     return@launch
                 }

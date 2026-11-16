@@ -1,3 +1,7 @@
+// Pinned AndroidX interop: TV provider builders / navigation stack expose
+// restricted members needed by this existing integration. Recheck when upgrading AndroidX.
+@file:android.annotation.SuppressLint("RestrictedApi")
+
 package com.nuvio.tv.livetv.home
 
 import android.graphics.Bitmap
@@ -494,6 +498,8 @@ internal object LauncherCards {
         return layout("$cut…", p, width, maxLines)
     }
 
+    // Layout's API-23 constant has the same value as API-29 LineBreaker's IntDef.
+    @android.annotation.SuppressLint("WrongConstant")
     private fun layout(text: String, p: TextPaint, width: Int, maxLines: Int): StaticLayout =
         StaticLayout.Builder.obtain(text, 0, text.length, p, width)
             .setAlignment(Layout.Alignment.ALIGN_CENTER)
