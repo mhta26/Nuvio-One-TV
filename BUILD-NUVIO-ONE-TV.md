@@ -30,8 +30,8 @@ Other optional service settings must be configured separately when needed.
 The outputs are `../deliverables/Nuvio-One-TV-arm64-v8a.apk` and
 `../deliverables/Nuvio-One-TV-armeabi-v7a.apk`; each is a standalone application
 for its architecture. The build fills missing Nuvio backend settings from the
-official public discovery endpoint, so a fresh preview can generate login QR codes.
-Existing complete custom backend settings are preserved. Previews use the fork signing key already committed to the original repository,
+official public discovery endpoint, so a fresh personal release can generate login QR codes.
+Existing complete custom backend settings are preserved. Personal releases use the fork signing key already committed to the original repository,
 so local and GitHub builds can update the same preview package. This public test key
 is not a private production signing identity. Override the `NUVIO_RELEASE_STORE_FILE`,
 `NUVIO_RELEASE_KEY_ALIAS`, `NUVIO_RELEASE_KEY_PASSWORD` and `NUVIO_RELEASE_STORE_PASSWORD`
@@ -39,9 +39,12 @@ environment variables together when using your own private key. Account data is 
 
 ## GitHub Actions
 
-Run **Actions → Nuvio One TV APK → Run workflow**. Enter the public Simkl Client ID
-in the optional input, or set the repository variable `SIMKL_CLIENT_ID` for repeat builds.
-Download **Nuvio-One-TV-release** from the successful workflow's artifacts.
+Run **Actions → Nuvio One TV APK → Run workflow**. Provide the public Simkl, Trakt
+and MDBList Client IDs through the inputs, or set `SIMKL_CLIENT_ID`, `TRAKT_CLIENT_ID`
+and `MDBLIST_CLIENT_ID` as Actions repository variables for automatic repeat builds.
+The stable workflow stops when these app identifiers are missing. A Trakt Client Secret
+is not required. Download **Nuvio-One-TV-release** from the successful workflow's artifacts,
+or use the normal GitHub Release created after all checks pass.
 Fork workflows may require enabling Actions in the fork first.
 
 ## Poster refresh
@@ -72,7 +75,7 @@ confirmed the `Nuvio One TV` label, package `app.onetube.tv.personal.preview`, m
 and both `armeabi-v7a` and `arm64-v8a`. Playback, account linking and performance on a
 physical TV still require device testing; these checks do not establish runtime behavior.
 
-Personal releases assemble fullRelease with R8 code optimization and resource shrinking, without debugger or Compose tooling. The personal application ID and signing identity remain compatible with earlier previews. The full release unit-test suite and full Android Lint run before packaging. Tests and R8 run in separate Gradle processes with one worker, avoiding concurrent compiler/optimizer memory pressure. The preview build timestamp is pinned across both invocations to preserve the same version and reuse compilation outputs.
+Personal releases assemble fullRelease with R8 code optimization and resource shrinking, without debugger or Compose tooling. The personal application ID and signing identity remain compatible with earlier previews. The full release unit-test suite and full Android Lint run before packaging. Tests and R8 run in separate Gradle processes with one worker, avoiding concurrent compiler/optimizer memory pressure. The personal build timestamp is pinned across all invocations to preserve the same version and reuse compilation outputs.
 
 ## Trakt and MDBList app registration
 
@@ -101,7 +104,9 @@ and features while reducing competing image work during navigation.
 
 The default personal release is version `1.1.0`, channel `stable`, with no Test
 resource overlay. `NUVIO_ONE_TV_VERSION` (or the workflow's `app_version` input)
-sets a future stable major.minor.patch version. Version codes remain on the
+sets a future stable major.minor.patch version. Increment it for future updates (for
+example `1.1.1`); build metadata alone does not make a semantic version newer for the
+in-app updater. Version codes remain on the
 previous personal build's monotonically increasing track, with the same package
 and signing identity, so no uninstall or data reset is needed.
 
@@ -118,3 +123,7 @@ on the same version and reuses compilation outputs. `--test-only`, `--lint-only`
 and `--package-only` modes are available for the helper; the default runs all
 three. `Nuvio-One-TV-audit-reports` contains test XML/HTML and lint XML/HTML.
 No APK is published when unit tests or lint fail.
+
+The unit-test XML/HTML artifact is uploaded immediately after the tests, before lint.
+See [the completed code audit](CODE-AUDIT-NUVIO-ONE-TV.md) for the stable release's
+results, native-buffer regression coverage and APK verification.

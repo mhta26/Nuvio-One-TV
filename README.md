@@ -2,17 +2,21 @@
 
 # Nuvio One TV
 
-**[تحميل ARM 64-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/tv-preview-43817341064/Nuvio-One-TV-arm64-v8a.apk)** · **[تحميل ARM 32-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/tv-preview-43817341064/Nuvio-One-TV-armeabi-v7a.apk)**
+<img src="branding/nuvio-one-tv/tv-banner.png" width="320" alt="Nuvio One TV" />
 
-[جميع الإصدارات التجريبية / Releases](https://github.com/mhta26/Nuvio-One-TV/releases) · Android TV 7+ · ARM 32/64
+**[تحميل ARM 64-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/v1.1.0%2Bbuild.43870184356/Nuvio-One-TV-arm64-v8a.apk)** · **[تحميل ARM 32-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/v1.1.0%2Bbuild.43870184356/Nuvio-One-TV-armeabi-v7a.apk)**
 
-اختر ملفًا واحدًا يناسب معمارية جهازك. بناء Release محسّن وغير قابل للتصحيح، مع تقليص الكود والموارد وتصحيح انتظار إعدادات التشخيص عند الإقلاع. يضبط حمل الصور بحسب RAM الفعلية للتلفزيون، ويتضمن إعدادات ربط Nuvio وTrakt وMDBList وSimkl. حدّث النسخة التجريبية السابقة مباشرة دون حذف بياناتها؛ وتُثبت النسخة التجريبية بجانب التطبيق الأصلي.
+[الإصدارات / Releases](https://github.com/mhta26/Nuvio-One-TV/releases) · Android TV 7+ · ARM 32/64
+
+اختر ملفًا واحدًا يناسب معمارية جهازك. الإصدار المستقر **1.1.0** بشعار وإقلاع جديدين، وإصلاحات لذاكرة التشغيل والكاش وتحديث القوائم، مع R8 وتقليص الموارد ودون أدوات تصحيح. يتضمن إعدادات ربط Nuvio وTrakt وMDBList وSimkl. حدّث النسخة الشخصية السابقة مباشرة دون حذف بياناتها؛ وتبقى منفصلة عن التطبيق الأصلي.
+
+[تقرير مراجعة الكود ونتائج الفحوص](CODE-AUDIT-NUVIO-ONE-TV.md) · [صفحة هذا الإصدار](https://github.com/mhta26/Nuvio-One-TV/releases/tag/v1.1.0%2Bbuild.43870184356)
 
 **Personal Nuvio One TV fork for Android TV, Google TV and Fire TV.**
 
-This fork adds poster-cache refresh, device-aware image loading, and guarded Simkl reimport. See [personal preview build instructions](BUILD-NUVIO-ONE-TV.md) for local/Codex setup and GitHub Actions. The original project documentation and credits follow below.
+This fork adds poster-cache refresh, device-aware image loading, and guarded Simkl reimport. See [personal release build instructions](BUILD-NUVIO-ONE-TV.md) for local/Codex setup and GitHub Actions. The original project documentation and credits follow below.
 
-[![Latest release](https://img.shields.io/github/v/release/mhta26/Nuvio-One-TV?include_prereleases&label=preview&style=for-the-badge)](https://github.com/mhta26/Nuvio-One-TV/releases)
+[![Latest release](https://img.shields.io/github/v/release/mhta26/Nuvio-One-TV?label=release&style=for-the-badge)](https://github.com/mhta26/Nuvio-One-TV/releases)
 [![Downloads](https://img.shields.io/github/downloads/mhta26/Nuvio-One-TV/total?style=for-the-badge)](https://github.com/mhta26/Nuvio-One-TV/releases)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=for-the-badge)](LICENSE)
 <a href="https://ko-fi.com/zoga2o3"><img src="https://img.shields.io/badge/Ko--fi-Support%20the%20project-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Support the project on Ko-fi" /></a>
