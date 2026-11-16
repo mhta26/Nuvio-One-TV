@@ -23,6 +23,10 @@ internal object ExternalSubtitleFont {
         if (bold) Typeface.create(it, Typeface.BOLD) else it
     }
 
+    // Framework openRawResource accepts file-backed resources, including compressed R.font
+    // assets. Its @RawRes annotation is narrower than that API contract; using an FD instead
+    // would fail for compressed fonts. Keep this exception scoped to the binary font reader.
+    @android.annotation.SuppressLint("ResourceType")
     fun bytes(context: Context): ByteArray = context.resources
         .openRawResource(R.font.nuvio_subtitle_arabic_medium).use { it.readBytes() }
 

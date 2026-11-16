@@ -1162,13 +1162,19 @@ open class MainActivity : ComponentActivity() {
                     // app shell and navigation. Recording screens still receive full progress.
                     val recordingMenu = remember(liveTvRecorder) {
                         liveTvRecorder.recordings.recordingMenuStates()
-                    }.collectAsState(initial = liveTvRecorder.recordings.value.recordingMenuState()).value
+                    }.collectAsState(initial = remember(liveTvRecorder) {
+                        liveTvRecorder.recordings.value.recordingMenuState()
+                    }).value
                     val hasSchedules = remember(liveTvRecordingScheduler) {
                         liveTvRecordingScheduler.schedules.map { it.isNotEmpty() }.distinctUntilChanged()
-                    }.collectAsState(initial = liveTvRecordingScheduler.schedules.value.isNotEmpty()).value
+                    }.collectAsState(initial = remember(liveTvRecordingScheduler) {
+                        liveTvRecordingScheduler.schedules.value.isNotEmpty()
+                    }).value
                     val hasSeries = remember(liveTvRecordingScheduler) {
                         liveTvRecordingScheduler.series.map { it.isNotEmpty() }.distinctUntilChanged()
-                    }.collectAsState(initial = liveTvRecordingScheduler.series.value.isNotEmpty()).value
+                    }.collectAsState(initial = remember(liveTvRecordingScheduler) {
+                        liveTvRecordingScheduler.series.value.isNotEmpty()
+                    }).value
                     val recordingNow = recordingMenu.isRecording
                     val recordingsInSidebar = liveTvSettingsNow.recordingsInSidebar && liveTvInSidebar &&
                         (recordingMenu.hasRecordings || hasSchedules || hasSeries)
