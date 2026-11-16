@@ -440,7 +440,7 @@ private fun PlayerRuntimeController.executeSubtitleDownload(
         if (body.isBlank()) {
             error(context.getString(com.nuvio.tv.R.string.subtitle_download_empty_content))
         }
-        return body
+        return ExternalSubtitleFontPolicy.overrideTextFonts(body)
     }
 }
 

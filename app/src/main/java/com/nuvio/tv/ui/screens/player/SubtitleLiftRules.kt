@@ -67,7 +67,8 @@ internal data class SubtitleTextMetrics(
     val scaleX: Float,
     val innerPaddingPx: Float,
     val wrapWidthPx: Float,
-    val centerXPx: Float
+    val centerXPx: Float,
+    val externalFont: Boolean = false
 )
 
 internal fun subtitleBlockWidthPx(

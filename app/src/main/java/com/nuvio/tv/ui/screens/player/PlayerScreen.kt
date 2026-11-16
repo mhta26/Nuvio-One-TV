@@ -1398,6 +1398,7 @@ fun PlayerScreen(
                                 useLibass = uiState.useLibass,
                                 libassRenderMode = uiState.libassRenderMode,
                                 subtitleStyle = uiState.effectiveSubtitleStyle,
+                                externalSubtitle = uiState.selectedAddonSubtitle != null,
                                 subtitleLiftPx = subtitleLiftPx,
                                 hideSubtitles = postPlayRecommendationState.isVisible ||
                                     youtubeCaptionTranslated,
@@ -1426,6 +1427,9 @@ fun PlayerScreen(
                         }
                         Text(
                             text = generatedYoutubeCaption.orEmpty(),
+                            fontFamily = androidx.compose.ui.text.font.FontFamily(
+                                androidx.compose.ui.text.font.Font(R.font.ibm_plex_sans_arabic_medium)
+                            ),
                             color = Color(captionStyle.textColor),
                             fontSize = (24f * captionStyle.size / 100f).sp,
                             fontWeight = if (captionStyle.bold) FontWeight.Bold else FontWeight.Normal,
@@ -2491,6 +2495,7 @@ private fun ExoPlayerSurface(
     useLibass: Boolean,
     libassRenderMode: LibassRenderMode,
     subtitleStyle: SubtitleStyleSettings,
+    externalSubtitle: Boolean,
     subtitleLiftPx: Float,
     hideSubtitles: Boolean = false,
     onBindSubtitleView: (androidx.media3.ui.SubtitleView?) -> Unit = {},
@@ -2503,6 +2508,7 @@ private fun ExoPlayerSurface(
     val latestTunneledSurfaceFill by rememberUpdatedState(tunneledSurfaceFill)
     val latestBindSubtitleView by rememberUpdatedState(onBindSubtitleView)
     val latestSubtitleStyle by rememberUpdatedState(subtitleStyle)
+    val latestExternalSubtitle by rememberUpdatedState(externalSubtitle)
     val latestSubtitleLiftPx by rememberUpdatedState(subtitleLiftPx)
     val latestMetricsCallback by rememberUpdatedState(onSubtitleTextMetricsChanged)
     val playerView = remember(context, player) {
@@ -2599,7 +2605,7 @@ private fun ExoPlayerSurface(
                 // Re-apply subtitle style when tracks change so style is applied
                 // even when subtitles are enabled after initial player setup.
                 playerView.post {
-                    playerView.applySubtitleStyleIfNeeded(latestSubtitleStyle, latestSubtitleLiftPx, force = true)
+                    playerView.applySubtitleStyleIfNeeded(latestSubtitleStyle, latestSubtitleLiftPx, latestExternalSubtitle, force = true)
                 }
             }
         }
@@ -2663,8 +2669,8 @@ private fun ExoPlayerSurface(
         }
     }
 
-    LaunchedEffect(playerView, subtitleStyle, subtitleLiftPx) {
-        playerView.applySubtitleStyleIfNeeded(subtitleStyle, subtitleLiftPx)
+    LaunchedEffect(playerView, subtitleStyle, subtitleLiftPx, externalSubtitle) {
+        playerView.applySubtitleStyleIfNeeded(subtitleStyle, subtitleLiftPx, externalSubtitle)
     }
 }
 
@@ -2763,7 +2769,8 @@ private fun describeRect(rect: RectF?): String =
 private data class SubtitleAppliedConfig(
     val style: SubtitleStyleSettings,
     val isAss: Boolean,
-    val liftPx: Float
+    val liftPx: Float,
+    val externalSubtitle: Boolean
 )
 
 private val SUBTITLE_CONTROLS_LIFT = 130.dp
@@ -2821,10 +2828,11 @@ private fun PlayerView.isAssOrSsaSubtitleSelected(): Boolean {
 private fun PlayerView.applySubtitleStyleIfNeeded(
     subtitleStyle: SubtitleStyleSettings,
     liftPx: Float,
+    externalSubtitle: Boolean,
     force: Boolean = false
 ) {
     val isAss = isAssOrSsaSubtitleSelected()
-    val config = SubtitleAppliedConfig(subtitleStyle, isAss, liftPx)
+    val config = SubtitleAppliedConfig(subtitleStyle, isAss, liftPx, externalSubtitle)
     if (!force && getTag(R.id.player_view_subtitle_style_tag) == config) {
         return
     }
@@ -2841,7 +2849,9 @@ private fun PlayerView.applySubtitleStyleIfNeeded(
         setFixedTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, scaledFontSize)
         setApplyEmbeddedFontSizes(false)
 
-        val typeface = if (subtitleStyle.bold) {
+        val typeface = if (externalSubtitle) {
+            ExternalSubtitleFont.typeface(context, subtitleStyle.bold)
+        } else if (subtitleStyle.bold) {
             android.graphics.Typeface.DEFAULT_BOLD
         } else {
             android.graphics.Typeface.DEFAULT
@@ -2910,7 +2920,8 @@ private fun PlayerView.exoSubtitleTextMetrics(): SubtitleTextMetrics? {
         scaleX = 1f,
         innerPaddingPx = innerPaddingPx,
         wrapWidthPx = (subView.width - subView.paddingLeft - subView.paddingRight - innerPaddingPx * 2f).coerceAtLeast(0f),
-        centerXPx = location[0] + subView.width / 2f
+        centerXPx = location[0] + subView.width / 2f,
+        externalFont = applied.externalSubtitle
     )
 }
 
@@ -2920,7 +2931,8 @@ private fun measureSubtitleBlockPx(
     metrics: SubtitleTextMetrics
 ): Float {
     paint.textSize = metrics.textSizePx
-    paint.typeface = if (metrics.bold) android.graphics.Typeface.DEFAULT_BOLD else android.graphics.Typeface.DEFAULT
+    paint.typeface = if (metrics.externalFont) ExternalSubtitleFont.loadedTypeface(metrics.bold)
+        ?: android.graphics.Typeface.DEFAULT else if (metrics.bold) android.graphics.Typeface.DEFAULT_BOLD else android.graphics.Typeface.DEFAULT
     return subtitleBlockWidthPx(text, metrics) { paint.measureText(it) }
 }
 

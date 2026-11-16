@@ -34,7 +34,7 @@ internal fun ExoPlayer.Builder.buildWithAssSupportCompat(
     renderersFactory: RenderersFactory = DefaultRenderersFactory(context)
 ): ExoPlayer {
     val assHandler = AssHandler()
-    val assSubtitleParserFactory = CompatAssSubtitleParserFactory(assHandler)
+    val assSubtitleParserFactory = CompatAssSubtitleParserFactory(assHandler, context)
     val assExtractorsFactory = extractorsFactory.withAssMkvSupportCompat(
         subtitleParserFactory = assSubtitleParserFactory,
         assHandler = assHandler
@@ -77,7 +77,8 @@ internal fun ExoPlayer.releaseAssHandlerCompat() {
 
 @OptIn(UnstableApi::class)
 private class CompatAssSubtitleParserFactory(
-    private val assHandler: AssHandler
+    private val assHandler: AssHandler,
+    private val context: Context
 ) : SubtitleParser.Factory {
     private val delegate = AssSubtitleParserFactory(assHandler)
 
@@ -96,7 +97,9 @@ private class CompatAssSubtitleParserFactory(
         // External ASS/SSA is parsed by libass itself; remove repeated Dialogue events before
         // libass registers them. Embedded ASS is deduped as samples are read instead.
         return if (parser is AssFullSubtitleParser) {
-            AssDialogueDedupeParser(autoSynced)
+            AssDialogueDedupeParser(ExternalAssFontParser(autoSynced) {
+                assHandler.addFont(ExternalSubtitleFontPolicy.FILE_NAME, ExternalSubtitleFont.bytes(context))
+            })
         } else {
             autoSynced
         }

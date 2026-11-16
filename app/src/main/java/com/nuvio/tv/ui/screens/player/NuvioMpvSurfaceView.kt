@@ -162,6 +162,7 @@ class NuvioMpvSurfaceView @JvmOverloads constructor(
 
     private fun applyDefaultTrackSelectionForNewLoad() {
         runCatching {
+            applyExternalSubtitleFont(false)
             // Let mpv choose the default streams for every new media load.
             mpv.setPropertyString("aid", "auto")
             mpv.setPropertyString("sid", "auto")
@@ -427,6 +428,14 @@ class NuvioMpvSurfaceView @JvmOverloads constructor(
         postDelayed(aspectReapplyRunnable, delayMs)
     }
 
+    private var externalFontApplied: Boolean? = null
+
+    private fun applyExternalSubtitleFont(external: Boolean) {
+        if (externalFontApplied == external) return
+        mpv.setPropertyString("sub-font", if (external) ExternalSubtitleFontPolicy.FAMILY else "Roboto")
+        externalFontApplied = external
+    }
+
     var subtitleLiftFraction: Double = 0.0
 
     fun applySubtitleStyle(style: SubtitleStyleSettings) {
@@ -495,6 +504,7 @@ class NuvioMpvSurfaceView @JvmOverloads constructor(
 
     internal fun subtitleTextMetrics(style: SubtitleStyleSettings): SubtitleTextMetrics? {
         if (!initialized || width <= 0 || height <= 0 || isAssOrSsaSubtitleSelectedNow()) return null
+        if (externalFontApplied == true) ExternalSubtitleFont.typeface(context, style.bold)
         val fontSize = mpv.getPropertyDouble("sub-font-size") ?: return null
         val unitPx = height / MPV_SUBTITLE_REFERENCE_HEIGHT
         val textSizePx = (fontSize * subtitleScale(style)).toFloat() * unitPx
@@ -507,7 +517,8 @@ class NuvioMpvSurfaceView @JvmOverloads constructor(
             scaleX = 1f,
             innerPaddingPx = textSizePx * MPV_SUBTITLE_INNER_PADDING_RATIO,
             wrapWidthPx = (width - marginXPx * 2f).coerceAtLeast(0f),
-            centerXPx = location[0] + width / 2f
+            centerXPx = location[0] + width / 2f,
+            externalFont = externalFontApplied == true
         )
     }
 
@@ -653,6 +664,7 @@ class NuvioMpvSurfaceView @JvmOverloads constructor(
         val selectedSubtitleTrackId = mpv.getPropertyString("sid")?.toIntOrNull()
             ?: mpv.getPropertyInt("current-tracks/sub/id")
 
+        applyExternalSubtitleFont(tracks.any { it.type == "sub" && it.id == selectedSubtitleTrackId && it.isExternal })
         return MpvTrackSnapshot(
             audioTracks = tracks.filter { it.type == "audio" }
                 .map { it.copy(isSelected = it.id == selectedAudioTrackId) },
@@ -752,7 +764,9 @@ class NuvioMpvSurfaceView @JvmOverloads constructor(
         // Preserve native ASS/SSA styling behavior on MPV.
         mpv.setOptionString("sub-ass-override", "no")
         mpv.setOptionString("sub-codepage", "auto:utf-8")
+        mpv.setOptionString("sub-fonts-dir", ExternalSubtitleFont.directory(context).absolutePath)
         mpv.setOptionString("sub-font", "Roboto")
+        externalFontApplied = null
         mpv.setOptionString("sub-use-margins", "yes")
         mpv.setOptionString("sub-ass-force-margins", "yes")
         mpv.setOptionString(

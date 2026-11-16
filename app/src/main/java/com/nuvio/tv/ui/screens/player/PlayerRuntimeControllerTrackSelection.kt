@@ -9,6 +9,9 @@ import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
 import com.nuvio.tv.domain.model.Subtitle
 import com.nuvio.tv.ui.screens.player.autosync.AutoSyncSyncedSubtitle
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -492,13 +495,18 @@ internal fun PlayerRuntimeController.selectAddonSubtitle(subtitle: Subtitle) {
         vlcAddonSubtitleSelectionJob?.cancel()
         vlcAddonSubtitleSelectionJob = scope.launch {
             val localPath = try {
-                val decodedBody = downloadSubtitleBody(subtitle.url, subtitle.lang, subtitle.headers)
-                val sanitized = SubtitleMojibakeSanitizer.sanitize(decodedBody).toString()
-                val cacheDir = java.io.File(context.cacheDir, "subtitles").also { it.mkdirs() }
-                val ext = if (subtitle.url.contains(".vtt", ignoreCase = true)) "vtt" else "srt"
-                val file = java.io.File(cacheDir, "vlc_${subtitle.id.hashCode()}.$ext")
-                file.writeText(sanitized, Charsets.UTF_8)
-                file.absolutePath
+                withContext(Dispatchers.IO) {
+                    val decodedBody = downloadSubtitleBody(subtitle.url, subtitle.lang, subtitle.headers)
+                    val sanitized = SubtitleMojibakeSanitizer.sanitize(decodedBody).toString()
+                    val cacheDir = java.io.File(context.cacheDir, "subtitles").also { it.mkdirs() }
+                    val fontSubtitle = VlcExternalSubtitleFont.prepare(context, sanitized, subtitle.url)
+                    val ext = if (fontSubtitle != null) "ass" else subtitleExtension(subtitle.url, sanitized)
+                    val file = java.io.File(cacheDir, "vlc_${subtitle.id.hashCode()}.$ext")
+                    file.writeText(fontSubtitle ?: sanitized, Charsets.UTF_8)
+                    file.absolutePath
+                }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.w(PlayerRuntimeController.TAG, "Failed to cache subtitle for VLC, falling back to URL", e)
                 subtitle.url
@@ -531,13 +539,17 @@ internal fun PlayerRuntimeController.selectAddonSubtitle(subtitle: Subtitle) {
         AutoSyncSyncedSubtitle.clear() // AutoSync hook
         mpvAddonSubtitleSelectionJob = scope.launch {
             val localPath = try {
-                val decodedBody = downloadSubtitleBody(subtitle.url, subtitle.lang, subtitle.headers)
-                val sanitized = SubtitleMojibakeSanitizer.sanitize(decodedBody).toString()
-                val cacheDir = java.io.File(context.cacheDir, "subtitles").also { it.mkdirs() }
-                val ext = if (subtitle.url.contains(".vtt", ignoreCase = true)) "vtt" else "srt"
-                val file = java.io.File(cacheDir, "mpv_${subtitle.id.hashCode()}.$ext")
-                file.writeText(sanitized, Charsets.UTF_8)
-                file.absolutePath
+                withContext(Dispatchers.IO) {
+                    val decodedBody = downloadSubtitleBody(subtitle.url, subtitle.lang, subtitle.headers)
+                    val sanitized = SubtitleMojibakeSanitizer.sanitize(decodedBody).toString()
+                    val cacheDir = java.io.File(context.cacheDir, "subtitles").also { it.mkdirs() }
+                    val ext = subtitleExtension(subtitle.url, sanitized)
+                    val file = java.io.File(cacheDir, "mpv_${subtitle.id.hashCode()}.$ext")
+                    file.writeText(sanitized, Charsets.UTF_8)
+                    file.absolutePath
+                }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.w(PlayerRuntimeController.TAG, "Failed to cache normalized subtitle for MPV, falling back to URL", e)
                 subtitle.url
@@ -827,4 +839,11 @@ internal fun PlayerRuntimeController.captureCurrentAudioSelectionForSubtitleRefr
         }
     }
     return null
+}
+
+private fun subtitleExtension(url: String, body: String): String = when {
+    body.contains("[Script Info]", true) -> "ass"
+    body.trimStart().startsWith("WEBVTT") || url.substringBefore('?').endsWith(".vtt", true) -> "vtt"
+    url.substringBefore('?').endsWith(".ttml", true) -> "ttml"
+    else -> "srt"
 }
