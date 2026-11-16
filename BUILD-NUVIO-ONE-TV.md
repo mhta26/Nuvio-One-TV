@@ -76,11 +76,17 @@ Personal previews now assemble fullRelease with R8 code optimization and resourc
 
 ## Trakt and MDBList app registration
 
-These services require your registered app credentials; the public repository does not provide them.
-In GitHub Settings → Secrets and variables → Actions, set `TRAKT_CLIENT_ID`
-and `MDBLIST_CLIENT_ID` as repository variables (or secrets), and set
-`TRAKT_CLIENT_SECRET` as a repository secret. Then dispatch the APK workflow again.
-The helper also accepts these names as environment variables for local builds.
-Do not use account passwords or personal access tokens in these fields.
-Existing APKs cannot gain missing build-time credentials by adding repository settings;
-a new build must include them. Missing credentials do not affect Simkl or local data.
+Set `TRAKT_CLIENT_ID` and `MDBLIST_CLIENT_ID` as GitHub repository variables
+(or secrets), or supply their public Client IDs in the manual workflow inputs.
+The local helper accepts these names as environment variables too.
+MDBList requires a **Device Code App** Client ID, not an API key or a PKCE app ID.
+Trakt TV device-code login uses the Client ID alone, including for new public apps.
+Set `TRAKT_REDIRECT_URI` to the exact URI registered in your Trakt app for token refresh.
+No Trakt Client Secret is needed or embedded. OAuth requests go to `auth.trakt.tv`;
+ordinary API calls remain on `api.trakt.tv`, following Trakt's current contract:
+https://developer.trakt.tv/docs/authentication-oauth
+https://github.com/trakt/trakt-api/blob/master/projects/api/src/contracts/oauth/index.ts
+
+Existing APKs require an update to gain these changes and app identifiers.
+The build runs OAuth request-contract and MDBList authorization tests as well
+as the guarded Simkl reimport tests before packaging the optimized APKs.

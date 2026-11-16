@@ -24,7 +24,7 @@ for key,value in {
     'DOVI_ENABLE_REAL_LINK':'true', 'DOVI_LIBDOVI_PREBUILT_ROOT':'DV7/libdovi',
     'SIMKL_APP_NAME':'nuvio-one-tv'
 }.items(): set_value(key,value)
-for key in ('SIMKL_CLIENT_ID', 'TRAKT_CLIENT_ID', 'TRAKT_CLIENT_SECRET', 'MDBLIST_CLIENT_ID'):
+for key in ('SIMKL_CLIENT_ID', 'TRAKT_CLIENT_ID', 'TRAKT_REDIRECT_URI', 'MDBLIST_CLIENT_ID'):
     value = os.environ.get(key, '').strip()
     if value:
         if any(c in value for c in '\r\n'):
@@ -60,7 +60,9 @@ run_preview_gradle() {
 }
 run_preview_gradle :app:testFullReleaseUnitTest \
     --tests 'com.nuvio.tv.data.simkl.SimklLocalReimportServiceTest' \
-    --tests 'com.nuvio.tv.data.simkl.SimklSyncRepositoryStorageTest'
+    --tests 'com.nuvio.tv.data.simkl.SimklSyncRepositoryStorageTest' \
+    --tests 'com.nuvio.tv.data.repository.TraktOAuthContractTest' \
+    --tests 'com.nuvio.tv.data.mdblist.MdbListAuthRepositoryTest'
 run_preview_gradle :app:assembleFullRelease
 mkdir -p "$CODEX_ANDROID_WORK_DIR/deliverables"
 for abi in arm64-v8a armeabi-v7a; do

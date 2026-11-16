@@ -7,6 +7,18 @@ on:
         description: 'Optional public Simkl Client ID (not an account token or Client Secret)'
         required: false
         type: string
+      trakt_client_id:
+        description: 'Optional public Trakt Client ID (no Client Secret needed for TV device login)'
+        required: false
+        type: string
+      trakt_redirect_uri:
+        description: 'Exact Redirect URI registered in your Trakt app (used for token refresh)'
+        required: false
+        type: string
+      mdblist_client_id:
+        description: 'Optional public MDBList Client ID for a Device Code App (not an API key)'
+        required: false
+        type: string
   push:
     branches: [main, codex/nuvio-one-tv]
     paths:
@@ -32,9 +44,9 @@ jobs:
       CODEX_GRADLE_HEAP_MB: '6144'
       CODEX_GRADLE_METASPACE_MB: '1024'
       SIMKL_CLIENT_ID: ${{ inputs.simkl_client_id || vars.SIMKL_CLIENT_ID || secrets.SIMKL_CLIENT_ID }}
-      TRAKT_CLIENT_ID: ${{ vars.TRAKT_CLIENT_ID || secrets.TRAKT_CLIENT_ID }}
-      TRAKT_CLIENT_SECRET: ${{ secrets.TRAKT_CLIENT_SECRET }}
-      MDBLIST_CLIENT_ID: ${{ vars.MDBLIST_CLIENT_ID || secrets.MDBLIST_CLIENT_ID }}
+      TRAKT_CLIENT_ID: ${{ inputs.trakt_client_id || vars.TRAKT_CLIENT_ID || secrets.TRAKT_CLIENT_ID }}
+      TRAKT_REDIRECT_URI: ${{ inputs.trakt_redirect_uri || vars.TRAKT_REDIRECT_URI || secrets.TRAKT_REDIRECT_URI }}
+      MDBLIST_CLIENT_ID: ${{ inputs.mdblist_client_id || vars.MDBLIST_CLIENT_ID || secrets.MDBLIST_CLIENT_ID }}
     steps:
       - uses: actions/checkout@v4
       - name: Select build workspace
