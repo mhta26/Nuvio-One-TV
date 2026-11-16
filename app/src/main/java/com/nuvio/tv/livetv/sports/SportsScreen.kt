@@ -282,7 +282,7 @@ fun SportsScreen(
 
     // Hold Back: full screen on what's playing in the window (like Live TV's guide). Nothing
     // playing: Back works as usual.
-    val hostActivity = androidx.compose.ui.platform.LocalContext.current as? com.nuvio.tv.MainActivity
+    val hostActivity = androidx.activity.compose.LocalActivity.current as? com.nuvio.tv.MainActivity
     var backStartedHere by remember { mutableStateOf(false) }
     fun backToFullscreen() {
         val key = playingKey ?: return

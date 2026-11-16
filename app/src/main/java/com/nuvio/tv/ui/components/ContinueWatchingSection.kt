@@ -567,10 +567,8 @@ fun ContinueWatchingCard(
     val effectiveImageModel = if (usesFallbackImage) fallbackImageModel else imageModel
     val titleText = remember(progress, nextUp) { progress?.name ?: nextUp?.name.orEmpty() }
     val context = LocalContext.current
-    val localizedResources = androidx.compose.ui.platform.LocalResources.current
-    val resourceConfiguration = androidx.compose.ui.platform.LocalConfiguration.current
     val strAirsDateForEpisode = computeAirDateBadgeText(context, nextUp?.released, nextUp?.airDateLabel)
-    val episodeTitle = remember(progress, nextUp, context, strAirsDateForEpisode) {
+    val episodeTitle = remember(progress, nextUp, context, strAirsDateForEpisode, resourceConfiguration) {
         when {
             progress != null -> progress.episodeTitle?.localizeEpisodeTitle(context)
             nextUp != null && !nextUp.hasAired -> nextUp.episodeTitle?.localizeEpisodeTitle(context) ?: strAirsDateForEpisode
