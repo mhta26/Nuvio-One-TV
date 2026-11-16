@@ -55,7 +55,7 @@ Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\pos(10,20)\fnArial\k20\c&HFF
     }
 
     @Test fun `unrelated subtitle text is unchanged`() {
-        val text = "1\n00:00:01,000 --> 00:00:02,000\nمرحبا بالعالم\nHello world!"
+        val text = "1\n00:00:01,000 --> 00:00:02,000\nمرحبا بالعالم\nHello world! font-family: Arial; fontFamily='Arial'"
         assertEquals(text, ExternalSubtitleFontPolicy.overrideTextFonts(text))
     }
 }

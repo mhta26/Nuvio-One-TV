@@ -7,13 +7,23 @@ internal object ExternalSubtitleFontPolicy {
     const val FILE_NAME = "IBMPlexSansArabic-Medium.ttf"
     private val inlineFont = Regex("""\\fn[^\\}]*""", RegexOption.IGNORE_CASE)
 
+    private val overrideBlock = Regex("""\{[^}]*}""")
+
     fun overrideTextFonts(text: String): String {
         if (text.contains("[Script Info]", true)) return overrideAssFonts(text)
-        // Retain colors, emphasis and cue positions; remove only competing font-family hints.
-        return Regex("(?is)<font\\b[^>]*>").replace(text) { tag ->
-            Regex("(?i)\\s+face\\s*=\\s*(?:\"[^\"]*\"|'[^']*'|[^\\s>]+)").replace(tag.value, "")
-        }.replace(Regex("(?i)font-family\\s*:[^;}\\r\\n]*;?"), "")
-            .replace(Regex("(?i)\\s+(?:tts:)?fontFamily\\s*=\\s*(?:\"[^\"]*\"|'[^']*')"), "")
+        // Restrict edits to markup and WebVTT STYLE blocks. Spoken text may itself mention CSS.
+        val fontAttribute = Regex("(?i)\\s+(?:face|(?:tts:)?fontFamily)\\s*=\\s*(?:\"[^\"]*\"|'[^']*'|[^\\s>]+)")
+        val cssFamily = Regex("(?i)font-family\\s*:[^;}\\r\\n]*;?")
+        val markup = Regex("(?is)<[^>]+>").replace(text) { tag ->
+            val attributes = if (tag.value.startsWith("<font", true)) {
+                fontAttribute.replace(tag.value, "")
+            } else {
+                Regex("(?i)\\s+(?:tts:)?fontFamily\\s*=\\s*(?:\"[^\"]*\"|'[^']*')").replace(tag.value, "")
+            }
+            cssFamily.replace(attributes, "")
+        }
+        return Regex("(?ms)^STYLE[ \\t]*\\r?\\n.*?(?=\\r?\\n[ \\t]*\\r?\\n|\\z)")
+            .replace(markup) { block -> cssFamily.replace(block.value, "") }
     }
 
     fun overrideAssFonts(text: String): String {
@@ -38,7 +48,7 @@ internal object ExternalSubtitleFontPolicy {
                 }
                 trimmed.startsWith("Dialogue:", true) -> {
                     // Font overrides only occur inside ASS override blocks, never in spoken text.
-                    Regex("""\{[^}]*}""").replace(line) { block ->
+                    overrideBlock.replace(line) { block ->
                         inlineFont.replace(block.value) { "\\fn$FAMILY" }
                     }
                 }

@@ -75,18 +75,22 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     private fun styledText(text: CharSequence): String = buildString {
         val spanned = text as? Spanned
         var previous = ""
-        for (i in text.indices) {
+        var i = 0
+        while (i < text.length) {
+            val next = spanned?.nextSpanTransition(i, text.length, Any::class.java) ?: text.length
             val spans = spanned?.getSpans(i, i + 1, Any::class.java).orEmpty()
             val flags = spans.filterIsInstance<StyleSpan>().fold(0) { a, s -> a or s.style }
             val color = spans.filterIsInstance<ForegroundColorSpan>().lastOrNull()?.foregroundColor ?: Color.WHITE
             val style = "\\b${if (flags and Typeface.BOLD != 0) 1 else 0}\\i${if (flags and Typeface.ITALIC != 0) 1 else 0}\\u${if (spans.any { it is UnderlineSpan }) 1 else 0}\\c&H${"%02X%02X%02X".format(Color.blue(color), Color.green(color), Color.red(color))}&"
             if (style != previous) { append('{').append(style).append('}'); previous = style }
-            when (val c = text[i]) {
-                '\n' -> append("\\N")
-                '{' -> append("\\{")
-                '}' -> append("\\}")
-                '\\' -> append("\\\\")
-                else -> append(c)
+            while (i < next) {
+                when (val c = text[i++]) {
+                    '\n' -> append("\\N")
+                    '{' -> append("\\{")
+                    '}' -> append("\\}")
+                    '\\' -> append("\\\\")
+                    else -> append(c)
+                }
             }
         }
     }
