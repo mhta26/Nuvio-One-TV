@@ -216,7 +216,7 @@ object LocalMusicRepository {
                 Environment.DIRECTORY_MUSIC,
                 Environment.DIRECTORY_DOWNLOADS,
                 Environment.DIRECTORY_PODCASTS,
-                Environment.DIRECTORY_RECORDINGS
+                "Recordings" // Same public folder on Android versions before API 31, too.
             ).forEach { directory ->
                 val dir = Environment.getExternalStoragePublicDirectory(directory)
                 if (dir.isDirectory && dir.canRead()) roots += dir

@@ -665,7 +665,7 @@ fun FolderEditorContent(
                 }
                 val isMissing = addonSource != null && catalog == null && addonCatalogInfo == null
                 val sourceKey = sourceKeys[index]
-                val removeFocusRequester = catalogFocusRequesters.getOrPut(sourceKey) { FocusRequester() }
+                val removeFocusRequester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(catalogFocusRequesters, sourceKey)
                 val genreLabel = addonSource?.genre ?: if (catalog?.genreRequired == true) {
                     stringResource(R.string.collections_editor_select_genre)
                 } else {

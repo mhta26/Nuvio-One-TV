@@ -200,7 +200,7 @@ fun YouTubeScreen(
     val appContext = androidx.compose.ui.platform.LocalContext.current
     // The centred logo needs room either side of it; on a narrower TV the account chip steps
     // aside while the search box is open instead of colliding with the title.
-    val compactHeader = appContext.resources.configuration.screenWidthDp < 1100
+    val compactHeader = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp < 1100
     val tabs = remember { YouTubeSettings.visibleTabs(appContext) }
     var pinnedPlaylists by remember { mutableStateOf(YouTubeSettings.pinnedPlaylists(appContext)) }
     // Pinning or unpinning happens in the card menu; refresh the row when that closes.

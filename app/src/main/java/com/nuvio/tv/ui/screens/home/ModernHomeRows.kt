@@ -942,7 +942,7 @@ internal fun ModernRowSection(
                         }
                     }
                 ) { index, item ->
-                    val requester = itemFocusRequesters.getOrPut(index) { FocusRequester() }
+                    val requester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(itemFocusRequesters, index)
                     val isContinueWatchingRow = row.key == MODERN_CONTINUE_WATCHING_ROW_KEY || row.key == MODERN_UPCOMING_ROW_KEY
                     val onFocused = remember(row.key, index, isContinueWatchingRow) {
                         {

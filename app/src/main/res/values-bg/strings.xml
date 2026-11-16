@@ -669,7 +669,7 @@
     <string name="supporters_contributors_donate_copy">Nuvio ще остане безплатен и с отворен код. Ако искате да подкрепите проекта, можете да помогнете за покриване на времето и инфраструктурата, които стоят зад него.</string>
     <string name="supporters_contributors_donation_progress_title">Сървър и поддръжка този месец</string>
     <string name="supporters_contributors_donation_progress_complete">Покрито. Допълнителна подкрепа вече отива за разработка.</string>
-    <string name="supporters_contributors_donation_progress_remaining">След 100%, допълнителната подкрепа отива за разработка.</string>
+    <string name="supporters_contributors_donation_progress_remaining" formatted="false">След 100%, допълнителната подкрепа отива за разработка.</string>
     <string name="supporters_contributors_loading_donation_progress">Зареждане на напредъка на финансирането...</string>
     <string name="supporters_contributors_donate_button">Подкрепете Nuvio</string>
     <string name="supporters_contributors_qr_title">Сканирайте, за да подкрепите</string>
@@ -3268,7 +3268,7 @@
     <string name="playback_cache_vod_size">Размер на кеша на VOD</string>
     <string name="playback_cache_vod_size_sub">Максимално използване на диска за прогресивен VOD кеш (LRU-елиминиран).</string>
     <string name="playback_cache_info_range">Диапазон: %1$d-%2$d МБ.</string>
-    <string name="playback_cache_info_auto">Автоматичният режим използва около 10% от свободното пространство.</string>
+    <string name="playback_cache_info_auto" formatted="false">Автоматичният режим използва около 10% от свободното пространство.</string>
     <string name="playback_cache_info_manual_headroom">Ръчният режим запазва около %1$dMB свободен капацитет.</string>
     <string name="playback_cache_info_free_disk">Наличен свободен диск: %1$s.</string>
     <string name="playback_cache_info_restart">Новото ограничение на кеша се прилага след рестартиране на приложението при смяна на режими/размери.</string>

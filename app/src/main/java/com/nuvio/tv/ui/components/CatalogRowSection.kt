@@ -410,9 +410,7 @@ fun CatalogRowSection(
                         entryFocusRequester != null && index == targetIndex
                     }
                 }
-                val cardFocusRequester = itemFocusRequestersByKey.getOrPut(
-                    rowItemFocusKey(index, item)
-                ) { FocusRequester() }
+                val cardFocusRequester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(itemFocusRequestersByKey, rowItemFocusKey(index, item))
 
                 val isPlaceholder = item.id.startsWith("__placeholder_")
                 val isNonFirstPlaceholder = isPlaceholder && index > 0

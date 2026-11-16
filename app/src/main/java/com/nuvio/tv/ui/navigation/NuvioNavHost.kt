@@ -1,3 +1,5 @@
+@file:androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+
 package com.nuvio.tv.ui.navigation
 
 import kotlinx.coroutines.launch
@@ -2118,7 +2120,7 @@ private fun PlaybackNavHost(
 
             // When coming from search, get the SearchViewModel from the Search back stack entry
             // so we share the same data (existing results + pagination)
-            val searchBackStackEntry = androidx.compose.runtime.remember(fromSearch) {
+            val searchBackStackEntry = androidx.compose.runtime.remember(backStackEntry, navController, fromSearch) {
                 if (fromSearch) {
                     try { navController.getBackStackEntry(Screen.Search.route) } catch (_: Exception) { null }
                 } else null
@@ -2127,7 +2129,7 @@ private fun PlaybackNavHost(
                 if (searchBackStackEntry != null) {
                     androidx.hilt.navigation.compose.hiltViewModel<com.nuvio.tv.ui.screens.search.SearchViewModel>(searchBackStackEntry)
                 } else null
-            val homeBackStackEntry = androidx.compose.runtime.remember {
+            val homeBackStackEntry = androidx.compose.runtime.remember(backStackEntry, navController) {
                 try { navController.getBackStackEntry(Screen.Home.route) } catch (_: Exception) { null }
             }
             val homeViewModel: com.nuvio.tv.ui.screens.home.HomeViewModel =

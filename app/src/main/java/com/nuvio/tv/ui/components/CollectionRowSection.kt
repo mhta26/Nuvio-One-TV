@@ -229,9 +229,7 @@ fun CollectionRowSection(
                             }
                         },
                         modifier = if (isEntryTarget) Modifier.focusRequester(entryFocusRequester!!) else Modifier,
-                        focusRequester = itemFocusRequesters.getOrPut(
-                            folderFocusKey(index, folder)
-                        ) { FocusRequester() }
+                        focusRequester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(itemFocusRequesters, folderFocusKey(index, folder))
                     )
                 }
             }

@@ -1,3 +1,5 @@
+@file:androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+
 package com.nuvio.tv.ui.screens.settings
 
 import com.nuvio.tv.ui.theme.NuvioPrimitives

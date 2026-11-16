@@ -1,3 +1,5 @@
+@file:androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+
 package com.nuvio.tv.music
 
 import androidx.activity.compose.BackHandler
@@ -101,7 +103,7 @@ fun MusicScreen(
     val party by MusicPartyManager.state.collectAsState()
     val accountViewModel: YouTubeAccountViewModel = hiltViewModel()
     // Music keeps its own YouTube profile choice, separate from OneTube's.
-    remember(accountViewModel) { accountViewModel.useScope(com.nuvio.tv.youtube.AccountScope.MUSIC) }
+    LaunchedEffect(accountViewModel) { accountViewModel.useScope(com.nuvio.tv.youtube.AccountScope.MUSIC) }
     val account by accountViewModel.state.collectAsState()
     val context = LocalContext.current
     var showNowPlaying by remember { mutableStateOf(false) }

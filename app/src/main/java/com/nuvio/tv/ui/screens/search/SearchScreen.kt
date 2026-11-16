@@ -936,8 +936,8 @@ fun SearchScreen(
                                     firstVisibleItemScrollOffset = saved?.second ?: 0
                                 )
                             }
-                            val rowFocusRequester = searchRowFocusRequesters.getOrPut(catalogKey) { FocusRequester() }
-                            val entryFocusRequester = searchRowEntryFocusRequesters.getOrPut(catalogKey) { FocusRequester() }
+                            val rowFocusRequester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(searchRowFocusRequesters, catalogKey)
+                            val entryFocusRequester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(searchRowEntryFocusRequesters, catalogKey)
 
                             CatalogRowSection(
                                 catalogRow = catalogRow,
@@ -1100,9 +1100,7 @@ private fun RecentSearchesSection(
     val removeFocusRequesters = remember { mutableMapOf<String, FocusRequester>() }
     var pendingDownwardFocus by remember { mutableStateOf<Pair<String, String>?>(null) }
     // Downward focus enters the query column. The remove buttons are reached with right.
-    val firstSearchFocusRequester = searchFocusRequesters.getOrPut(recentSearches.first()) {
-        FocusRequester()
-    }
+    val firstSearchFocusRequester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(searchFocusRequesters, recentSearches.first())
     LaunchedEffect(recentSearches, pendingDownwardFocus) {
         val visibleQueries = recentSearches.toSet()
         searchFocusRequesters.keys.retainAll(visibleQueries)
@@ -1157,19 +1155,15 @@ private fun RecentSearchesSection(
 
         recentSearches.forEachIndexed { index, recentQuery ->
             key(recentQuery) {
-                val searchFocusRequester = searchFocusRequesters.getOrPut(recentQuery) {
-                    FocusRequester()
-                }
-                val removeFocusRequester = removeFocusRequesters.getOrPut(recentQuery) {
-                    FocusRequester()
-                }
+                val searchFocusRequester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(searchFocusRequesters, recentQuery)
+                val removeFocusRequester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(removeFocusRequesters, recentQuery)
                 val previousRemoveFocusRequester = if (index == 0) {
                     clearHistoryFocusRequester
                 } else {
-                    removeFocusRequesters.getOrPut(recentSearches[index - 1]) { FocusRequester() }
+                    com.nuvio.tv.ui.components.rememberCachedFocusRequester(removeFocusRequesters, recentSearches[index - 1])
                 }
                 val nextRemoveFocusRequester = recentSearches.getOrNull(index + 1)?.let {
-                    removeFocusRequesters.getOrPut(it) { FocusRequester() }
+                    com.nuvio.tv.ui.components.rememberCachedFocusRequester(removeFocusRequesters, it)
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),

@@ -773,7 +773,7 @@ fun GridHomeContent(
                         }
                         GridContentCard(
                             item = gridItem.item,
-                            focusRequester = focusRequester ?: focusRequesters.getOrPut(itemKey) { FocusRequester() },
+                            focusRequester = focusRequester ?: com.nuvio.tv.ui.components.rememberCachedFocusRequester(focusRequesters, itemKey),
                             posterCardStyle = posterCardStyle,
                             showLabel = uiState.posterLabelsEnabled,
                             isWatched = isCatalogItemWatched(gridItem.item),
@@ -824,7 +824,7 @@ fun GridHomeContent(
                         }
                         SeeAllGridCard(
                             posterCardStyle = posterCardStyle,
-                            focusRequester = focusRequester ?: focusRequesters.getOrPut(itemKey) { FocusRequester() },
+                            focusRequester = focusRequester ?: com.nuvio.tv.ui.components.rememberCachedFocusRequester(focusRequesters, itemKey),
                             onFocused = remember(itemKey) {
                                 {
                                     lastFocusedGridItemKey.value = itemKey
@@ -852,7 +852,7 @@ fun GridHomeContent(
                             collectionTitle = gridItem.collectionTitle,
                             focusGlowEnabled = gridItem.focusGlowEnabled,
                             posterCardStyle = posterCardStyle,
-                            focusRequester = focusRequesters.getOrPut(itemKey) { FocusRequester() },
+                            focusRequester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(focusRequesters, itemKey),
                             onFocused = remember(itemKey) { { lastFocusedGridItemKey.value = itemKey; activeCwRowKey.value = null } },
                             onClick = remember(gridItem.collectionId, gridItem.folder.id) {
                                 {

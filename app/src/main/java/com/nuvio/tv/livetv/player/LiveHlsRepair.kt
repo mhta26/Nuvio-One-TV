@@ -64,7 +64,7 @@ internal object HlsRepair {
     fun fix(bytes: ByteArray): String? {
         // A TS stream starts with 0x47 every 188 bytes: certainly not a playlist.
         if (bytes.size >= 189 && bytes[0] == 0x47.toByte() && bytes[188] == 0x47.toByte()) return null
-        var text = String(bytes, Charsets.UTF_8).removePrefix("﻿")
+        var text = String(bytes, Charsets.UTF_8).removePrefix("\uFEFF")
         val start = text.indexOf("#EXTM3U")
         text = when {
             // Junk (blank lines, spaces, a byte-order mark) before the header: dropped.

@@ -24,7 +24,7 @@ internal object AutoSyncSubtitleTextRetimer {
 
     fun retime(body: String, timeline: AutoSyncTimelineRetimeResult): String? {
         val text = body
-            .replace("﻿", "")
+            .replace("\uFEFF", "")
             .replace("\r\n", "\n")
             .replace('\r', '\n')
         if (ttmlRegex.containsMatchIn(text.take(512))) return null

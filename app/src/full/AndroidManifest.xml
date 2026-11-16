@@ -6,7 +6,15 @@
     <!-- Lets the in-app updater install its own updates without a confirmation screen on Android 12+. -->
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
 
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+
     <application>
+        <service android:name="com.nuvio.tv.livetv.record.LiveTvRecordingService" android:foregroundServiceType="dataSync" />
+        <service android:name="com.nuvio.tv.core.player.ExternalPlaybackKeepAliveService" android:foregroundServiceType="mediaPlayback" />
+        <service android:name="com.nuvio.tv.music.MusicPlaybackService" android:foregroundServiceType="mediaPlayback" />
+        <service android:name="com.nuvio.tv.music.MusicDownloadService" android:foregroundServiceType="dataSync" />
+        <service android:name="com.nuvio.tv.music.MusicPartyService" android:foregroundServiceType="dataSync" />
         <service
             android:name=".updater.UpdateJobService"
             android:exported="false"

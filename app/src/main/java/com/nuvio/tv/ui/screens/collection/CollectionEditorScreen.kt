@@ -460,7 +460,7 @@ fun CollectionEditorScreen(
             items = uiState.folders,
             key = { _, folder -> folder.id }
         ) { index, folder ->
-            val editFocusRequester = folderFocusRequesters.getOrPut(folder.id) { FocusRequester() }
+            val editFocusRequester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(folderFocusRequesters, folder.id)
             Box(modifier = Modifier.padding(start = NuvioTheme.spacing.sm, end = NuvioTheme.spacing.sm, bottom = NuvioTheme.spacing.sm)) {
                 FolderListItem(
                     folder = folder,
@@ -479,7 +479,7 @@ fun CollectionEditorScreen(
         }
 
         item(key = "add_folder") {
-            val addFolderFocusRequester = folderFocusRequesters.getOrPut("add_folder") { FocusRequester() }
+            val addFolderFocusRequester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(folderFocusRequesters, "add_folder")
             Box(modifier = Modifier.padding(start = NuvioTheme.spacing.sm, end = NuvioTheme.spacing.sm, top = NuvioTheme.spacing.xs)) {
                 NuvioButton(
                     onClick = {

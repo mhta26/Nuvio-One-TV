@@ -1,4 +1,8 @@
+@file:androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+
 package com.nuvio.tv.music
+
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
@@ -541,6 +545,7 @@ private fun MusicLibraryContent(
     onAlbum: (NavidromeAlbum) -> Unit,
     onPlaylist: (NavidromePlaylist) -> Unit
 ) {
+    val coverConfig by MusicNavidrome.config.collectAsStateWithLifecycle()
     Column(modifier) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 4.dp),
@@ -586,7 +591,7 @@ private fun MusicLibraryContent(
                     title = album.name,
                     subtitle = album.artist,
                     coverArt = MusicNavidrome.coverUrl(
-                        MusicNavidrome.config.value,
+                        coverConfig,
                         album.coverArt
                     ),
                     trailing = "${album.songCount} tracks",
@@ -604,7 +609,7 @@ private fun MusicLibraryContent(
                     title = playlist.name,
                     subtitle = playlist.owner ?: "Navidrome playlist",
                     coverArt = MusicNavidrome.coverUrl(
-                        MusicNavidrome.config.value,
+                        coverConfig,
                         playlist.coverArt
                     ),
                     trailing = "${playlist.songCount} tracks",
@@ -626,12 +631,13 @@ private fun AlbumDetailContent(
     onBack: () -> Unit,
     onPlay: (List<Song>, Int) -> Unit
 ) {
+    val coverConfig by MusicNavidrome.config.collectAsStateWithLifecycle()
     Column(modifier) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         NavidromeBackButton(onBack)
         Spacer(Modifier.width(14.dp))
         MusicArtwork(
-            url = detail.album.coverArt?.let { MusicNavidrome.coverUrl(MusicNavidrome.config.value, it) },
+            url = detail.album.coverArt?.let { MusicNavidrome.coverUrl(coverConfig, it) },
             modifier = Modifier.size(84.dp),
             cornerRadius = 12.dp,
             iconSize = 28.dp,
@@ -691,13 +697,14 @@ private fun PlaylistDetailContent(
     onPlay: (List<Song>, Int) -> Unit,
     onSave: () -> Unit
 ) {
+    val coverConfig by MusicNavidrome.config.collectAsStateWithLifecycle()
     Column(modifier) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         NavidromeBackButton(onBack)
         Spacer(Modifier.width(14.dp))
         MusicArtwork(
             url = detail.playlist.coverArt?.let {
-                MusicNavidrome.coverUrl(MusicNavidrome.config.value, it)
+                MusicNavidrome.coverUrl(coverConfig, it)
             },
             modifier = Modifier.size(84.dp),
             cornerRadius = 12.dp,

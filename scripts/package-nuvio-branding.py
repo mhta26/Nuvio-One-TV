@@ -23,6 +23,8 @@ run(master,'-resize','256x256','-strip',root/'app/src/main/res/drawable-nodpi/ap
 mark=scratch/'wordmark-symbol.png';run(master,'-resize','200x200',mark)
 wordmark=scratch/'wordmark.png'
 run('-size','1100x220','xc:none',mark,'-gravity','West','-geometry','+0+0','-composite','-font',font,'-fill','#F4F7FF','-pointsize','91','-gravity','West','-annotate','+218+0','Nuvio One TV','-strip',wordmark)
+(root/'app/src/main/res/raw').mkdir(exist_ok=True)
+shutil.copyfile(wordmark,root/'app/src/main/res/raw/one_tv_wordmark.png')
 for p in (root/'app/src/main/res/drawable-nodpi').glob('app_logo_wordmark*.png'):shutil.copyfile(wordmark,p)
 for p in (root/'app/src/main/res/drawable').glob('livetv_wordmark_iptv*.png'):shutil.copyfile(wordmark,p)
 shutil.copyfile(root/'app/src/main/res/mipmap-xxxhdpi/ic_launcher.png',root/'app/src/main/res/drawable/ic_launcher.png')

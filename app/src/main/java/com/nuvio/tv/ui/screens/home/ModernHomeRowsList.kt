@@ -442,7 +442,7 @@ internal fun ModernHomeRowsList(
                 ModernRowSection(
                     row = row,
                     isActiveRow = isActiveRowLambda,
-                    rowFocusRequester = rowFocusRequesters.getOrPut(row.key) { FocusRequester() },
+                    rowFocusRequester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(rowFocusRequesters, row.key),
                     rowTitleBottom = 14.dp, // rowTitleBottom
                     defaultBringIntoViewSpec = defaultBringIntoViewSpec,
                     focusStateCatalogRowScrollIndex = focusState.catalogRowScrollStates[row.key] ?: 0,

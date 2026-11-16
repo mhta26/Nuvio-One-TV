@@ -1,3 +1,5 @@
+@file:androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+
 package com.nuvio.tv.livetv.ui
 
 import com.nuvio.tv.livetv.model.EpgProgram
@@ -858,7 +860,7 @@ internal object LiveCorners {
 @Composable
 internal fun liveCorner(): androidx.compose.ui.unit.Dp {
     val context = androidx.compose.ui.platform.LocalContext.current
-    androidx.compose.runtime.remember { LiveCorners.start(context) }
+    androidx.compose.runtime.LaunchedEffect(context) { LiveCorners.start(context) }
     return LiveCorners.radius.collectAsState().value.dp
 }
 

@@ -1321,7 +1321,7 @@ private fun StreamsList(
                     onClick = { onStreamSelected(stream) },
                     focusRequester = when {
                         shouldRestoreFocusedStream && index == focusedStreamIndex.coerceIn(0, (streams.lastIndex).coerceAtLeast(0)) -> restoreFocusRequester
-                        else -> streamFocusRequesters.getOrPut(streamKeys[index]) { FocusRequester() }
+                        else -> com.nuvio.tv.ui.components.rememberCachedFocusRequester(streamFocusRequesters, streamKeys[index])
                     },
                     onFocusChanged = { focused ->
                         if (focused) {

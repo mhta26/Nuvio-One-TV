@@ -381,6 +381,7 @@
     <plurals name="ambient_mode_timeout_minutes">
         <item quantity="one">%1$d minuto</item>
         <item quantity="other">%1$d minutos</item>
+        <item quantity="many">%1$d minutos</item>
     </plurals>
     <string name="ambient_mode_catalogs">Catálogos</string>
     <string name="ambient_mode_catalogs_subtitle">Elige hasta 3 catálogos de los que obtener imágenes</string>
@@ -673,7 +674,7 @@
     <string name="supporters_contributors_donate_copy">Nuvio seguirá siendo gratis y de código abierto. Si deseas respaldar el proyecto, puedes ayudar a cubrir el tiempo e infraestructura detrás.</string>
     <string name="supporters_contributors_donation_progress_title">Servidor &amp; mantenimiento de este mes</string>
     <string name="supporters_contributors_donation_progress_complete">Cubierto. El apoyo adicional ahora se destina al desarrollo.</string>
-    <string name="supporters_contributors_donation_progress_remaining">Después del 100%, el apoyo adicional se destina al desarrollo.</string>
+    <string name="supporters_contributors_donation_progress_remaining" formatted="false">Después del 100%, el apoyo adicional se destina al desarrollo.</string>
     <string name="supporters_contributors_loading_donation_progress">Cargando progreso de financiación...</string>
     <string name="supporters_contributors_donate_button">Donar a Nuvio</string>
     <string name="supporters_contributors_qr_title">Escanear para donar</string>
@@ -1896,6 +1897,7 @@ Utilizas esta función bajo tu entera responsabilidad. P2P se puede desactivar e
     <plurals name="player_report_loading_issue_prompt">
         <item quantity="one">Sigue cargando tras %1$d segundo</item>
         <item quantity="other">Sigue cargando tras %1$d segundos</item>
+        <item quantity="many">Sigue cargando tras %1$d segundos</item>
     </plurals>
     <string name="player_speed_title">Velocidad de reproducción</string>
     <string name="player_more_actions_title">Más acciones</string>
@@ -3206,6 +3208,7 @@ Utilizas esta función bajo tu entera responsabilidad. P2P se puede desactivar e
     <plurals name="debrid_selection_count_value">
         <item quantity="one">%d seleccionado</item>
         <item quantity="other">%d seleccionados</item>
+        <item quantity="many">%d seleccionados</item>
     </plurals>
     <string name="debrid_size_range_any">Cualquiera</string>
     <string name="debrid_size_range_up_to">Hasta %1$dGB</string>
@@ -3293,7 +3296,7 @@ Utilizas esta función bajo tu entera responsabilidad. P2P se puede desactivar e
     <string name="playback_cache_vod_size">Tamaño de la caché VOD</string>
     <string name="playback_cache_vod_size_sub">Uso máximo de disco para la caché de VOD progresivo (con expulsión LRU).</string>
     <string name="playback_cache_info_range">Rango: %1$d-%2$d MB.</string>
-    <string name="playback_cache_info_auto">El modo automático apunta a aproximadamente el 10% del espacio libre.</string>
+    <string name="playback_cache_info_auto" formatted="false">El modo automático apunta a aproximadamente el 10% del espacio libre.</string>
     <string name="playback_cache_info_manual_headroom">El modo manual mantiene aproximadamente %1$dMB de margen.</string>
     <string name="playback_cache_info_free_disk">Espacio libre en disco disponible: %1$s.</string>
     <string name="playback_cache_info_restart">El nuevo límite de caché se aplica tras reiniciar la aplicación al cambiar entre modos/tamaños.</string>

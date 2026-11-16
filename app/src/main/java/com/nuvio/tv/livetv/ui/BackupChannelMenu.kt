@@ -42,6 +42,7 @@ internal fun BackupChannelMenu(
     var step by remember { mutableStateOf("menu") }
     val first = remember { FocusRequester() }
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val user by viewModel.userState.collectAsStateWithLifecycle()
     val recordings by viewModel.recordings.collectAsStateWithLifecycle()
     val schedules by viewModel.schedules.collectAsStateWithLifecycle()
@@ -76,7 +77,7 @@ internal fun BackupChannelMenu(
         )
         "group" -> GroupPickerDialog(
             channel = channel,
-            groups = viewModel.uiState.value.customGroups,
+            groups = uiState.customGroups,
             onDismiss = onDismiss,
             onPick = { g -> viewModel.addToGroup(g.id, channel); onDismiss() },
             onNewGroup = { step = "newgroup" }

@@ -419,6 +419,8 @@ object LiveTvSearchBridge {
  */
 @Composable
 private fun ChannelQuickMenu(channel: LiveChannel, viewModel: LiveTvViewModel, program: EpgProgram? = null, onDismiss: () -> Unit) {
+    val menuState by viewModel.uiState.collectAsStateWithLifecycle()
+    val menuUser by viewModel.userState.collectAsStateWithLifecycle()
     var step by remember { mutableStateOf("menu") }
     val first = remember { FocusRequester() }
     when (step) {
@@ -449,13 +451,13 @@ private fun ChannelQuickMenu(channel: LiveChannel, viewModel: LiveTvViewModel, p
         )
         "group" -> GroupPickerDialog(
             channel = channel,
-            groups = viewModel.uiState.value.customGroups,
+            groups = menuState.customGroups,
             onDismiss = onDismiss,
             onPick = { g -> viewModel.addToGroup(g.id, channel); onDismiss() },
             onNewGroup = { step = "newgroup" }
         )
         else -> {
-            val isFavorite = channel.key in viewModel.userState.value.favorites
+            val isFavorite = channel.key in menuUser.favorites
             // The Calendar's bell for the show in this result (follow the show / put the movie on the Calendar).
             val bell = com.nuvio.tv.livetv.calendar.rememberLiveBell(program, channel)
             LiveDialog(onDismiss = onDismiss, width = 440.dp) {

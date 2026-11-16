@@ -315,6 +315,7 @@ object CrashCatcher {
     }
 
     /** The main thread's part of Android's freeze (ANR) report. */
+    @androidx.annotation.RequiresApi(android.os.Build.VERSION_CODES.R)
     private fun mainThreadFromAnr(info: ApplicationExitInfo): String? {
         val text = info.traceInputStream?.bufferedReader()?.use { r ->
             val out = StringBuilder()

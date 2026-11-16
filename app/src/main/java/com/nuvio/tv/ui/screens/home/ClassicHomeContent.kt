@@ -858,7 +858,7 @@ fun ClassicHomeContent(
                             firstVisibleItemIndex = focusState.catalogRowScrollStates[catalogKey] ?: 0
                         )
                     }
-                    val rowFocusRequester = rowFocusRequesters.getOrPut(catalogKey) { FocusRequester() }
+                    val rowFocusRequester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(rowFocusRequesters, catalogKey)
 
                     androidx.compose.runtime.CompositionLocalProvider(com.nuvio.tv.livetv.home.LocalLiveTvHintHere provides (liveTvRowAbove == true && index == 0 && !(uiState.continueWatchingEnabled && uiState.continueWatchingItems.isNotEmpty()))) {
                     CatalogRowSection(
@@ -931,7 +931,7 @@ fun ClassicHomeContent(
                         listState = listState,
                         posterCardStyle = classicSecondaryPosterCardStyle,
                         focusedItemIndex = collectionFocusedItemIndex,
-                        rowFocusRequester = rowFocusRequesters.getOrPut(collectionKey) { FocusRequester() },
+                        rowFocusRequester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(rowFocusRequesters, collectionKey),
                         onItemFocused = { itemIndex ->
                             if (restoringFocus) restoringFocus = false
                             currentFocusSnapshot.rowIndex = index

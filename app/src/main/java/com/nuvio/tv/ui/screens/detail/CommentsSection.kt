@@ -423,7 +423,7 @@ fun CommentsSection(
                     horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md)
                 ) {
                     items(comments, key = { it.id }) { review ->
-                        val commentFocusRequester = commentFocusRequesters.getOrPut(review.id) { FocusRequester() }
+                        val commentFocusRequester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(commentFocusRequesters, review.id)
                         CommentCard(
                             review = review,
                             shape = cardShape,

@@ -345,7 +345,7 @@ private fun LiveTvHomeRowContent(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 itemsIndexed(entries, key = { _, it -> it.channel.key }) { index, e ->
-                    val requester = cardFocus.getOrPut(e.channel.key) { androidx.compose.ui.focus.FocusRequester() }
+                    val requester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(cardFocus, e.channel.key)
                     HomeCard(
                         modifier = (if (index == 0) Modifier.focusRequester(firstCard) else Modifier).focusRequester(requester),
                         // Keep the highlighted card fully on screen, and the very start of the row

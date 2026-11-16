@@ -222,7 +222,7 @@ private fun EpisodeStreamsView(
     val firstStreamKey = streamKeys.firstOrNull()
     val streamFocusRequesters = remember { mutableMapOf<String, FocusRequester>() }
     streamKeys.forEach { key ->
-        streamFocusRequesters.getOrPut(key) { FocusRequester() }
+        com.nuvio.tv.ui.components.rememberCachedFocusRequester(streamFocusRequesters, key)
     }
     var firstCardHasFocus by remember(firstStreamKey) { mutableStateOf(false) }
 

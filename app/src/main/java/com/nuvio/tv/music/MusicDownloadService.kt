@@ -16,7 +16,7 @@ class MusicDownloadService : DownloadService(
     DEFAULT_FOREGROUND_NOTIFICATION_UPDATE_INTERVAL,
     CHANNEL_ID,
     R.string.music_downloads_channel_name,
-    R.drawable.ic_music_notification
+    0 // Optional channel description, not the notification icon resource.
 ) {
     override fun getDownloadManager(): DownloadManager =
         MusicDownloads.downloadManager(this)

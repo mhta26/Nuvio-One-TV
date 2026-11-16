@@ -263,7 +263,7 @@ fun ContinueWatchingSection(
                     }
                 }
             ) { index, progress ->
-                val requester = focusRequesters.getOrPut(index) { FocusRequester() }
+                val requester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(focusRequesters, index)
                 val focusModifier = Modifier.focusRequester(requester)
                 val stableOnClick = remember(progress) { { onItemClick(progress) } }
                 val stableOnLongPress = remember(progress) { { optionsItem = progress } }

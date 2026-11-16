@@ -54,7 +54,7 @@ object YouTubeAutoCaptions {
     /** The captions in [file] (WebVTT) with only each caption's newest line. Anything else is returned as it is. */
     fun tidy(file: String): String {
         val text = file.replace("\r\n", "\n")
-        if (!text.trimStart('﻿', ' ', '\n').startsWith("WEBVTT")) return file
+        if (!text.trimStart('\uFEFF', ' ', '\n').startsWith("WEBVTT")) return file
         val cues = ArrayList<Cue>()
         for (block in text.split(Regex("\n{2,}"))) {
             val lines = block.split('\n')

@@ -1,3 +1,5 @@
+@file:androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+
 @file:OptIn(
     ExperimentalTvMaterial3Api::class,
     androidx.compose.ui.ExperimentalComposeUiApi::class
@@ -640,7 +642,7 @@ fun PlayerScreen(
     }
 
     // Frame rate matching lifecycle.
-    val activity = LocalContext.current as? android.app.Activity
+    val activity = androidx.activity.compose.LocalActivity.current
     LaunchedEffect(activity) {
         viewModel.attachHostActivity(activity)
         viewModel.startInitialPlaybackIfNeeded()

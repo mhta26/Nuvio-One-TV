@@ -274,7 +274,7 @@ fun CollectionManagementScreen(
                     items = uiState.collections,
                     key = { _, item -> item.id }
                 ) { index, collection ->
-                    val editFocusRequester = itemFocusRequesters.getOrPut(collection.id) { FocusRequester() }
+                    val editFocusRequester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(itemFocusRequesters, collection.id)
                     CollectionListItem(
                         collection = collection,
                         isFirst = index == 0,

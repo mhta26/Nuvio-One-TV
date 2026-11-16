@@ -140,6 +140,11 @@ val releaseStorePasswordValue = env("NUVIO_RELEASE_STORE_PASSWORD")
     ?: localProperties.getProperty("NUVIO_RELEASE_STORE_PASSWORD", "815787")
 
 android {
+    lint {
+        // Incomplete community translations use Android's default-language fallback.
+        warning += "MissingTranslation"
+    }
+
     namespace = "com.nuvio.tv"
     compileSdk = 36
     ndkVersion = "29.0.14206865"
