@@ -51,7 +51,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusGroup
@@ -777,10 +776,6 @@ fun ContinueWatchingCard(
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxSize()
-                            .graphicsLayer {
-                                compositingStrategy =
-                                    CompositingStrategy.Offscreen
-                            }
                             .clip(cwClipShape)
 
                             // Gradient overlay for text legibility, only needed when text sits on the artwork.

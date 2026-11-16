@@ -46,7 +46,6 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -502,9 +501,6 @@ fun ContentCard(
                             .align(Alignment.BottomStart)
                             .fillMaxWidth()
                             .height(96.dp)
-                            .graphicsLayer {
-                                compositingStrategy = CompositingStrategy.Offscreen
-                            }
                             .drawWithCache {
                                 val gradient = Brush.verticalGradient(
                                     colors = listOf(
@@ -558,7 +554,6 @@ fun ContentCard(
                         modifier = Modifier
                             .fillMaxSize()
                             .zIndex(1.5f)
-                            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
                             .drawWithCache {
                                 val gradient = Brush.verticalGradient(
                                     colorStops = arrayOf(
@@ -588,7 +583,6 @@ fun ContentCard(
                         modifier = Modifier
                             .fillMaxSize()
                             .zIndex(1.5f)
-                            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
                             .drawWithCache {
                                 val gradient = Brush.verticalGradient(
                                     colorStops = arrayOf(
