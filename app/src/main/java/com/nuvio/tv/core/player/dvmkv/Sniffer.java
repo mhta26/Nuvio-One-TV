@@ -1,5 +1,3 @@
-@file:androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-
 /*
  * Copyright (C) 2016 The Android Open Source Project
  *
@@ -27,6 +25,7 @@ import java.io.IOException;
  * Utility class that peeks from the input stream in order to determine whether it appears to be
  * compatible input for this extractor.
  */
+@androidx.annotation.OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
 /* package */ final class Sniffer {
 
   /** The number of bytes to search for a valid header in {@link #sniff(ExtractorInput)}. */

@@ -1,5 +1,3 @@
-@file:androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-
 /*
  * Copyright (C) 2016 The Android Open Source Project
  *
@@ -28,6 +26,7 @@ import java.io.IOException;
  * originally designed for the Matroska container format. More information about EBML and Matroska
  * is available <a href="http://www.matroska.org/technical/specs/index.html">here</a>.
  */
+@androidx.annotation.OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
 /* package */ interface EbmlReader {
 
   /**
