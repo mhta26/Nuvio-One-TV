@@ -23,7 +23,7 @@ internal object VlcExternalSubtitleFont {
         val styled = if (text.contains("[Script Info]", true)) {
             ExternalSubtitleFontPolicy.overrideAssFonts(text)
         } else {
-            val format = Format.Builder().setSampleMimeType(PlayerSubtitleUtils.mimeTypeFromUrl(url)).build()
+            val format = Format.Builder().setSampleMimeType(PlayerSubtitleUtils.sniffSubtitleMimeType(text, url)).build()
             val factory = DefaultSubtitleParserFactory()
             if (!factory.supportsFormat(format)) return null
             val events = StringBuilder()
