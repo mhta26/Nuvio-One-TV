@@ -75,12 +75,24 @@ jobs:
           path: ${{ runner.temp }}/nuvio-one-tv-build/gradle-cache
           key: nuvio-one-tv-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', 'gradle/libs.versions.toml') }}
           restore-keys: nuvio-one-tv-${{ runner.os }}-
+      - name: Verify service app identifiers
+        id: service_config
+        run: |
+          python3 - <<'PYCONFIG'
+          import os
+          required = ('SIMKL_CLIENT_ID', 'TRAKT_CLIENT_ID', 'MDBLIST_CLIENT_ID')
+          missing = [name for name in required if not os.environ.get(name, '').strip()]
+          if missing:
+              raise SystemExit('Missing public app identifiers: ' + ', '.join(missing) +
+                  '. Set Actions repository variables or use the manual workflow inputs.')
+          print('Simkl, Trakt and MDBList app identifiers are configured; values are not printed.')
+          PYCONFIG
       - name: Test account configuration
         run: python3 -m unittest discover -s scripts/tests -p 'test_preview_backend.py'
       - name: Run all release unit tests
         run: bash scripts/build-codex-preview.sh --test-only
       - name: Run full Android Lint
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.service_config.outcome == 'success' }}
         run: bash scripts/build-codex-preview.sh --lint-only
       - name: Upload code audit reports
         if: always()
