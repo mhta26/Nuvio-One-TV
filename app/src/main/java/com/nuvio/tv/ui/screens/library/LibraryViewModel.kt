@@ -1048,10 +1048,22 @@ class LibraryViewModel @Inject constructor(
         val validGenre = selectedGenre?.takeIf { g -> genreOptions.any { it.key.equals(g, ignoreCase = true) } }
         val validYear = selectedYear?.takeIf { y -> yearOptions.any { it.key == y } }
 
+        val posterPattern = com.nuvio.tv.core.poster.patternForScreen(
+            customPosterUrlPattern, com.nuvio.tv.core.poster.CustomPosterScreen.LIBRARY, customPosterEnabledScreens
+        )
+        val posterIds = if (posterPattern.isBlank()) emptyMap() else buildMap {
+            for (entry in sorted) {
+                val ids = com.nuvio.tv.core.poster.CustomPosterUrlResolver.extractIds(entry.id, entry.imdbId, entry.tmdbId)
+                if (ids.imdbId != null || ids.tmdbId != null) continue
+                val apiType = if (entry.type.equals("movie", true)) "movie" else "series"
+                val meta = metaRepository.getCachedMeta(apiType, entry.id)
+                    ?: if (entry.id != ids.id) metaRepository.getCachedMeta(apiType, ids.id) else null
+                if (meta?.imdbId != null) put(entry.id,
+                    com.nuvio.tv.core.poster.CustomPosterUrlResolver.extractIds(entry.id, meta.imdbId))
+            }
+        }
         return copy(
-            visibleItems = sorted.withCustomPosterUrls(
-                com.nuvio.tv.core.poster.patternForScreen(customPosterUrlPattern, com.nuvio.tv.core.poster.CustomPosterScreen.LIBRARY, customPosterEnabledScreens)
-            ),
+            visibleItems = sorted.withCustomPosterUrls(posterPattern, posterIds),
             availableTypeTabs = typeTabsWithCounts,
             availableGenres = genreOptions,
             availableYears = yearOptions,

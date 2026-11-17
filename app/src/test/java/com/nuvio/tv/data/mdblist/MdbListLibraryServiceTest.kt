@@ -22,6 +22,22 @@ import org.junit.Test
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class MdbListLibraryServiceTest {
     @Test
+    fun `poster metadata can observe cached library without refreshing remote lists`() = runTest {
+        val h = MdbListSyncTestHarness(backgroundScope)
+        h.seedLibrary(mdbListLibrarySnapshot(h.http.now - 86_400_000L).copy(
+            itemsByList = mapOf(MDBLIST_WATCHLIST_KEY to listOf(
+                MdbListLibraryItem(MdbListItemType.MOVIE, mdbListTestMovie().media)
+            ))
+        ))
+        h.repository.ensureLoaded()
+        val service = h.libraryService(backgroundScope)
+        assertTrue(service.cachedItems.first().isNotEmpty())
+        runCurrent()
+        assertTrue(h.http.engine.requests.isEmpty())
+        assertTrue(h.remote.calls.isEmpty())
+    }
+
+    @Test
     fun `unresolved provider IDs do not break the shared membership picker`() = runTest {
         val h = MdbListSyncTestHarness(backgroundScope)
         h.seedLibrary()

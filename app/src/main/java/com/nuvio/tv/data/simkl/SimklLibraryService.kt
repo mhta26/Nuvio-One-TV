@@ -28,10 +28,8 @@ class SimklLibraryService @Inject constructor(
         .distinctUntilChanged()
     override val isRefreshing = syncRepository.state.map { state -> state.isLoading }
         .distinctUntilChanged()
-    override val items = syncRepository.projection.map { projection ->
-        projection.library.items
-    }.onStart { syncRepository.refresh(TrackingRefreshIntent.AUTOMATIC) }
-        .distinctUntilChanged()
+    override val cachedItems = syncRepository.projection.map { it.library.items }.distinctUntilChanged()
+    override val items = cachedItems.onStart { syncRepository.refresh(TrackingRefreshIntent.AUTOMATIC) }
     override val tabs = isAuthenticated.map { authenticated ->
         if (authenticated) {
             syncRepository.projection.value.library.tabs

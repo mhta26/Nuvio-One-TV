@@ -93,7 +93,14 @@ object CustomPosterUrlResolver {
      * - `"tmdb:1396"` -> tmdbId = "1396"
      * - `"kitsu:7442"` -> kitsuId = "7442"
      */
-    fun extractIds(metaId: String, explicitImdbId: String? = null): ContentIds {
+    fun extractIds(
+        metaId: String,
+        explicitImdbId: String? = null,
+        explicitTmdbId: Int? = null
+    ): ContentIds {
+        // Posters describe a title, not a video. Episode IDs otherwise produce invalid
+        // imdb_id/tmdb_id and stremio_id values (e.g. tt26743760:3:8 -> HTTP 400).
+        val posterId = titleId(metaId)
         var imdbId: String? = null
         var tmdbId: String? = null
         var tvdbId: String? = null
@@ -103,21 +110,23 @@ object CustomPosterUrlResolver {
         var anidbId: String? = null
 
         when {
-            metaId.startsWith("tt") -> imdbId = metaId
-            metaId.startsWith("tmdb:") -> tmdbId = metaId.removePrefix("tmdb:")
-            metaId.startsWith("tvdb:") -> tvdbId = metaId.removePrefix("tvdb:")
-            metaId.startsWith("kitsu:") -> kitsuId = metaId.removePrefix("kitsu:")
-            metaId.startsWith("anilist:") -> anilistId = metaId.removePrefix("anilist:")
-            metaId.startsWith("mal:") -> malId = metaId.removePrefix("mal:")
-            metaId.startsWith("anidb:") -> anidbId = metaId.removePrefix("anidb:")
+            posterId.startsWith("tt") -> imdbId = posterId
+            posterId.startsWith("tmdb:") -> tmdbId = posterId.removePrefix("tmdb:")
+            posterId.startsWith("tvdb:") -> tvdbId = posterId.removePrefix("tvdb:")
+            posterId.startsWith("kitsu:") -> kitsuId = posterId.removePrefix("kitsu:")
+            posterId.startsWith("anilist:") -> anilistId = posterId.removePrefix("anilist:")
+            posterId.startsWith("mal:") -> malId = posterId.removePrefix("mal:")
+            posterId.startsWith("anidb:") -> anidbId = posterId.removePrefix("anidb:")
         }
 
         if (!explicitImdbId.isNullOrBlank()) {
-            imdbId = explicitImdbId
+            imdbId = titleId(explicitImdbId.removePrefix("imdb:"))
         }
 
+        if (explicitTmdbId != null && explicitTmdbId > 0) tmdbId = explicitTmdbId.toString()
+
         return ContentIds(
-            id = metaId,
+            id = posterId,
             imdbId = imdbId,
             tmdbId = tmdbId,
             tvdbId = tvdbId,
@@ -126,6 +135,19 @@ object CustomPosterUrlResolver {
             malId = malId,
             anidbId = anidbId
         )
+    }
+
+    /** Strip only numeric episode suffixes on known media namespaces; opaque IDs stay intact. */
+    private val numericPosterNamespaces = setOf("tmdb", "tvdb", "kitsu", "anilist", "mal", "anidb")
+
+    private fun titleId(id: String): String {
+        val parts = id.split(':')
+        if (parts.size > 1 && parts[0].startsWith("tt") &&
+            parts[0].drop(2).isNotEmpty() && parts[0].drop(2).all(Char::isDigit) &&
+            parts.drop(1).all { it.isNotEmpty() && it.all(Char::isDigit) }) return parts[0]
+        if (parts.size > 2 && parts[0] in numericPosterNamespaces &&
+            parts.drop(1).all { it.isNotEmpty() && it.all(Char::isDigit) }) return parts.take(2).joinToString(":")
+        return id
     }
 
     // -- Internal --

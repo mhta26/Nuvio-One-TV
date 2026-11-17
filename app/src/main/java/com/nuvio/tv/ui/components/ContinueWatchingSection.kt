@@ -440,8 +440,10 @@ internal fun continueWatchingImageCacheKey(
     model: String?,
     widthPx: Int,
     heightPx: Int,
-    shouldBlur: Boolean
-): String = "${model}_${widthPx}x${heightPx}_blur${shouldBlur}"
+    shouldBlur: Boolean,
+    revalidationVersion: Int = 0
+): String = "${model}_${widthPx}x${heightPx}_blur${shouldBlur}" +
+    if (revalidationVersion > 0) "_v$revalidationVersion" else ""
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -607,13 +609,14 @@ fun ContinueWatchingCard(
             titleMarqueeActive = true
         }
     }
-    val imageRequest = remember(effectiveImageModel, requestWidthPx, requestHeightPx, shouldBlur) {
+    val imageRevalidationVersion = com.nuvio.tv.core.image.rememberImageRevalidationKey(effectiveImageModel)
+    val imageRequest = remember(effectiveImageModel, requestWidthPx, requestHeightPx, shouldBlur, imageRevalidationVersion) {
         val builder = ImageRequest.Builder(context)
             .data(effectiveImageModel)
             .crossfade(true)
             .memoryCacheKey(
                 continueWatchingImageCacheKey(
-                    effectiveImageModel, requestWidthPx, requestHeightPx, shouldBlur
+                    effectiveImageModel, requestWidthPx, requestHeightPx, shouldBlur, imageRevalidationVersion
                 )
             )
             .size(width = requestWidthPx, height = requestHeightPx)

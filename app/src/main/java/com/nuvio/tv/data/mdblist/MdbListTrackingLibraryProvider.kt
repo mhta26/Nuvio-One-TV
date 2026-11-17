@@ -19,6 +19,7 @@ class MdbListTrackingLibraryProvider @Inject constructor(
     override val isAuthenticated = tracking.isAuthenticated
     override val isRefreshing = service.isRefreshing
     override val items = service.items
+    override val cachedItems = service.cachedItems
     override val tabs = service.tabs
 
     override fun recognizesListKey(key: String): Boolean =

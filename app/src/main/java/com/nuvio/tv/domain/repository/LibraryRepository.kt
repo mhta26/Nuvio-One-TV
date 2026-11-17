@@ -15,6 +15,8 @@ interface LibraryRepository {
     val sourceMode: Flow<LibrarySourceMode>
     val isSyncing: Flow<Boolean>
     val libraryItems: Flow<List<LibraryEntry>>
+    /** Cache-only stream for artwork ID hints, without refresh side effects. */
+    val cachedLibraryItems: Flow<List<LibraryEntry>> get() = kotlinx.coroutines.flow.flowOf(emptyList())
     val listTabs: Flow<List<LibraryListTab>>
     val membershipListTabs: Flow<List<LibraryListTab>>
 

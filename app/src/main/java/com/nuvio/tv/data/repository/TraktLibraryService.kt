@@ -84,12 +84,10 @@ class TraktLibraryService @Inject constructor(
             .onStart { ensureFresh() }
     }
 
-    fun observeAllItems(): Flow<List<LibraryEntry>> {
-        return snapshotState
-            .map { it.allEntries }
-            .distinctUntilChanged()
-            .onStart { ensureFresh() }
-    }
+    fun observeCachedItems(): Flow<List<LibraryEntry>> = snapshotState
+        .map { it.allEntries }.distinctUntilChanged()
+
+    fun observeAllItems(): Flow<List<LibraryEntry>> = observeCachedItems().onStart { ensureFresh() }
 
     fun observeMembership(itemId: String, itemType: String): Flow<Set<String>> {
         val key = contentKey(itemId = itemId, itemType = itemType)

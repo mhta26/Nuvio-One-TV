@@ -136,6 +136,7 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
                 .build()
         }
 
+        val posterCallFactory by lazy { com.nuvio.tv.core.image.PosterImageCallFactory(imageOkHttpClient) }
         val imageLoaderRef: () -> ImageLoader = { SingletonImageLoader.get(this) }
 
         return ImageLoader.Builder(this)
@@ -149,7 +150,7 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
                 add(SvgDecoder.Factory())
                 add(
                     imageNetworkFetcherFactory(
-                        callFactory = { imageOkHttpClient },
+                        callFactory = { posterCallFactory },
                         cacheStrategy = {
                             StaleWhileRevalidateCacheStrategy(
                                 revalidationClient = { imageOkHttpClient },

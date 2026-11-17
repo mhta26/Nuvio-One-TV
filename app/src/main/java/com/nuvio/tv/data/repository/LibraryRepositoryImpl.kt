@@ -105,11 +105,14 @@ class LibraryRepositoryImpl @Inject constructor(
         }
         .distinctUntilChanged()
 
-    override val libraryItems: Flow<List<LibraryEntry>> = sourceMode
+    override val libraryItems: Flow<List<LibraryEntry>> = observeItems(refresh = true)
+    override val cachedLibraryItems: Flow<List<LibraryEntry>> = observeItems(refresh = false)
+
+    private fun observeItems(refresh: Boolean): Flow<List<LibraryEntry>> = sourceMode
         .flatMapLatest { mode ->
             val provider = mode.providerId?.let(trackingProviders::provider)
             if (provider != null) {
-                provider.items
+                if (refresh) provider.items else provider.cachedItems
             } else {
                 libraryPreferences.libraryItems.map { items ->
                     items.map { saved ->

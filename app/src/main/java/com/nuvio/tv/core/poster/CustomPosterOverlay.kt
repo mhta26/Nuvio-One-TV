@@ -112,11 +112,13 @@ fun Meta.withCustomPosterUrl(
  * Applies a custom poster URL pattern to a [LibraryEntry].
  */
 fun LibraryEntry.withCustomPosterUrl(
-    pattern: String
+    pattern: String,
+    additionalIds: ContentIds? = null
 ): LibraryEntry {
     if (pattern.isBlank()) return this
 
-    val ids = CustomPosterUrlResolver.extractIds(id, explicitImdbId = imdbId)
+    val ids = CustomPosterUrlResolver.extractIds(id, explicitImdbId = imdbId ?: additionalIds?.imdbId,
+        explicitTmdbId = tmdbId ?: additionalIds?.tmdbId?.toIntOrNull())
     val type = this.type.let { if (it.equals("tv", ignoreCase = true)) "series" else it }
     val supportsShape = CustomPosterUrlResolver.supportsShape(pattern)
 
@@ -150,10 +152,11 @@ fun LibraryEntry.withCustomPosterUrl(
  */
 @JvmName("withCustomPosterUrlsLibrary")
 fun List<LibraryEntry>.withCustomPosterUrls(
-    pattern: String
+    pattern: String,
+    idHints: Map<String, ContentIds> = emptyMap()
 ): List<LibraryEntry> {
     if (pattern.isBlank()) return this
-    return map { it.withCustomPosterUrl(pattern) }
+    return map { it.withCustomPosterUrl(pattern, idHints[it.id]) }
 }
 
 /**
@@ -174,13 +177,14 @@ fun com.nuvio.tv.core.tmdb.TmdbEntityBrowseData.withCustomPosterUrls(
  * Applies a custom poster URL to a [ContinueWatchingItem].
  */
 fun com.nuvio.tv.ui.screens.home.ContinueWatchingItem.withCustomPosterUrl(
-    pattern: String
+    pattern: String,
+    additionalIds: ContentIds? = null
 ): com.nuvio.tv.ui.screens.home.ContinueWatchingItem {
     if (pattern.isBlank()) return this
     val supportsShape = CustomPosterUrlResolver.supportsShape(pattern)
     return when (this) {
         is com.nuvio.tv.ui.screens.home.ContinueWatchingItem.InProgress -> {
-            val ids = CustomPosterUrlResolver.extractIds(progress.contentId)
+            val ids = CustomPosterUrlResolver.extractIds(progress.contentId, additionalIds?.imdbId, additionalIds?.tmdbId?.toIntOrNull())
             val type = if (progress.contentType.equals("movie", ignoreCase = true)) "movie" else "series"
             val resolvedPoster = CustomPosterUrlResolver.resolve(pattern, ids, type)
             val resolvedLandscape = if (supportsShape) {
@@ -194,7 +198,7 @@ fun com.nuvio.tv.ui.screens.home.ContinueWatchingItem.withCustomPosterUrl(
             )
         }
         is com.nuvio.tv.ui.screens.home.ContinueWatchingItem.NextUp -> {
-            val ids = CustomPosterUrlResolver.extractIds(info.contentId)
+            val ids = CustomPosterUrlResolver.extractIds(info.contentId, additionalIds?.imdbId, additionalIds?.tmdbId?.toIntOrNull())
             val type = if (info.contentType.equals("movie", ignoreCase = true)) "movie" else "series"
             val resolvedPoster = CustomPosterUrlResolver.resolve(pattern, ids, type)
             val resolvedLandscape = if (supportsShape) {
@@ -215,10 +219,17 @@ fun com.nuvio.tv.ui.screens.home.ContinueWatchingItem.withCustomPosterUrl(
  */
 @JvmName("withCustomPosterUrlsCw")
 fun List<com.nuvio.tv.ui.screens.home.ContinueWatchingItem>.withCustomPosterUrls(
-    pattern: String
+    pattern: String,
+    idHints: Map<String, ContentIds> = emptyMap()
 ): List<com.nuvio.tv.ui.screens.home.ContinueWatchingItem> {
     if (pattern.isBlank()) return this
-    return map { it.withCustomPosterUrl(pattern) }
+    return map { item ->
+        val id = when (item) {
+            is com.nuvio.tv.ui.screens.home.ContinueWatchingItem.InProgress -> item.progress.contentId
+            is com.nuvio.tv.ui.screens.home.ContinueWatchingItem.NextUp -> item.info.contentId
+        }
+        item.withCustomPosterUrl(pattern, idHints[id])
+    }
 }
 
 /**

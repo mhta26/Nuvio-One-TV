@@ -25,9 +25,13 @@ class CustomPosterFallbackInterceptor : Interceptor {
 
         if (result is ErrorResult) {
             val fallbackUrl = chain.request.memoryCacheKeyExtras[FALLBACK_URL_KEY]
-            if (!fallbackUrl.isNullOrBlank()) {
+            if (!fallbackUrl.isNullOrBlank() && fallbackUrl != chain.request.data.toString()) {
                 val fallbackRequest = chain.request.newBuilder()
                     .data(fallbackUrl)
+                    // A temporary raw fallback must never be cached under the styled URL's key.
+                    .memoryCacheKey(null as String?)
+                    .diskCacheKey(null)
+                    .placeholderMemoryCacheKey(null as String?)
                     .memoryCacheKeyExtras(
                         chain.request.memoryCacheKeyExtras - FALLBACK_URL_KEY
                     )

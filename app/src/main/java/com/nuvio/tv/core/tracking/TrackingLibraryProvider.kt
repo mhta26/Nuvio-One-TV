@@ -16,6 +16,8 @@ interface TrackingLibraryProvider {
     val isAuthenticated: Flow<Boolean>
     val isRefreshing: Flow<Boolean>
     val items: Flow<List<LibraryEntry>>
+    /** Metadata decoration must not trigger a remote library refresh. */
+    val cachedItems: Flow<List<LibraryEntry>> get() = kotlinx.coroutines.flow.flowOf(emptyList())
     val tabs: Flow<List<LibraryListTab>>
 
     fun recognizesListKey(key: String): Boolean

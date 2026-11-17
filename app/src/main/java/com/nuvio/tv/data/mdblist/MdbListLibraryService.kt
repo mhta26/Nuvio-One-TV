@@ -43,6 +43,9 @@ class MdbListLibraryService(
     /** Every list that can be hidden, with whether it is shown in the library, for MDBList settings. */
     val listOptions = allSnapshots.map { it?.listOptions().orEmpty() }.distinctUntilChanged()
 
+    val cachedItems = allSnapshots.map { snapshot ->
+        MdbListLibraryProjection(snapshot?.visible() ?: MdbListLibrarySnapshot()).entries
+    }.distinctUntilChanged()
     val items = projection.map { it.entries }.onStart { refreshAsync() }.distinctUntilChanged()
     val tabs = snapshots.map { it?.visibleTabs().orEmpty() }.onStart { refreshAsync() }.distinctUntilChanged()
     val isRefreshing = combine(loadState, auth.state, activeProfileId) { state, authorization, profileId ->

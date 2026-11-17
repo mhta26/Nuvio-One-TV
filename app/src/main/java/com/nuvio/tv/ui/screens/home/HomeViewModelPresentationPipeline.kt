@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.nuvio.tv.LocaleCache
 import com.nuvio.tv.core.build.AppFeaturePolicy
 import com.nuvio.tv.core.network.NetworkResult
+import com.nuvio.tv.core.poster.CustomPosterUrlResolver
 import com.nuvio.tv.core.poster.CustomPosterScreen
 import com.nuvio.tv.core.poster.patternForScreen
 import com.nuvio.tv.core.poster.withCustomPosterUrls
@@ -26,6 +27,10 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -288,13 +293,13 @@ private data class ContinueWatchingPosterOverlay(
     val upcomingItems: List<ContinueWatchingItem>,
 )
 
-@OptIn(FlowPreview::class)
+@OptIn(FlowPreview::class, kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 internal fun HomeViewModel.observeModernHomePresentationPipeline() {
     viewModelScope.launch {
         // Poster URLs are resolved only when the list or the pattern changes.
         // uiState also emits on focus and catalog updates; resolving there
         // reran placeholder replacement for every row on each scroll step.
-        val posterOverlay = uiState
+        val posterInput = uiState
             .map { state ->
                 ContinueWatchingPosterInput(
                     enabled = state.continueWatchingEnabled,
@@ -305,22 +310,64 @@ internal fun HomeViewModel.observeModernHomePresentationPipeline() {
                 )
             }
             .distinctUntilChanged()
-            .map { input ->
-                if (!input.enabled) {
-                    ContinueWatchingPosterOverlay(emptyList(), emptyList())
-                } else {
-                    val pattern = patternForScreen(
-                        input.pattern,
-                        CustomPosterScreen.CONTINUE_WATCHING,
-                        input.screens,
-                    )
-                    ContinueWatchingPosterOverlay(
-                        continueWatchingItems = input.continueWatchingItems.withCustomPosterUrls(pattern),
-                        upcomingItems = input.upcomingItems.withCustomPosterUrls(pattern),
-                    )
+
+        // Reuse IDs already held by the library/metadata cache. Do not issue per-poster
+        // metadata requests or change canonical anime IDs used for watching/sync.
+        val requestedPosterIds = posterInput.map { input ->
+            if (!input.enabled || patternForScreen(input.pattern, CustomPosterScreen.CONTINUE_WATCHING, input.screens).isBlank()) {
+                emptySet()
+            } else buildSet {
+                for (item in input.continueWatchingItems + input.upcomingItems) {
+                    val id = when (item) {
+                        is ContinueWatchingItem.InProgress -> item.progress.contentId
+                        is ContinueWatchingItem.NextUp -> item.info.contentId
+                    }
+                    add(id)
+                    add(CustomPosterUrlResolver.extractIds(id).id)
                 }
             }
-            .distinctUntilChanged()
+        }.distinctUntilChanged()
+        val libraryPosterIds = requestedPosterIds.flatMapLatest { requested ->
+            if (requested.isEmpty()) flowOf(emptyMap()) else libraryRepository.cachedLibraryItems.map { entries ->
+                buildMap<String, CustomPosterUrlResolver.ContentIds> {
+                    for (entry in entries) {
+                        val ids = CustomPosterUrlResolver.extractIds(entry.id, entry.imdbId, entry.tmdbId)
+                        if (entry.id !in requested && ids.id !in requested && ids.imdbId !in requested &&
+                            ids.tmdbId?.let { "tmdb:$it" in requested } != true) continue
+                        put(entry.id, ids)
+                        put(ids.id, ids)
+                        ids.imdbId?.let { put(it, ids) }
+                        ids.tmdbId?.let { put("tmdb:$it", ids) }
+                    }
+                }
+            }
+        }.distinctUntilChanged().flowOn(Dispatchers.Default).onStart { emit(emptyMap()) }
+
+        val posterOverlay = combine(posterInput, libraryPosterIds) { input, libraryIds ->
+            if (!input.enabled) {
+                ContinueWatchingPosterOverlay(emptyList(), emptyList())
+            } else {
+                val pattern = patternForScreen(input.pattern, CustomPosterScreen.CONTINUE_WATCHING, input.screens)
+                val idHints = if (pattern.isBlank()) emptyMap() else {
+                    (input.continueWatchingItems + input.upcomingItems).associate { item ->
+                        val (id, type) = when (item) {
+                            is ContinueWatchingItem.InProgress -> item.progress.contentId to item.progress.contentType
+                            is ContinueWatchingItem.NextUp -> item.info.contentId to item.info.contentType
+                        }
+                        val parsed = CustomPosterUrlResolver.extractIds(id)
+                        val known = libraryIds[id] ?: libraryIds[parsed.id]
+                        val apiType = if (type.equals("movie", true)) "movie" else "series"
+                        val meta = metaRepository.getCachedMeta(apiType, id)
+                            ?: if (id != parsed.id) metaRepository.getCachedMeta(apiType, parsed.id) else null
+                        id to CustomPosterUrlResolver.extractIds(id, known?.imdbId ?: meta?.imdbId, known?.tmdbId?.toIntOrNull())
+                    }
+                }
+                ContinueWatchingPosterOverlay(
+                    continueWatchingItems = input.continueWatchingItems.withCustomPosterUrls(pattern, idHints),
+                    upcomingItems = input.upcomingItems.withCustomPosterUrls(pattern, idHints),
+                )
+            }
+        }.distinctUntilChanged().flowOn(Dispatchers.Default)
 
         combine(uiState, _currentLocaleTag, posterOverlay) { state, localeTag, overlay ->
                 ModernHomePresentationInput(
