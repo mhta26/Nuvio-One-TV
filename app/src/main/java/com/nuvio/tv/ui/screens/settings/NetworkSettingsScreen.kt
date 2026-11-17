@@ -586,6 +586,8 @@ fun AdvancedSettingsContent(
             }
         }
 
+        item(key = "performance_diagnostics") { PerformanceDiagnosticsSettings() }
+
         item(key = "playback_issue_reports") {
             SettingsGroupCard(
                 modifier = Modifier.fillMaxWidth(),

@@ -228,19 +228,16 @@ fun LibraryScreen(
             val restoreRequester = restoreKey?.let { posterFocusRequesters[it] }
 
             var focused = false
-            if (restoreIndex != null && restoreRequester != null) {
-                if (gridState.firstVisibleItemIndex == 0 && gridState.firstVisibleItemScrollOffset == 0) {
-                    runCatching { gridState.scrollToItem(restoreIndex) }
+            if (viewMode == LibraryViewMode.Saved && restoreIndex != null && restoreRequester != null) {
+                if (gridState.layoutInfo.visibleItemsInfo.none { it.key == restoreKey }) {
+                    val headerCount = 3 + if (uiState.listManagement != null && uiState.isTrackingAuthenticated) 1 else 0
+                    runCatching { gridState.scrollToItem(restoreIndex + headerCount) }
                 }
-                focused = runCatching { restoreRequester.requestFocus() }.isSuccess
-                if (!focused) {
-                    delay(16)
-                    focused = runCatching { restoreRequester.requestFocus() }.isSuccess
-                }
+                focused = restoreRequester.requestFocusAfterFrames(frames = 1)
             }
 
             if (!focused) {
-                focused = runCatching { primaryFocusRequester.requestFocus() }.isSuccess
+                focused = runCatching { primaryFocusRequester.requestFocus() }.getOrDefault(false)
             }
             if (!focused) {
                 delay(16)
@@ -257,7 +254,7 @@ fun LibraryScreen(
         var focused = false
         repeat(6) {
             focused = posterFocusRequesters[targetKey]
-                ?.let { requester -> runCatching { requester.requestFocus() }.isSuccess }
+                ?.let { requester -> runCatching { requester.requestFocus() }.getOrDefault(false) }
                 ?: false
             if (focused) return@LaunchedEffect
             delay(24)

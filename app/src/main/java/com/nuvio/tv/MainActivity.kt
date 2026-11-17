@@ -970,6 +970,13 @@ open class MainActivity : ComponentActivity() {
                     LaunchedEffect(actualRoute) {
                         optimisticRoute = null
                         ambientIdleController.onInteraction()
+                        val diagnostics = com.nuvio.tv.core.diagnostics.PerformanceDiagnostics
+                        diagnostics.session.navigate(actualRoute, diagnostics.elapsedMs())
+                        if (diagnostics.session.enabled) {
+                            val started = diagnostics.elapsedMs()
+                            androidx.compose.runtime.withFrameNanos { }
+                            diagnostics.session.navigationFrame(diagnostics.elapsedMs(), diagnostics.elapsedMs() - started)
+                        }
                     }
 
                     // Auto-play next episode for EXTERNAL players: the tracker resolves the
@@ -1493,6 +1500,7 @@ open class MainActivity : ComponentActivity() {
         }
 
         jankStats = JankStats.createAndTrack(window) { frameData ->
+            com.nuvio.tv.core.diagnostics.PerformanceDiagnostics.session.frame(frameData.frameDurationUiNanos, frameData.isJank)
             // Counted per screen for the start-up report (Live TV says guide or full screen).
             // It used to write every slow frame to the system log, which cost a little on each
             // one and nobody could see; that's kept for debug builds only.
@@ -1570,8 +1578,19 @@ open class MainActivity : ComponentActivity() {
     }
 
     // TV remotes require key-up and held-Back handling before Compose dispatch.
+    private var diagnosticKeyFramePending = false
     @android.annotation.SuppressLint("RestrictedApi", "GestureBackNavigation")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN && event.keyCode in KeyEvent.KEYCODE_DPAD_UP..KeyEvent.KEYCODE_DPAD_CENTER && com.nuvio.tv.core.diagnostics.PerformanceDiagnostics.session.enabled && !diagnosticKeyFramePending) {
+            diagnosticKeyFramePending = true
+            val started = System.nanoTime()
+            window.decorView.postOnAnimation {
+                diagnosticKeyFramePending = false
+                com.nuvio.tv.core.diagnostics.PerformanceDiagnostics.operation(
+                    com.nuvio.tv.core.diagnostics.PerformanceOperation.DPAD_TO_NEXT_VSYNC, started, true
+                )
+            }
+        }
         // Live TV fork: remember when the remote was last used (the home screen's Live TV row
         // only claims the first highlight while nobody has pressed anything yet).
         if (event.action == KeyEvent.ACTION_DOWN) com.nuvio.tv.livetv.home.LiveTvHomeFocus.lastKeyAt = android.os.SystemClock.uptimeMillis()

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="performance_title">Performance diagnostics and artwork</string>
+    <string name="performance_record">Record performance diagnostics</string>
+    <string name="performance_record_description">Enable, reproduce the delay, then save or share the report. Recording continues after restarting until disabled. Stores bounded counters locally, not a video recording.</string>
+    <string name="performance_save">Save performance report</string>
+    <string name="performance_privacy">JSON with app/device information, startup time, frame timings, memory and image failures. No account details, viewing titles, URLs or keys. Nothing is uploaded automatically.</string>
+    <string name="performance_share">Share performance report</string>
+    <string name="performance_share_description">Send the JSON file using an installed sharing app. You can attach it for review.</string>
+    <string name="performance_clear">Clear recorded measurements</string>
+    <string name="performance_clear_description">Clears this session’s frame counters and events only. Library, history and settings are preserved.</string>
+    <string name="performance_cleared">Recorded measurements cleared.</string>
+    <string name="performance_saved">Performance report saved.</string>
+    <string name="performance_exporting">Preparing report…</string>
+    <string name="performance_export_failed">Could not export the report. Please try again.</string>
+    <string name="performance_picker_unavailable">No compatible save or sharing app is available. Try the other export option or install a file manager that supports Android document saving.</string>
+    <string name="poster_retry_title">Retry failed posters</string>
+    <string name="poster_retry_cancel">Cancel poster retries</string>
+    <string name="poster_retry_description">%1$d failed custom posters in this session. Retries up to 10 at a time without clearing good images, restarting or changing your library.</string>
+    <string name="poster_retry_done">Retry batch complete. Available posters were refreshed.</string>
+    <string name="poster_retry_partial">Some posters could not be refreshed. Check connectivity or try again later.</string>
+    <string name="performance_downloads">Save to Downloads</string>
+    <string name="performance_downloads_description">Save directly without a document picker or sharing app (Android 10+).</string>
+    <string name="performance_downloads_saved">Report saved in Downloads/Nuvio-One-TV.</string>
+</resources>

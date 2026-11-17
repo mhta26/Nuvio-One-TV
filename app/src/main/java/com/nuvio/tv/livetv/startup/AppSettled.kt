@@ -19,6 +19,7 @@ object AppSettled {
     private val startedAt = SystemClock.elapsedRealtime()
 
     fun markDrawn() {
+        com.nuvio.tv.core.diagnostics.PerformanceDiagnostics.markDrawn()
         if (drawnAt.value == 0L) drawnAt.value = SystemClock.elapsedRealtime()
     }
 

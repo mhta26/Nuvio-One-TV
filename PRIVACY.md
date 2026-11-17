@@ -23,3 +23,6 @@ The app may offer optional debug or playback reports to help diagnose problems. 
 ## Contact
 
 For privacy questions, contact zoga2o3@gmail.com.
+## Personal fork: optional performance export
+
+Nuvio One TV has an optional local performance recorder, disabled by default. It keeps bounded frame counters by fixed screen category and up to 120 recent timing events in memory. Export happens only when requested and includes app/device details, startup timing, memory sampled at export, and explicitly selected numeric playback statistics. It excludes content titles/IDs, account details, URLs, request headers, keys, free-form errors and logcat. No report is uploaded automatically. The user selects a document destination, Downloads (Android 10+), or an installed sharing app. One working report is retained in app cache; user-saved copies remain until the user deletes them. Failed-poster retry URLs stay in a bounded memory-only list and are never included in the report. See [performance diagnostics](PERFORMANCE-DIAGNOSTICS.md).

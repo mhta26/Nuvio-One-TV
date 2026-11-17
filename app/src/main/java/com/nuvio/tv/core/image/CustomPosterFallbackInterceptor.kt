@@ -21,10 +21,19 @@ class CustomPosterFallbackInterceptor : Interceptor {
     }
 
     override suspend fun intercept(chain: Interceptor.Chain): ImageResult {
+        val started = System.nanoTime()
         val result = chain.proceed()
+        val fallbackUrl = chain.request.memoryCacheKeyExtras[FALLBACK_URL_KEY]
+        if (!fallbackUrl.isNullOrBlank()) {
+            val url = chain.request.data.toString()
+            if (result is ErrorResult) FailedPosterRegistry.shared.failed(url)
+            else FailedPosterRegistry.shared.succeeded(url)
+            com.nuvio.tv.core.diagnostics.PerformanceDiagnostics.operation(
+                com.nuvio.tv.core.diagnostics.PerformanceOperation.POSTER, started, result !is ErrorResult
+            )
+        }
 
         if (result is ErrorResult) {
-            val fallbackUrl = chain.request.memoryCacheKeyExtras[FALLBACK_URL_KEY]
             if (!fallbackUrl.isNullOrBlank() && fallbackUrl != chain.request.data.toString()) {
                 val fallbackRequest = chain.request.newBuilder()
                     .data(fallbackUrl)
@@ -36,7 +45,12 @@ class CustomPosterFallbackInterceptor : Interceptor {
                         chain.request.memoryCacheKeyExtras - FALLBACK_URL_KEY
                     )
                     .build()
-                return chain.withRequest(fallbackRequest).proceed()
+                val fallbackStarted = System.nanoTime()
+                return chain.withRequest(fallbackRequest).proceed().also {
+                    com.nuvio.tv.core.diagnostics.PerformanceDiagnostics.operation(
+                        com.nuvio.tv.core.diagnostics.PerformanceOperation.POSTER_FALLBACK, fallbackStarted, it !is ErrorResult
+                    )
+                }
             }
         }
 

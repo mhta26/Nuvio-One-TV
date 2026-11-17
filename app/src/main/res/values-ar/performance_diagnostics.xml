@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="performance_title">تشخيص الأداء والبوسترات</string>
+    <string name="performance_record">تسجيل تشخيص الأداء</string>
+    <string name="performance_record_description">فعّل التسجيل، ثم كرر الخطوات التي يظهر فيها التأخير واحفظ التقرير أو شاركه. يستمر التسجيل بعد إعادة التشغيل حتى تعطيله. يحفظ قياسات محدودة محليًا، وليس تسجيل فيديو.</string>
+    <string name="performance_save">حفظ تقرير الأداء</string>
+    <string name="performance_privacy">ملف JSON بمعلومات التطبيق والجهاز وزمن الإقلاع والإطارات والذاكرة وفشل الصور. لا يتضمن بيانات الحساب أو عناوين المشاهدة أو الروابط أو المفاتيح، ولا يُرفع تلقائيًا.</string>
+    <string name="performance_share">مشاركة تقرير الأداء</string>
+    <string name="performance_share_description">إرسال ملف JSON عبر تطبيق مشاركة مثبّت. يمكنك إرفاقه لمراجعته.</string>
+    <string name="performance_clear">مسح القياسات المسجلة</string>
+    <string name="performance_clear_description">يمسح عدادات الإطارات والأحداث لهذه الجلسة فقط، ويحافظ على المكتبة والسجل والإعدادات.</string>
+    <string name="performance_cleared">تم مسح القياسات المسجلة.</string>
+    <string name="performance_saved">تم حفظ تقرير الأداء.</string>
+    <string name="performance_exporting">جارٍ تجهيز التقرير…</string>
+    <string name="performance_export_failed">تعذر تصدير التقرير. أعد المحاولة.</string>
+    <string name="performance_picker_unavailable">لا يوجد تطبيق مناسب للحفظ أو المشاركة. جرّب خيار التصدير الآخر، أو ثبّت مدير ملفات يدعم حفظ مستندات Android.</string>
+    <string name="poster_retry_title">إعادة محاولة البوسترات الفاشلة</string>
+    <string name="poster_retry_cancel">إلغاء إعادة محاولة البوسترات</string>
+    <string name="poster_retry_description">عدد البوسترات المخصصة الفاشلة في هذه الجلسة: %1$d. تُعاد محاولة 10 صور كحد أقصى في كل دفعة دون مسح الصور السليمة أو إعادة التشغيل أو تعديل المكتبة.</string>
+    <string name="poster_retry_done">اكتملت الدفعة وتم تحديث البوسترات المتاحة.</string>
+    <string name="poster_retry_partial">تعذر تحديث بعض البوسترات. تحقق من الاتصال أو أعد المحاولة لاحقًا.</string>
+    <string name="performance_downloads">حفظ في التنزيلات</string>
+    <string name="performance_downloads_description">حفظ مباشر دون الحاجة لتطبيق مشاركة أو منتقي ملفات (Android 10 أو أحدث).</string>
+    <string name="performance_downloads_saved">تم حفظ التقرير في Downloads/Nuvio-One-TV.</string>
+</resources>
