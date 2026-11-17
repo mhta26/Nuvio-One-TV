@@ -20,6 +20,7 @@
     <string name="poster_retry_done">اكتملت الدفعة وتم تحديث البوسترات المتاحة.</string>
     <string name="poster_retry_partial">تعذر تحديث بعض البوسترات. تحقق من الاتصال أو أعد المحاولة لاحقًا.</string>
     <string name="performance_downloads">حفظ في التنزيلات</string>
-    <string name="performance_downloads_description">حفظ مباشر دون الحاجة لتطبيق مشاركة أو منتقي ملفات (Android 10 أو أحدث).</string>
+    <string name="performance_downloads_description">حفظ مباشر دون الحاجة لتطبيق مشاركة أو منتقي ملفات. يطلب Android 9 والأقدم إذن التخزين عند الحفظ.</string>
     <string name="performance_downloads_saved">تم حفظ التقرير في Downloads/Nuvio-One-TV.</string>
+    <string name="performance_storage_denied">لم يُمنح إذن التخزين. يمكنك استخدام حفظ تقرير الأداء لاختيار مستند، أو مشاركة تقرير الأداء.</string>
 </resources>

@@ -61,9 +61,17 @@ class PerformanceDiagnosticsViewModel @Inject constructor(
         }
         _message.value = R.string.performance_saved
     }
-    @androidx.annotation.RequiresApi(29)
+    @Suppress("DEPRECATION")
     fun saveDownloads() = export { file ->
         withContext(Dispatchers.IO) {
+            if (android.os.Build.VERSION.SDK_INT < 29) {
+                check(androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == android.content.pm.PackageManager.PERMISSION_GRANTED)
+                val directory = File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "Nuvio-One-TV")
+                check(directory.isDirectory || directory.mkdirs())
+                val target = File(directory, "Nuvio-One-TV-performance-${System.currentTimeMillis()}.json")
+                try { file.inputStream().use { input -> target.outputStream().use { input.copyTo(it) } } }
+                catch (error: Exception) { target.delete(); throw error }
+            } else {
             val resolver = context.contentResolver
             val values = android.content.ContentValues().apply {
                 put(android.provider.MediaStore.Downloads.DISPLAY_NAME, "Nuvio-One-TV-performance-${System.currentTimeMillis()}.json")
@@ -76,6 +84,7 @@ class PerformanceDiagnosticsViewModel @Inject constructor(
                 requireNotNull(resolver.openOutputStream(uri)).use { output -> file.inputStream().use { it.copyTo(output) } }
                 resolver.update(uri, android.content.ContentValues().apply { put(android.provider.MediaStore.Downloads.IS_PENDING, 0) }, null, null)
             } catch (error: Exception) { resolver.delete(uri, null, null); throw error }
+            }
         }
         _message.value = R.string.performance_downloads_saved
     }
@@ -95,5 +104,6 @@ class PerformanceDiagnosticsViewModel @Inject constructor(
             } finally { _busy.value = false }
         }
     }
+    fun storageDenied() { _message.value = R.string.performance_storage_denied }
     fun unavailable() { _message.value = R.string.performance_picker_unavailable }
 }

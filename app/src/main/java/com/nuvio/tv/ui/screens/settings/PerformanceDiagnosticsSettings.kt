@@ -28,6 +28,9 @@ internal fun PerformanceDiagnosticsSettings(viewModel: PerformanceDiagnosticsVie
     val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) viewModel.save(uri)
     }
+    val storagePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) viewModel.saveDownloads() else viewModel.storageDenied()
+    }
     val shareTitle = stringResource(R.string.performance_share)
     SettingsGroupCard(modifier = Modifier.fillMaxWidth(), title = stringResource(R.string.performance_title)) {
         SettingsToggleRow(title = stringResource(R.string.performance_record), subtitle = stringResource(R.string.performance_record_description),
@@ -35,10 +38,16 @@ internal fun PerformanceDiagnosticsSettings(viewModel: PerformanceDiagnosticsVie
         SettingsActionRow(title = stringResource(R.string.performance_save), subtitle = stringResource(R.string.performance_privacy),
             value = if (busy) stringResource(R.string.performance_exporting) else null, enabled = !busy,
             onClick = { if (!busy) { try { save.launch("Nuvio-One-TV-performance.json") } catch (_: Exception) { viewModel.unavailable() } } })
-        if (android.os.Build.VERSION.SDK_INT >= 29) {
-            SettingsActionRow(title = stringResource(R.string.performance_downloads), subtitle = stringResource(R.string.performance_downloads_description),
-                enabled = !busy, onClick = { viewModel.saveDownloads() })
-        }
+        SettingsActionRow(title = stringResource(R.string.performance_downloads), subtitle = stringResource(R.string.performance_downloads_description),
+            enabled = !busy, onClick = {
+                if (android.os.Build.VERSION.SDK_INT >= 29 || androidx.core.content.ContextCompat.checkSelfPermission(context,
+                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    viewModel.saveDownloads()
+                } else {
+                    try { storagePermission.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) }
+                    catch (_: Exception) { viewModel.unavailable() }
+                }
+            })
         SettingsActionRow(title = shareTitle, subtitle = stringResource(R.string.performance_share_description), enabled = !busy, onClick = {
             viewModel.export { file ->
                 val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)

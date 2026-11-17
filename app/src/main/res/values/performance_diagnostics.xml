@@ -20,6 +20,7 @@
     <string name="poster_retry_done">Retry batch complete. Available posters were refreshed.</string>
     <string name="poster_retry_partial">Some posters could not be refreshed. Check connectivity or try again later.</string>
     <string name="performance_downloads">Save to Downloads</string>
-    <string name="performance_downloads_description">Save directly without a document picker or sharing app (Android 10+).</string>
+    <string name="performance_downloads_description">Save directly without a document picker or sharing app. Android 9 and earlier request storage permission when saving.</string>
     <string name="performance_downloads_saved">Report saved in Downloads/Nuvio-One-TV.</string>
+    <string name="performance_storage_denied">Storage permission was denied. Use Save performance report to choose a document destination, or Share performance report.</string>
 </resources>
