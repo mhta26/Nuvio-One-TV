@@ -120,7 +120,10 @@ class StalkerMimeProbeTest {
                     }
                 }.build()
                 assertNull(StalkerMimeProbe.probe(server.url("/play").toString(), http))
-                assertTrue(readBytes.get() in 1..8192L)
+                // The inspected prefix is 8 KiB. Okio may read ahead one extra 8 KiB
+                // segment after a short socket read; a timeout can stop before any body.
+                // Keep a strict transport bound: the full 1 MiB response must never drain.
+                assertTrue("Probe transport read ${readBytes.get()} bytes", readBytes.get() in 0L..16_384L)
             } finally { policy.retire() }
         }
     }
