@@ -44,6 +44,7 @@ import com.nuvio.tv.R
 @Composable
 fun RemoteButtonTester(onClose: () -> Unit) {
     val context = LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     data class Entry(val text: String, val highlight: Boolean)
     val entries = remember { mutableStateListOf<Entry>() }
     val focus = remember { FocusRequester() }
@@ -64,21 +65,21 @@ fun RemoteButtonTester(onClose: () -> Unit) {
                     val k = e.nativeKeyEvent
                     val gap = if (lastTime[0] == 0L) 0L else k.eventTime - lastTime[0]
                     lastTime[0] = k.eventTime
-                    val action = context.getString(when (k.action) {
+                    val action = localizedResources.getString(when (k.action) {
                         KeyEvent.ACTION_DOWN -> R.string.iptv_settings_support_remote_action_down
                         KeyEvent.ACTION_UP -> R.string.iptv_settings_support_remote_action_up
                         else -> R.string.iptv_settings_support_remote_action_multiple
                     })
                     val name = KeyEvent.keyCodeToString(k.keyCode).removePrefix("KEYCODE_")
                     val extras = buildList {
-                        if (k.repeatCount > 0) add(context.getString(R.string.iptv_settings_support_remote_repeat, k.repeatCount))
-                        if (k.isLongPress) add(context.getString(R.string.iptv_settings_support_remote_long_press))
-                        if (k.isCanceled) add(context.getString(R.string.iptv_settings_support_remote_canceled))
-                        if (k.action == KeyEvent.ACTION_UP) add(context.getString(R.string.iptv_settings_support_remote_held, k.eventTime - k.downTime))
+                        if (k.repeatCount > 0) add(localizedResources.getString(R.string.iptv_settings_support_remote_repeat, k.repeatCount))
+                        if (k.isLongPress) add(localizedResources.getString(R.string.iptv_settings_support_remote_long_press))
+                        if (k.isCanceled) add(localizedResources.getString(R.string.iptv_settings_support_remote_canceled))
+                        if (k.action == KeyEvent.ACTION_UP) add(localizedResources.getString(R.string.iptv_settings_support_remote_held, k.eventTime - k.downTime))
                     }.joinToString(", ")
                     // Two different buttons arriving close together (like OK with Up/Down).
                     val close = gap in 1..250 && entries.firstOrNull()?.text?.contains(name) == false
-                    entries.add(0, Entry(context.getString(R.string.iptv_settings_support_remote_event,
+                    entries.add(0, Entry(localizedResources.getString(R.string.iptv_settings_support_remote_event,
                         action, name, k.keyCode, gap, extras), close))
                     if (entries.size > 40) entries.removeAt(entries.lastIndex)
                     if (k.keyCode == KeyEvent.KEYCODE_BACK && k.action == KeyEvent.ACTION_UP) {

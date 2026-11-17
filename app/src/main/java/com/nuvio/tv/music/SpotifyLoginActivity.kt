@@ -43,7 +43,7 @@ import kotlinx.coroutines.withContext
  * moves it, OK clicks the element under it. While the on-screen keyboard is open the cursor
  * steps aside and the remote controls the keyboard.
  */
-class SpotifyLoginActivity : Activity() {
+class SpotifyLoginActivity : androidx.activity.ComponentActivity() {
     companion object {
         private const val LOGIN_URL =
             "https://accounts.spotify.com/login?continue=https%3A%2F%2Fopen.spotify.com%2F"
@@ -84,6 +84,9 @@ class SpotifyLoginActivity : Activity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() = handleBackNavigation()
+        })
         window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         MusicSpotifyWebSession.init(this)
         cursorStep = 26f * resources.displayMetrics.density
@@ -221,14 +224,19 @@ class SpotifyLoginActivity : Activity() {
                     clickAtCursor()
                     return true
                 }
-                KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_ESCAPE -> {
+                KeyEvent.KEYCODE_ESCAPE -> {
                     setCursorOn(false)
                     return true
                 }
                 else -> return super.dispatchKeyEvent(event)
             }
         }
-        return true
+        return when (event.keyCode) {
+            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT,
+            KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_CENTER,
+            KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> true
+            else -> super.dispatchKeyEvent(event)
+        }
     }
 
     private fun moveCursor(dx: Float, dy: Float) {
@@ -312,8 +320,7 @@ class SpotifyLoginActivity : Activity() {
         finish()
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
+    private fun handleBackNavigation() {
         if (cursorOn) {
             setCursorOn(false)
             return

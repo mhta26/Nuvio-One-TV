@@ -121,6 +121,7 @@ private val LIVE_TABS = listOf(LiveTvPage.MAIN, LiveTvPage.GUIDE, LiveTvPage.PLA
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 internal fun LiveTabRow(selected: LiveTvPage, first: FocusRequester?, onSelect: (LiveTvPage) -> Unit) {
     val context = LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     // Coming up from the page below lands on the tab you're on, not whichever one is nearest.
     // Only the tab you're on can take focus from outside the row; once focus is in the row, all can.
     var rowHasFocus by remember { mutableStateOf(false) }
@@ -136,7 +137,7 @@ internal fun LiveTabRow(selected: LiveTvPage, first: FocusRequester?, onSelect: 
             val on = tab == selected
             val shape = androidx.compose.foundation.shape.RoundedCornerShape(50)
             Text(
-                context.getString(tab.tab),
+                localizedResources.getString(tab.tab),
                 color = if (focused) NuvioTheme.colors.OnSecondary else if (on) NuvioTheme.colors.TextPrimary else NuvioTheme.colors.TextSecondary,
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier
@@ -169,7 +170,8 @@ fun LiveTvSettingsScreen(
     viewModel: LiveTvSettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    SettingsStandaloneScaffold(title = context.getString(LIVE_TV_TITLE), subtitle = context.getString(LIVE_TV_SUBTITLE)) {
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
+    SettingsStandaloneScaffold(title = localizedResources.getString(LIVE_TV_TITLE), subtitle = localizedResources.getString(LIVE_TV_SUBTITLE)) {
         LiveTvSettingsContent(viewModel = viewModel, page = LiveTvPage.ALL)
     }
 }
@@ -291,7 +293,7 @@ private fun offsetLabel(context: Context, min: Int): String {
     if (min == 0) return context.getString(R.string.iptv_settings_none)
     val sign = if (min > 0) "+" else "−"
     val a = kotlin.math.abs(min)
-    return if (a % 60 == 0) context.getString(R.string.iptv_settings_1_s_2_s_h, sign, a / 60) else context.getString(R.string.iptv_settings_1_s_2_s_h_3_s_min, sign, a / 60, a % 60)
+    return if (a % 60 == 0) context.getString(R.string.iptv_settings_1_s_2_s_h, sign, (a / 60).toString()) else context.getString(R.string.iptv_settings_1_s_2_s_h_3_s_min, sign, (a / 60).toString(), (a % 60).toString())
 }
 
 private fun hoursLabel(context: Context, h: Int): String = when {
@@ -329,6 +331,7 @@ internal fun LiveTvSettingsContent(
     page: LiveTvPage = LiveTvPage.ALL
 ) {
     val context = LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     // HUB: one Live TV page with its own row of tabs; the tab picked is the page shown.
     val hub = page == LiveTvPage.HUB
     var tab by remember { mutableStateOf(LiveTvPage.MAIN) }
@@ -371,16 +374,16 @@ internal fun LiveTvSettingsContent(
         verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md)
     ) {
         SettingsDetailHeader(
-            title = context.getString(page.title),
-            subtitle = if (status.loading && !flat) (status.message ?: context.getString(R.string.iptv_settings_updating)) else context.getString(page.subtitle)
+            title = localizedResources.getString(page.title),
+            subtitle = if (status.loading && !flat) (status.message ?: localizedResources.getString(R.string.iptv_settings_updating)) else localizedResources.getString(page.subtitle)
         )
         // Live TV switched off (Settings → Menu & Features): say so, with a way to turn it back on.
         if (!s.showInSidebar) {
             SettingsGroupCard {
                 SettingsActionRow(
-                    title = context.getString(R.string.iptv_settings_live_tv_is_turned_off),
-                    subtitle = context.getString(R.string.iptv_settings_the_guide_its_row_on_home_and_everything),
-                    value = context.getString(R.string.iptv_settings_turn_on),
+                    title = localizedResources.getString(R.string.iptv_settings_live_tv_is_turned_off),
+                    subtitle = localizedResources.getString(R.string.iptv_settings_the_guide_its_row_on_home_and_everything),
+                    value = localizedResources.getString(R.string.iptv_settings_turn_on),
                     onClick = { update { it.copy(showInSidebar = true) } }
                 )
             }
@@ -424,26 +427,26 @@ internal fun LiveTvSettingsContent(
                     driveAvailable = drive.available,
                     onImportDrive = {
                         confirm(
-                            context.getString(R.string.iptv_settings_import_from_google_drive),
-                            if (drive.connected) context.getString(R.string.iptv_settings_your_google_drive_backup_is_combined_with_this)
-                            else context.getString(R.string.iptv_settings_you_sign_in_to_google_with_a_code),
-                            context.getString(R.string.iptv_settings_import)
+                            localizedResources.getString(R.string.iptv_settings_import_from_google_drive),
+                            if (drive.connected) localizedResources.getString(R.string.iptv_settings_your_google_drive_backup_is_combined_with_this)
+                            else localizedResources.getString(R.string.iptv_settings_you_sign_in_to_google_with_a_code),
+                            localizedResources.getString(R.string.iptv_settings_import)
                         ) { viewModel.cloudSync.importFromDrive() }
                     },
                     onSyncNow = { viewModel.cloudSync.syncNow() },
                     onRestorePrevious = {
                         confirm(
-                            context.getString(R.string.iptv_settings_restore_the_earlier_copy),
-                            context.getString(R.string.iptv_settings_this_tv_s_setup_is_replaced_with_the),
-                            context.getString(R.string.iptv_settings_restore)
+                            localizedResources.getString(R.string.iptv_settings_restore_the_earlier_copy),
+                            localizedResources.getString(R.string.iptv_settings_this_tv_s_setup_is_replaced_with_the),
+                            localizedResources.getString(R.string.iptv_settings_restore)
                         ) { viewModel.cloudSync.restorePrevious() }
                     },
                     onTurnOff = { viewModel.cloudSync.turnOff() },
                     onDelete = {
                         confirm(
-                            context.getString(R.string.iptv_settings_delete_the_saved_setup),
-                            context.getString(R.string.iptv_settings_the_saved_copy_is_deleted_and_this_tv),
-                            context.getString(R.string.action_delete)
+                            localizedResources.getString(R.string.iptv_settings_delete_the_saved_setup),
+                            localizedResources.getString(R.string.iptv_settings_the_saved_copy_is_deleted_and_this_tv),
+                            localizedResources.getString(R.string.action_delete)
                         ) { viewModel.cloudSync.deleteCloudCopy() }
                     }
                 )
@@ -460,17 +463,17 @@ internal fun LiveTvSettingsContent(
                     onAutoSync = { viewModel.driveSync.setAutoSync(it) },
                     onBackUp = {
                         confirm(
-                            context.getString(R.string.iptv_settings_back_up_now),
-                            context.getString(R.string.iptv_settings_the_copy_in_your_google_drive_is_replaced),
-                            context.getString(R.string.iptv_settings_back_up)
+                            localizedResources.getString(R.string.iptv_settings_back_up_now),
+                            localizedResources.getString(R.string.iptv_settings_the_copy_in_your_google_drive_is_replaced),
+                            localizedResources.getString(R.string.iptv_settings_back_up)
                         ) { viewModel.driveSync.backUpNow() }
                     },
                     onRestore = { dialog = LiveDialog.ConfirmRestore },
                     onDisconnect = {
                         confirm(
-                            context.getString(R.string.iptv_settings_disconnect_google_drive),
-                            context.getString(R.string.iptv_settings_this_tv_stops_syncing_your_backup_stays_in),
-                            context.getString(R.string.iptv_settings_disconnect)
+                            localizedResources.getString(R.string.iptv_settings_disconnect_google_drive),
+                            localizedResources.getString(R.string.iptv_settings_this_tv_stops_syncing_your_backup_stays_in),
+                            localizedResources.getString(R.string.iptv_settings_disconnect)
                         ) { viewModel.driveSync.disconnect() }
                     }
                 )
@@ -479,37 +482,37 @@ internal fun LiveTvSettingsContent(
             // ------------------------------------------------------------ Playlists & Guides
             if (show(LiveTvPage.MAIN)) item(key = "sources") {
                 LiveSection(
-                    title = context.getString(R.string.iptv_settings_playlists_guides),
-                    summary = if (status.loading) (status.message ?: context.getString(R.string.iptv_settings_updating))
-                    else context.getString(R.string.iptv_settings_source_counts, context.resources.getQuantityString(R.plurals.iptv_settings_playlist_count, playlists.size, playlists.size), context.resources.getQuantityString(R.plurals.iptv_settings_guide_count, epgs.size, epgs.size)),
+                    title = localizedResources.getString(R.string.iptv_settings_playlists_guides),
+                    summary = if (status.loading) (status.message ?: localizedResources.getString(R.string.iptv_settings_updating))
+                    else localizedResources.getString(R.string.iptv_settings_source_counts, localizedResources.getQuantityString(R.plurals.iptv_settings_playlist_count, playlists.size, playlists.size), localizedResources.getQuantityString(R.plurals.iptv_settings_guide_count, epgs.size, epgs.size)),
                     icon = Icons.AutoMirrored.Filled.PlaylistPlay,
                     open = "sources" in open,
                     onToggle = { toggle("sources") }
                 ) {
-                    SubHeading(context.getString(R.string.iptv_settings_playlists))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_playlists))
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_add_from_your_phone),
-                        subtitle = context.getString(R.string.iptv_settings_scan_a_qr_code_then_paste_your_playlist),
+                        title = localizedResources.getString(R.string.iptv_settings_add_from_your_phone),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_scan_a_qr_code_then_paste_your_playlist),
                         leadingIcon = Icons.Default.PhoneAndroid,
                         onClick = { dialog = LiveDialog.AddFromPhone }
                     )
-                    if (status.loading) LoadingLine(status.message ?: context.getString(R.string.iptv_settings_updating))
+                    if (status.loading) LoadingLine(status.message ?: localizedResources.getString(R.string.iptv_settings_updating))
                     playlists.forEach { pl ->
                         val account = accounts[pl.id]
                         val expiring = pl.enabled && account?.expiringSoon() == true
                         SettingsActionRow(
-                            title = pl.name + when { pl.isStalker -> context.getString(R.string.iptv_settings_stalker); pl.isXtream -> context.getString(R.string.iptv_settings_xtream); else -> "" },
+                            title = pl.name + when { pl.isStalker -> localizedResources.getString(R.string.iptv_settings_stalker); pl.isXtream -> localizedResources.getString(R.string.iptv_settings_xtream); else -> "" },
                             subtitle = when {
-                                pl.hasCatalog && pl.enabled && !pl.importLive && pl.importVod -> context.getString(R.string.iptv_settings_movies_series_only_tv_channels_off)
-                                pl.hasCatalog && pl.enabled && !pl.importLive && !pl.importVod -> context.getString(R.string.iptv_settings_nothing_included_turn_on_tv_channels_or_movies)
+                                pl.hasCatalog && pl.enabled && !pl.importLive && pl.importVod -> localizedResources.getString(R.string.iptv_settings_movies_series_only_tv_channels_off)
+                                pl.hasCatalog && pl.enabled && !pl.importLive && !pl.importVod -> localizedResources.getString(R.string.iptv_settings_nothing_included_turn_on_tv_channels_or_movies)
                                 else -> sourceStatus(context, pl.enabled, pl.lastUpdatedMs, pl.lastError, context.resources.getQuantityString(R.plurals.iptv_settings_channel_count, pl.channelCount, pl.channelCount)) +
-                                    (if (pl.hasCatalog && pl.importVod && pl.enabled) context.getString(R.string.iptv_settings_movies_series) else "")
-                            } + (account?.let { expiryLabel(context, it) }?.let { context.getString(R.string.iptv_settings_expires_1_s, it) } ?: ""),
+                                    (if (pl.hasCatalog && pl.importVod && pl.enabled) localizedResources.getString(R.string.iptv_settings_movies_series) else "")
+                            } + (account?.let { expiryLabel(context, it) }?.let { localizedResources.getString(R.string.iptv_settings_expires_1_s, it) } ?: ""),
                             value = when {
-                                !pl.enabled -> context.getString(R.string.playback_afr_off)
-                                expiring && (account?.expiresAtMs ?: 0L) <= System.currentTimeMillis() -> context.getString(R.string.iptv_settings_expired)
-                                expiring -> context.getString(R.string.iptv_settings_expires_soon)
-                                else -> context.getString(R.string.iptv_settings_on)
+                                !pl.enabled -> localizedResources.getString(R.string.playback_afr_off)
+                                expiring && (account?.expiresAtMs ?: 0L) <= System.currentTimeMillis() -> localizedResources.getString(R.string.iptv_settings_expired)
+                                expiring -> localizedResources.getString(R.string.iptv_settings_expires_soon)
+                                else -> localizedResources.getString(R.string.iptv_settings_on)
                             },
                             valueColor = if (expiring) NuvioTheme.colors.Error else NuvioTheme.colors.TextSecondary,
                             leadingIcon = Icons.Default.LiveTv,
@@ -517,14 +520,14 @@ internal fun LiveTvSettingsContent(
                         )
                     }
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_add_m3u_playlist),
-                        subtitle = context.getString(R.string.iptv_settings_a_channel_list_from_the_m3u_link_your),
+                        title = localizedResources.getString(R.string.iptv_settings_add_m3u_playlist),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_a_channel_list_from_the_m3u_link_your),
                         leadingIcon = Icons.Default.Add,
                         onClick = { dialog = LiveDialog.AddM3u }
                     )
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_add_xtream_codes_login),
-                        subtitle = context.getString(R.string.iptv_settings_sign_in_with_the_server_username_and_password),
+                        title = localizedResources.getString(R.string.iptv_settings_add_xtream_codes_login),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_sign_in_with_the_server_username_and_password),
                         leadingIcon = Icons.Default.Add,
                         onClick = { dialog = LiveDialog.AddXtream }
                     )
@@ -548,45 +551,45 @@ internal fun LiveTvSettingsContent(
                         onClick = { dialog = LiveDialog.AddonChannels }
                     )
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_add_stalker_ministra_portal),
-                        subtitle = context.getString(R.string.iptv_settings_use_the_portal_url_and_mac_address_supplied),
+                        title = localizedResources.getString(R.string.iptv_settings_add_stalker_ministra_portal),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_use_the_portal_url_and_mac_address_supplied),
                         leadingIcon = Icons.Default.Add,
                         onClick = { dialog = LiveDialog.AddStalker }
                     )
-                    SubHeading(context.getString(R.string.iptv_settings_tv_guides_epg))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_tv_guides_epg))
                     epgs.forEach { e ->
                         SettingsActionRow(
                             title = e.name,
                             subtitle = sourceStatus(context, e.enabled, e.lastUpdatedMs, e.lastError, context.resources.getQuantityString(R.plurals.iptv_settings_program_count, e.programCount, e.programCount)),
-                            value = if (e.enabled) context.getString(R.string.iptv_settings_on) else context.getString(R.string.playback_afr_off),
+                            value = if (e.enabled) localizedResources.getString(R.string.iptv_settings_on) else localizedResources.getString(R.string.playback_afr_off),
                             leadingIcon = Icons.Default.Link,
                             onClick = { dialog = LiveDialog.EpgActions(e) }
                         )
                     }
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_add_epg_source),
-                        subtitle = context.getString(R.string.iptv_settings_extra_tv_listings_from_an_xmltv_link_ending),
+                        title = localizedResources.getString(R.string.iptv_settings_add_epg_source),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_extra_tv_listings_from_an_xmltv_link_ending),
                         leadingIcon = Icons.Default.Add,
                         onClick = { dialog = LiveDialog.AddEpg }
                     )
-                    SubHeading(context.getString(R.string.iptv_settings_updates))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_updates))
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_update_everything_now),
-                        subtitle = context.getString(R.string.iptv_settings_downloads_the_latest_channels_and_listings_instead_of),
+                        title = localizedResources.getString(R.string.iptv_settings_update_everything_now),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_downloads_the_latest_channels_and_listings_instead_of),
                         leadingIcon = Icons.Default.Refresh,
                         onClick = { viewModel.refreshAll() }
                     )
                     SettingsActionRow(
-                        context.getString(R.string.iptv_settings_check_playlists_for_updates_every), context.getString(R.string.iptv_settings_how_often_channel_lists_are_downloaded_again_from),
+                        localizedResources.getString(R.string.iptv_settings_check_playlists_for_updates_every), localizedResources.getString(R.string.iptv_settings_how_often_channel_lists_are_downloaded_again_from),
                         hoursLabel(context, s.playlistRefreshHours), onClick = { dialog = LiveDialog.PlaylistRefresh }
                     )
                     SettingsActionRow(
-                        context.getString(R.string.iptv_settings_check_guides_for_updates_every), context.getString(R.string.iptv_settings_how_often_tv_listings_are_downloaded_again),
+                        localizedResources.getString(R.string.iptv_settings_check_guides_for_updates_every), localizedResources.getString(R.string.iptv_settings_how_often_tv_listings_are_downloaded_again),
                         hoursLabel(context, s.epgRefreshHours), onClick = { dialog = LiveDialog.EpgRefresh }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_update_banners),
-                        context.getString(R.string.iptv_settings_show_playlist_epg_and_on_demand_update_progress),
+                        localizedResources.getString(R.string.iptv_settings_show_update_banners),
+                        localizedResources.getString(R.string.iptv_settings_show_playlist_epg_and_on_demand_update_progress),
                         s.showImportProgress,
                         { update { it.copy(showImportProgress = !it.showImportProgress) } }
                     )
@@ -596,77 +599,77 @@ internal fun LiveTvSettingsContent(
             // ------------------------------------------------------------ Channels
             if (show(LiveTvPage.MAIN)) item(key = "channels") {
                 LiveSection(
-                    title = context.getString(R.string.iptv_settings_channels),
-                    summary = context.getString(R.string.iptv_settings_name_cleanup_hidden_channels_and_groups_your_groups),
+                    title = localizedResources.getString(R.string.iptv_settings_channels),
+                    summary = localizedResources.getString(R.string.iptv_settings_name_cleanup_hidden_channels_and_groups_your_groups),
                     icon = Icons.Default.LiveTv,
                     open = "channels" in open,
                     onToggle = { toggle("channels") }
                 ) {
                     Text(
-                        text = context.getString(R.string.iptv_settings_tip_long_press_a_channel_in_the_guide),
+                        text = localizedResources.getString(R.string.iptv_settings_tip_long_press_a_channel_in_the_guide),
                         style = MaterialTheme.typography.bodySmall,
                         color = NuvioTheme.colors.TextSecondary,
                         modifier = Modifier.padding(horizontal = NuvioTheme.spacing.lg, vertical = NuvioTheme.spacing.sm)
                     )
-                    SubHeading(context.getString(R.string.iptv_settings_channel_names))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_channel_names))
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_channel_name_cleanup),
-                        subtitle = context.getString(R.string.iptv_settings_words_to_take_off_the_start_or_end),
-                        value = com.nuvio.tv.livetv.model.ChannelNameEditor.terms(s.nameRemovals).size.let { if (it == 0) context.getString(R.string.playback_afr_off) else context.resources.getQuantityString(R.plurals.iptv_settings_removed_count, it, it) },
+                        title = localizedResources.getString(R.string.iptv_settings_channel_name_cleanup),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_words_to_take_off_the_start_or_end),
+                        value = com.nuvio.tv.livetv.model.ChannelNameEditor.terms(s.nameRemovals).size.let { if (it == 0) localizedResources.getString(R.string.playback_afr_off) else localizedResources.getQuantityString(R.plurals.iptv_settings_removed_count, it, it) },
                         onClick = { dialog = LiveDialog.NameEditor }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_also_clean_group_names),
-                        context.getString(R.string.iptv_settings_take_the_same_words_off_group_names_too),
+                        localizedResources.getString(R.string.iptv_settings_also_clean_group_names),
+                        localizedResources.getString(R.string.iptv_settings_take_the_same_words_off_group_names_too),
                         s.cleanGroupNames,
                         { update { it.copy(cleanGroupNames = !it.cleanGroupNames) } }
                     )
                     if (s.nameRemovals.isBlank()) {
                         SettingsActionRow(
-                            context.getString(R.string.iptv_settings_add_common_prefixes_suffixes),
-                            context.getString(R.string.iptv_settings_fills_in_1_s, com.nuvio.tv.livetv.model.ChannelNameEditor.COMMON),
+                            localizedResources.getString(R.string.iptv_settings_add_common_prefixes_suffixes),
+                            localizedResources.getString(R.string.iptv_settings_fills_in_1_s, com.nuvio.tv.livetv.model.ChannelNameEditor.COMMON),
                             onClick = { update { it.copy(nameRemovals = com.nuvio.tv.livetv.model.ChannelNameEditor.COMMON) } }
                         )
                     }
-                    SubHeading(context.getString(R.string.iptv_settings_hidden_your_groups))
-                    SettingsActionRow(context.getString(R.string.iptv_settings_hidden_channels), context.getString(R.string.iptv_settings_channels_you_hid_select_one_to_show_it), "${user.hiddenChannels.size}", leadingIcon = Icons.Default.VisibilityOff, onClick = { dialog = LiveDialog.HiddenChannels })
-                    SettingsActionRow(context.getString(R.string.iptv_settings_hidden_groups), context.getString(R.string.iptv_settings_groups_you_hid_select_one_to_show_it), "${user.hiddenGroups.size}", leadingIcon = Icons.Default.VisibilityOff, onClick = { dialog = LiveDialog.HiddenGroups })
-                    SettingsActionRow(context.getString(R.string.iptv_settings_my_groups), context.getString(R.string.iptv_settings_groups_you_created_select_one_to_delete_it), "${user.customGroups.size}", onClick = { dialog = LiveDialog.CustomGroups })
-                    SubHeading(context.getString(R.string.iptv_settings_clear_reset))
-                    SettingsActionRow(context.getString(R.string.iptv_settings_clear_favorites), context.getString(R.string.iptv_settings_removes_every_channel_from_favorites), "${user.favorites.size}", onClick = {
-                        confirm(context.getString(R.string.iptv_settings_clear_favorites_2), context.getString(R.string.iptv_settings_every_channel_is_taken_out_of_favorites), context.getString(R.string.action_clear)) { viewModel.clearFavorites() }
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_hidden_your_groups))
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_hidden_channels), localizedResources.getString(R.string.iptv_settings_channels_you_hid_select_one_to_show_it), "${user.hiddenChannels.size}", leadingIcon = Icons.Default.VisibilityOff, onClick = { dialog = LiveDialog.HiddenChannels })
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_hidden_groups), localizedResources.getString(R.string.iptv_settings_groups_you_hid_select_one_to_show_it), "${user.hiddenGroups.size}", leadingIcon = Icons.Default.VisibilityOff, onClick = { dialog = LiveDialog.HiddenGroups })
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_my_groups), localizedResources.getString(R.string.iptv_settings_groups_you_created_select_one_to_delete_it), "${user.customGroups.size}", onClick = { dialog = LiveDialog.CustomGroups })
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_clear_reset))
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_clear_favorites), localizedResources.getString(R.string.iptv_settings_removes_every_channel_from_favorites), "${user.favorites.size}", onClick = {
+                        confirm(localizedResources.getString(R.string.iptv_settings_clear_favorites_2), localizedResources.getString(R.string.iptv_settings_every_channel_is_taken_out_of_favorites), localizedResources.getString(R.string.action_clear)) { viewModel.clearFavorites() }
                     })
-                    SettingsActionRow(context.getString(R.string.iptv_settings_clear_recently_watched), context.getString(R.string.iptv_settings_empties_the_recently_watched_group), "${user.recent.size}", onClick = {
-                        confirm(context.getString(R.string.iptv_settings_clear_recently_watched_2), context.getString(R.string.iptv_settings_the_recently_watched_group_is_emptied), context.getString(R.string.action_clear)) { viewModel.clearRecent() }
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_clear_recently_watched), localizedResources.getString(R.string.iptv_settings_empties_the_recently_watched_group), "${user.recent.size}", onClick = {
+                        confirm(localizedResources.getString(R.string.iptv_settings_clear_recently_watched_2), localizedResources.getString(R.string.iptv_settings_the_recently_watched_group_is_emptied), localizedResources.getString(R.string.action_clear)) { viewModel.clearRecent() }
                     })
                     SettingsActionRow(
-                        context.getString(R.string.iptv_settings_reset_channel_names_numbers), context.getString(R.string.iptv_settings_puts_back_the_names_and_numbers_from_your),
+                        localizedResources.getString(R.string.iptv_settings_reset_channel_names_numbers), localizedResources.getString(R.string.iptv_settings_puts_back_the_names_and_numbers_from_your),
                         "${(user.channelNames.keys + user.channelNumbers.keys).size}",
                         onClick = {
-                            confirm(context.getString(R.string.iptv_settings_reset_channel_names_and_numbers), context.getString(R.string.iptv_settings_every_channel_you_renamed_or_renumbered_goes_back), context.getString(R.string.iptv_settings_reset)) { viewModel.resetChannelEdits() }
+                            confirm(localizedResources.getString(R.string.iptv_settings_reset_channel_names_and_numbers), localizedResources.getString(R.string.iptv_settings_every_channel_you_renamed_or_renumbered_goes_back), localizedResources.getString(R.string.iptv_settings_reset)) { viewModel.resetChannelEdits() }
                         }
                     )
-                    SettingsActionRow(context.getString(R.string.iptv_settings_reset_group_names_order), context.getString(R.string.iptv_settings_puts_back_the_group_names_and_order_from), onClick = {
-                        confirm(context.getString(R.string.iptv_settings_reset_group_names_and_order), context.getString(R.string.iptv_settings_renamed_groups_get_their_playlist_names_back_and), context.getString(R.string.iptv_settings_reset)) { viewModel.resetGroupEdits() }
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_reset_group_names_order), localizedResources.getString(R.string.iptv_settings_puts_back_the_group_names_and_order_from), onClick = {
+                        confirm(localizedResources.getString(R.string.iptv_settings_reset_group_names_and_order), localizedResources.getString(R.string.iptv_settings_renamed_groups_get_their_playlist_names_back_and), localizedResources.getString(R.string.iptv_settings_reset)) { viewModel.resetGroupEdits() }
                     })
                     SettingsActionRow(
-                        context.getString(R.string.iptv_settings_reset_channel_order), context.getString(R.string.iptv_settings_undoes_reorder_channels_in_every_group),
+                        localizedResources.getString(R.string.iptv_settings_reset_channel_order), localizedResources.getString(R.string.iptv_settings_undoes_reorder_channels_in_every_group),
                         "${user.channelOrder.size}", onClick = {
-                            confirm(context.getString(R.string.iptv_settings_reset_channel_order_2), context.getString(R.string.iptv_settings_every_group_goes_back_to_its_normal_channel), context.getString(R.string.iptv_settings_reset)) { viewModel.resetChannelOrder() }
+                            confirm(localizedResources.getString(R.string.iptv_settings_reset_channel_order_2), localizedResources.getString(R.string.iptv_settings_every_group_goes_back_to_its_normal_channel), localizedResources.getString(R.string.iptv_settings_reset)) { viewModel.resetChannelOrder() }
                         }
                     )
                     SettingsActionRow(
-                        context.getString(R.string.iptv_settings_remove_copied_channels), context.getString(R.string.iptv_settings_takes_out_every_channel_you_copied_into_another),
+                        localizedResources.getString(R.string.iptv_settings_remove_copied_channels), localizedResources.getString(R.string.iptv_settings_takes_out_every_channel_you_copied_into_another),
                         "${user.channelCopies.values.sumOf { it.size }}", onClick = {
-                            confirm(context.getString(R.string.iptv_settings_remove_copied_channels_2), context.getString(R.string.iptv_settings_every_channel_you_copied_into_another_group_is), context.getString(R.string.iptv_settings_remove)) { viewModel.clearChannelCopies() }
+                            confirm(localizedResources.getString(R.string.iptv_settings_remove_copied_channels_2), localizedResources.getString(R.string.iptv_settings_every_channel_you_copied_into_another_group_is), localizedResources.getString(R.string.iptv_settings_remove)) { viewModel.clearChannelCopies() }
                         }
                     )
                     SettingsActionRow(
-                        context.getString(R.string.iptv_settings_reset_epg_assignments),
-                        context.getString(R.string.iptv_settings_channels_you_assigned_a_guide_to_go_back),
+                        localizedResources.getString(R.string.iptv_settings_reset_epg_assignments),
+                        localizedResources.getString(R.string.iptv_settings_channels_you_assigned_a_guide_to_go_back),
                         "${user.epgOverrides.size}",
                         onClick = {
-                            confirm(context.getString(R.string.iptv_settings_reset_epg_assignments_2), context.getString(R.string.iptv_settings_every_channel_you_assigned_a_guide_to_or), context.getString(R.string.iptv_settings_reset)) { viewModel.resetEpgAssignments() }
+                            confirm(localizedResources.getString(R.string.iptv_settings_reset_epg_assignments_2), localizedResources.getString(R.string.iptv_settings_every_channel_you_assigned_a_guide_to_or), localizedResources.getString(R.string.iptv_settings_reset)) { viewModel.resetEpgAssignments() }
                         }
                     )
                 }
@@ -675,64 +678,64 @@ internal fun LiveTvSettingsContent(
             // ------------------------------------------------------------ Groups
             if (show(LiveTvPage.MAIN)) item(key = "groups") {
                 LiveSection(
-                    title = context.getString(R.string.iptv_settings_groups),
-                    summary = context.getString(R.string.iptv_settings_the_group_list_on_the_left_of_the),
+                    title = localizedResources.getString(R.string.iptv_settings_groups),
+                    summary = localizedResources.getString(R.string.iptv_settings_the_group_list_on_the_left_of_the),
                     icon = Icons.Default.Folder,
                     open = "groups" in open,
                     onToggle = { toggle("groups") }
                 ) {
-                    SubHeading(context.getString(R.string.iptv_settings_built_in_groups))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_built_in_groups))
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_favorites),
-                        context.getString(R.string.iptv_settings_the_group_of_channels_you_ve_marked_as),
+                        localizedResources.getString(R.string.iptv_settings_show_favorites),
+                        localizedResources.getString(R.string.iptv_settings_the_group_of_channels_you_ve_marked_as),
                         s.showFavoritesGroup,
                         { update { it.copy(showFavoritesGroup = !it.showFavoritesGroup) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_recently_watched),
-                        context.getString(R.string.iptv_settings_the_group_of_channels_you_watched_last),
+                        localizedResources.getString(R.string.iptv_settings_show_recently_watched),
+                        localizedResources.getString(R.string.iptv_settings_the_group_of_channels_you_watched_last),
                         s.showRecentGroup,
                         { update { it.copy(showRecentGroup = !it.showRecentGroup) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_all_channels),
-                        context.getString(R.string.iptv_settings_the_group_with_every_channel_in_it),
+                        localizedResources.getString(R.string.iptv_settings_show_all_channels),
+                        localizedResources.getString(R.string.iptv_settings_the_group_with_every_channel_in_it),
                         s.showAllChannelsGroup,
                         { update { it.copy(showAllChannelsGroup = !it.showAllChannelsGroup) } }
                     )
-                    SubHeading(context.getString(R.string.iptv_settings_the_list))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_the_list))
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_group_by_playlist),
-                        context.getString(R.string.iptv_settings_with_more_than_one_playlist_each_playlist_s),
+                        localizedResources.getString(R.string.iptv_settings_group_by_playlist),
+                        localizedResources.getString(R.string.iptv_settings_with_more_than_one_playlist_each_playlist_s),
                         s.groupPlaylistHeadings,
                         { update { it.copy(groupPlaylistHeadings = !it.groupPlaylistHeadings) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_channel_counts),
-                        context.getString(R.string.iptv_settings_the_number_of_channels_next_to_each_group),
+                        localizedResources.getString(R.string.iptv_settings_show_channel_counts),
+                        localizedResources.getString(R.string.iptv_settings_the_number_of_channels_next_to_each_group),
                         s.showGroupCounts,
                         { update { it.copy(showGroupCounts = !it.showGroupCounts) } }
                     )
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_group_order),
-                        subtitle = context.getString(R.string.iptv_settings_how_the_group_list_is_sorted_your_order),
-                        value = when (s.groupSort) { "playlist" -> context.getString(R.string.iptv_settings_playlist_order); "name" -> context.getString(R.string.iptv_settings_name_a_z); else -> context.getString(R.string.iptv_settings_your_order) },
+                        title = localizedResources.getString(R.string.iptv_settings_group_order),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_how_the_group_list_is_sorted_your_order),
+                        value = when (s.groupSort) { "playlist" -> localizedResources.getString(R.string.iptv_settings_playlist_order); "name" -> localizedResources.getString(R.string.iptv_settings_name_a_z); else -> localizedResources.getString(R.string.iptv_settings_your_order) },
                         onClick = { dialog = LiveDialog.GroupSortChoice }
                     )
-                    SubHeading(context.getString(R.string.iptv_settings_channels_in_a_group))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_channels_in_a_group))
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_channel_order),
-                        subtitle = context.getString(R.string.iptv_settings_how_channels_are_sorted_in_every_group_favorites),
+                        title = localizedResources.getString(R.string.iptv_settings_channel_order),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_how_channels_are_sorted_in_every_group_favorites),
                         value = when (s.channelSort) {
-                            ChannelSort.PLAYLIST -> context.getString(R.string.iptv_settings_playlist_order)
-                            ChannelSort.NUMBER -> context.getString(R.string.iptv_settings_channel_number)
-                            ChannelSort.NAME -> context.getString(R.string.iptv_settings_name)
+                            ChannelSort.PLAYLIST -> localizedResources.getString(R.string.iptv_settings_playlist_order)
+                            ChannelSort.NUMBER -> localizedResources.getString(R.string.iptv_settings_channel_number)
+                            ChannelSort.NAME -> localizedResources.getString(R.string.iptv_settings_name)
                         },
                         onClick = { dialog = LiveDialog.SortChoice }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_number_channels_1_2_3_in_each_group),
-                        context.getString(R.string.iptv_settings_replaces_the_playlist_s_numbers_with_each_channel),
+                        localizedResources.getString(R.string.iptv_settings_number_channels_1_2_3_in_each_group),
+                        localizedResources.getString(R.string.iptv_settings_replaces_the_playlist_s_numbers_with_each_channel),
                         s.sequentialNumbers,
                         { update { it.copy(sequentialNumbers = !it.sequentialNumbers) } }
                     )
@@ -742,13 +745,13 @@ internal fun LiveTvSettingsContent(
             // ------------------------------------------------------------ On Demand
             if (show(LiveTvPage.ON_DEMAND)) item(key = "on_demand") {
                 LiveSection(
-                    title = context.getString(R.string.iptv_settings_on_demand),
+                    title = localizedResources.getString(R.string.iptv_settings_on_demand),
                     summary = when {
-                        onDemandStatus.loading -> onDemandStatus.message ?: context.getString(R.string.iptv_settings_importing_movies_and_series)
-                        !onDemandHas -> context.getString(R.string.iptv_settings_nothing_imported_yet)
-                        else -> context.getString(R.string.iptv_settings_movies_series_imported) + when {
-                            !s.onDemandEnabled -> context.getString(R.string.iptv_settings_switched_off)
-                            s.onDemandInSidebar -> context.getString(R.string.iptv_settings_in_the_side_menu)
+                        onDemandStatus.loading -> onDemandStatus.message ?: localizedResources.getString(R.string.iptv_settings_importing_movies_and_series)
+                        !onDemandHas -> localizedResources.getString(R.string.iptv_settings_nothing_imported_yet)
+                        else -> localizedResources.getString(R.string.iptv_settings_movies_series_imported) + when {
+                            !s.onDemandEnabled -> localizedResources.getString(R.string.iptv_settings_switched_off)
+                            s.onDemandInSidebar -> localizedResources.getString(R.string.iptv_settings_in_the_side_menu)
                             else -> ""
                         }
                     },
@@ -758,39 +761,39 @@ internal fun LiveTvSettingsContent(
                     focusFirst = firstFocus(LiveTvPage.ON_DEMAND)
                 ) {
                     Text(
-                        text = context.getString(R.string.iptv_settings_movies_and_series_from_xtream_logins_with_movies),
+                        text = localizedResources.getString(R.string.iptv_settings_movies_and_series_from_xtream_logins_with_movies),
                         style = MaterialTheme.typography.bodySmall,
                         color = NuvioTheme.colors.TextSecondary,
                         modifier = Modifier.padding(horizontal = NuvioTheme.spacing.lg, vertical = NuvioTheme.spacing.sm)
                     )
-                    if (onDemandStatus.loading) LoadingLine(onDemandStatus.message ?: context.getString(R.string.iptv_settings_importing_movies_and_series))
-                    SubHeading(context.getString(R.string.iptv_settings_providers))
+                    if (onDemandStatus.loading) LoadingLine(onDemandStatus.message ?: localizedResources.getString(R.string.iptv_settings_importing_movies_and_series))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_providers))
                     SettingsActionRow(
-                        context.getString(R.string.iptv_settings_update_movies_series_now),
-                        onDemandStatus.message ?: if (onDemandHas) context.getString(R.string.iptv_settings_imported_updates_once_a_day_by_itself) else context.getString(R.string.iptv_settings_nothing_imported_yet),
+                        localizedResources.getString(R.string.iptv_settings_update_movies_series_now),
+                        onDemandStatus.message ?: if (onDemandHas) localizedResources.getString(R.string.iptv_settings_imported_updates_once_a_day_by_itself) else localizedResources.getString(R.string.iptv_settings_nothing_imported_yet),
                         onClick = { viewModel.onDemand.refreshNow() }
                     )
                     // One switch per Xtream login (logins added before On Demand start switched off).
                     playlists.filter { it.hasCatalog }.forEach { pl ->
                         SettingsToggleRow(
-                            context.getString(R.string.iptv_settings_movies_series_from_1_s, pl.name),
-                            if (pl.importVod) context.getString(R.string.iptv_settings_included) else context.getString(R.string.iptv_settings_not_included_switch_on_to_import_this_provider),
+                            localizedResources.getString(R.string.iptv_settings_movies_series_from_1_s, pl.name),
+                            if (pl.importVod) localizedResources.getString(R.string.iptv_settings_included) else localizedResources.getString(R.string.iptv_settings_not_included_switch_on_to_import_this_provider),
                             pl.importVod,
                             { viewModel.savePlaylist(pl.copy(importVod = !pl.importVod)) }
                         )
                     }
-                    SubHeading(context.getString(R.string.iptv_settings_browsing))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_browsing))
                     var pickingSort by remember { mutableStateOf(false) }
                     val defaultSort = com.nuvio.tv.livetv.ondemand.VodSort.parse(s.vodDefaultSort)?.first
                         ?: com.nuvio.tv.livetv.ondemand.VodSort.DEFAULT
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_default_sort_order),
-                        subtitle = context.getString(R.string.iptv_settings_how_each_group_is_sorted_unless_you_pick),
+                        title = localizedResources.getString(R.string.iptv_settings_default_sort_order),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_how_each_group_is_sorted_unless_you_pick),
                         value = stringResource(com.nuvio.tv.livetv.ondemand.vodSortLabelResource(defaultSort)),
                         onClick = { pickingSort = true }
                     )
                     if (pickingSort) com.nuvio.tv.livetv.ondemand.VodSortPicker(
-                        title = context.getString(R.string.iptv_settings_default_sort_order),
+                        title = localizedResources.getString(R.string.iptv_settings_default_sort_order),
                         current = defaultSort,
                         onPick = { picked ->
                             pickingSort = false
@@ -800,33 +803,33 @@ internal fun LiveTvSettingsContent(
                         onDismiss = { pickingSort = false }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_merge_duplicates),
-                        context.getString(R.string.iptv_settings_shows_each_movie_or_series_once_even_when),
+                        localizedResources.getString(R.string.iptv_settings_merge_duplicates),
+                        localizedResources.getString(R.string.iptv_settings_shows_each_movie_or_series_once_even_when),
                         s.vodMergeDuplicates,
                         { update { it.copy(vodMergeDuplicates = !it.vodMergeDuplicates) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_play_straight_from_my_provider),
-                        context.getString(R.string.iptv_settings_play_on_a_title_opened_from_on_demand),
+                        localizedResources.getString(R.string.iptv_settings_play_straight_from_my_provider),
+                        localizedResources.getString(R.string.iptv_settings_play_on_a_title_opened_from_on_demand),
                         s.onDemandPlayDirect,
                         { update { it.copy(onDemandPlayDirect = !it.onDemandPlayDirect) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_use_posters_from_my_addons),
-                        context.getString(R.string.iptv_settings_your_addons_posters_where_they_have_the_title),
+                        localizedResources.getString(R.string.iptv_settings_use_posters_from_my_addons),
+                        localizedResources.getString(R.string.iptv_settings_your_addons_posters_where_they_have_the_title),
                         s.onDemandAddonPosters,
                         { update { it.copy(onDemandAddonPosters = !it.onDemandAddonPosters) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_continue_watching_on_home),
-                        context.getString(R.string.iptv_settings_show_on_demand_titles_you_started),
+                        localizedResources.getString(R.string.iptv_settings_continue_watching_on_home),
+                        localizedResources.getString(R.string.iptv_settings_show_on_demand_titles_you_started),
                         s.onDemandHomeRowEnabled,
                         { update { it.copy(onDemandHomeRowEnabled = !it.onDemandHomeRowEnabled) } }
                     )
                     SettingsActionRow(
-                        context.getString(R.string.iptv_settings_show_hidden_categories), context.getString(R.string.iptv_settings_brings_back_every_on_demand_category_you_hid),
+                        localizedResources.getString(R.string.iptv_settings_show_hidden_categories), localizedResources.getString(R.string.iptv_settings_brings_back_every_on_demand_category_you_hid),
                         "${user.vodHiddenCategories.size}", onClick = {
-                            confirm(context.getString(R.string.iptv_settings_show_hidden_categories_2), context.getString(R.string.iptv_settings_every_on_demand_category_you_hid_comes_back), context.getString(R.string.iptv_settings_show)) { viewModel.clearVodHidden() }
+                            confirm(localizedResources.getString(R.string.iptv_settings_show_hidden_categories_2), localizedResources.getString(R.string.iptv_settings_every_on_demand_category_you_hid_comes_back), localizedResources.getString(R.string.iptv_settings_show)) { viewModel.clearVodHidden() }
                         }
                     )
                 }
@@ -835,36 +838,36 @@ internal fun LiveTvSettingsContent(
             // ------------------------------------------------------------ Guide Layout
             if (show(LiveTvPage.GUIDE)) item(key = "layout") {
                 LiveSection(
-                    title = context.getString(R.string.iptv_settings_guide_layout),
-                    summary = context.getString(R.string.iptv_settings_what_the_guide_shows_and_how_much_fits),
+                    title = localizedResources.getString(R.string.iptv_settings_guide_layout),
+                    summary = localizedResources.getString(R.string.iptv_settings_what_the_guide_shows_and_how_much_fits),
                     icon = Icons.Default.GridView,
                     open = "layout" in open,
                     onToggle = { toggle("layout") },
                     focusFirst = firstFocus(LiveTvPage.GUIDE)
                 ) {
-                    SubHeading(context.getString(R.string.iptv_settings_top_of_the_guide))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_top_of_the_guide))
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_info_panel),
-                        context.getString(R.string.iptv_settings_the_panel_with_the_highlighted_show_s_poster),
+                        localizedResources.getString(R.string.iptv_settings_show_info_panel),
+                        localizedResources.getString(R.string.iptv_settings_the_panel_with_the_highlighted_show_s_poster),
                         s.showProgramDetails,
                         { update { it.copy(showProgramDetails = !it.showProgramDetails) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_preview_window),
-                        context.getString(R.string.iptv_settings_the_small_video_of_the_highlighted_channel_in),
+                        localizedResources.getString(R.string.iptv_settings_show_preview_window),
+                        localizedResources.getString(R.string.iptv_settings_the_small_video_of_the_highlighted_channel_in),
                         s.showPreview,
                         { update { it.copy(showPreview = !it.showPreview) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_smaller_info_panel_preview),
-                        context.getString(R.string.iptv_settings_shrinks_the_top_of_the_guide_to_about),
+                        localizedResources.getString(R.string.iptv_settings_smaller_info_panel_preview),
+                        localizedResources.getString(R.string.iptv_settings_shrinks_the_top_of_the_guide_to_about),
                         s.smallHeader,
                         { update { it.copy(smallHeader = !it.smallHeader) } }
                     )
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_guide_darkness),
-                        subtitle = context.getString(R.string.iptv_settings_how_dark_the_info_panel_at_the_top),
-                        value = when (s.guideInfoBackground) { "darker" -> context.getString(R.string.iptv_settings_standard); "solid" -> context.getString(R.string.iptv_settings_darkest); else -> context.getString(R.string.iptv_settings_lightest) },
+                        title = localizedResources.getString(R.string.iptv_settings_guide_darkness),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_how_dark_the_info_panel_at_the_top),
+                        value = when (s.guideInfoBackground) { "darker" -> localizedResources.getString(R.string.iptv_settings_standard); "solid" -> localizedResources.getString(R.string.iptv_settings_darkest); else -> localizedResources.getString(R.string.iptv_settings_lightest) },
                         onClick = {
                             update {
                                 it.copy(guideInfoBackground = when (it.guideInfoBackground) { "standard" -> "darker"; "darker" -> "solid"; else -> "standard" })
@@ -872,21 +875,21 @@ internal fun LiveTvSettingsContent(
                         }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_posters),
-                        context.getString(R.string.iptv_settings_posters_for_what_s_on_from_your_addons),
+                        localizedResources.getString(R.string.iptv_settings_show_posters),
+                        localizedResources.getString(R.string.iptv_settings_posters_for_what_s_on_from_your_addons),
                         s.showPosters,
                         { update { it.copy(showPosters = !it.showPosters) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_playlist_name_in_info_panel),
-                        context.getString(R.string.iptv_settings_which_playlist_the_highlighted_channel_comes_from),
+                        localizedResources.getString(R.string.iptv_settings_show_playlist_name_in_info_panel),
+                        localizedResources.getString(R.string.iptv_settings_which_playlist_the_highlighted_channel_comes_from),
                         s.showPlaylistInInfo,
                         { update { it.copy(showPlaylistInInfo = !it.showPlaylistInInfo) } }
                     )
-                    SubHeading(context.getString(R.string.iptv_settings_info_panel_parts))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_info_panel_parts))
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_channel_name_logo),
-                        context.getString(R.string.iptv_settings_the_channel_line_at_the_top_of_the),
+                        localizedResources.getString(R.string.iptv_settings_show_channel_name_logo),
+                        localizedResources.getString(R.string.iptv_settings_the_channel_line_at_the_top_of_the),
                         com.nuvio.tv.livetv.ui.GuideInfoPart.CHANNEL !in com.nuvio.tv.livetv.ui.BarPart.parse(s.guideInfoHidden),
                         {
                             update {
@@ -897,8 +900,8 @@ internal fun LiveTvSettingsContent(
                         }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_live_catch_up_tags),
-                        context.getString(R.string.iptv_settings_the_small_tags_beside_the_channel_name),
+                        localizedResources.getString(R.string.iptv_settings_show_live_catch_up_tags),
+                        localizedResources.getString(R.string.iptv_settings_the_small_tags_beside_the_channel_name),
                         com.nuvio.tv.livetv.ui.GuideInfoPart.TAGS !in com.nuvio.tv.livetv.ui.BarPart.parse(s.guideInfoHidden),
                         {
                             update {
@@ -909,8 +912,8 @@ internal fun LiveTvSettingsContent(
                         }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_title),
-                        context.getString(R.string.iptv_settings_the_big_show_title),
+                        localizedResources.getString(R.string.iptv_settings_show_title),
+                        localizedResources.getString(R.string.iptv_settings_the_big_show_title),
                         com.nuvio.tv.livetv.ui.GuideInfoPart.TITLE !in com.nuvio.tv.livetv.ui.BarPart.parse(s.guideInfoHidden),
                         {
                             update {
@@ -921,8 +924,8 @@ internal fun LiveTvSettingsContent(
                         }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_start_end_time),
-                        context.getString(R.string.iptv_settings_like_8_00_pm_9_00_pm),
+                        localizedResources.getString(R.string.iptv_settings_show_start_end_time),
+                        localizedResources.getString(R.string.iptv_settings_like_8_00_pm_9_00_pm),
                         com.nuvio.tv.livetv.ui.GuideInfoPart.TIME !in com.nuvio.tv.livetv.ui.BarPart.parse(s.guideInfoHidden),
                         {
                             update {
@@ -933,8 +936,8 @@ internal fun LiveTvSettingsContent(
                         }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_time_left),
-                        context.getString(R.string.iptv_settings_like_25_min_left),
+                        localizedResources.getString(R.string.iptv_settings_show_time_left),
+                        localizedResources.getString(R.string.iptv_settings_like_25_min_left),
                         com.nuvio.tv.livetv.ui.GuideInfoPart.LEFT !in com.nuvio.tv.livetv.ui.BarPart.parse(s.guideInfoHidden),
                         {
                             update {
@@ -945,8 +948,8 @@ internal fun LiveTvSettingsContent(
                         }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_category),
-                        context.getString(R.string.iptv_settings_like_drama_or_sports),
+                        localizedResources.getString(R.string.iptv_settings_show_category),
+                        localizedResources.getString(R.string.iptv_settings_like_drama_or_sports),
                         com.nuvio.tv.livetv.ui.GuideInfoPart.CATEGORY !in com.nuvio.tv.livetv.ui.BarPart.parse(s.guideInfoHidden),
                         {
                             update {
@@ -957,8 +960,8 @@ internal fun LiveTvSettingsContent(
                         }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_progress_bar),
-                        context.getString(R.string.iptv_settings_how_far_into_the_show_you_are),
+                        localizedResources.getString(R.string.iptv_settings_show_progress_bar),
+                        localizedResources.getString(R.string.iptv_settings_how_far_into_the_show_you_are),
                         com.nuvio.tv.livetv.ui.GuideInfoPart.PROGRESS !in com.nuvio.tv.livetv.ui.BarPart.parse(s.guideInfoHidden),
                         {
                             update {
@@ -969,8 +972,8 @@ internal fun LiveTvSettingsContent(
                         }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_description),
-                        context.getString(R.string.iptv_settings_the_text_about_the_show),
+                        localizedResources.getString(R.string.iptv_settings_show_description),
+                        localizedResources.getString(R.string.iptv_settings_the_text_about_the_show),
                         com.nuvio.tv.livetv.ui.GuideInfoPart.DESCRIPTION !in com.nuvio.tv.livetv.ui.BarPart.parse(s.guideInfoHidden),
                         {
                             update {
@@ -980,55 +983,55 @@ internal fun LiveTvSettingsContent(
                             }
                         }
                     )
-                    SubHeading(context.getString(R.string.iptv_settings_channel_rows))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_channel_rows))
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_channel_names),
-                        context.getString(R.string.iptv_settings_off_just_numbers_and_logos_which_leaves_more),
+                        localizedResources.getString(R.string.iptv_settings_show_channel_names),
+                        localizedResources.getString(R.string.iptv_settings_off_just_numbers_and_logos_which_leaves_more),
                         s.showChannelNames,
                         { update { it.copy(showChannelNames = !it.showChannelNames) } }
                     )
                     if (s.showChannelNames) {
                         SettingsToggleRow(
-                            context.getString(R.string.iptv_settings_two_line_channel_names),
-                            context.getString(R.string.iptv_settings_two_line_channel_names_desc),
+                            localizedResources.getString(R.string.iptv_settings_two_line_channel_names),
+                            localizedResources.getString(R.string.iptv_settings_two_line_channel_names_desc),
                             s.twoLineChannelNames,
                             { update { it.copy(twoLineChannelNames = !it.twoLineChannelNames) } }
                         )
                     }
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_channel_numbers),
-                        context.getString(R.string.iptv_settings_the_number_in_front_of_each_channel),
+                        localizedResources.getString(R.string.iptv_settings_show_channel_numbers),
+                        localizedResources.getString(R.string.iptv_settings_the_number_in_front_of_each_channel),
                         s.showChannelNumbers,
                         { update { it.copy(showChannelNumbers = !it.showChannelNumbers) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_channel_logos),
-                        context.getString(R.string.iptv_settings_the_logo_in_front_of_each_channel_name),
+                        localizedResources.getString(R.string.iptv_settings_show_channel_logos),
+                        localizedResources.getString(R.string.iptv_settings_the_logo_in_front_of_each_channel_name),
                         s.showChannelLogos,
                         { update { it.copy(showChannelLogos = !it.showChannelLogos) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_outline_the_playing_channel),
-                        context.getString(R.string.iptv_settings_a_red_outline_around_the_channel_you_re),
+                        localizedResources.getString(R.string.iptv_settings_outline_the_playing_channel),
+                        localizedResources.getString(R.string.iptv_settings_a_red_outline_around_the_channel_you_re),
                         s.markPlayingChannel,
                         { update { it.copy(markPlayingChannel = !it.markPlayingChannel) } }
                     )
                     var pickingGuideSize by remember { mutableStateOf(false) }
                     val guideSizes = listOf(
-                        Triple("COMPACT", context.getString(R.string.iptv_settings_compact), context.getString(R.string.iptv_settings_slimmer_rows_slightly_smaller_text_about_two_more)),
-                        Triple("STANDARD", context.getString(R.string.iptv_settings_standard), context.getString(R.string.iptv_settings_the_usual_size)),
-                        Triple("LARGE", context.getString(R.string.iptv_settings_large), context.getString(R.string.iptv_settings_bigger_text_and_rows_about_three_fewer_channels)),
-                        Triple("XLARGE", context.getString(R.string.iptv_settings_extra_large), context.getString(R.string.iptv_settings_the_biggest_text_and_rows_about_five_fewer))
+                        Triple("COMPACT", localizedResources.getString(R.string.iptv_settings_compact), localizedResources.getString(R.string.iptv_settings_slimmer_rows_slightly_smaller_text_about_two_more)),
+                        Triple("STANDARD", localizedResources.getString(R.string.iptv_settings_standard), localizedResources.getString(R.string.iptv_settings_the_usual_size)),
+                        Triple("LARGE", localizedResources.getString(R.string.iptv_settings_large), localizedResources.getString(R.string.iptv_settings_bigger_text_and_rows_about_three_fewer_channels)),
+                        Triple("XLARGE", localizedResources.getString(R.string.iptv_settings_extra_large), localizedResources.getString(R.string.iptv_settings_the_biggest_text_and_rows_about_five_fewer))
                     )
                     val currentSize = s.effectiveGuideSize
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_guide_size),
-                        subtitle = context.getString(R.string.iptv_settings_how_big_the_text_and_rows_in_the),
-                        value = guideSizes.firstOrNull { it.first == currentSize }?.second ?: context.getString(R.string.iptv_settings_standard),
+                        title = localizedResources.getString(R.string.iptv_settings_guide_size),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_how_big_the_text_and_rows_in_the),
+                        value = guideSizes.firstOrNull { it.first == currentSize }?.second ?: localizedResources.getString(R.string.iptv_settings_standard),
                         onClick = { pickingGuideSize = true }
                     )
                     if (pickingGuideSize) ActionListDialog(
-                        title = context.getString(R.string.iptv_settings_guide_size),
+                        title = localizedResources.getString(R.string.iptv_settings_guide_size),
                         actions = guideSizes.map { (key, label, _) ->
                             (if (key == currentSize) "$label  ✓" else label) to {
                                 pickingGuideSize = false
@@ -1038,51 +1041,51 @@ internal fun LiveTvSettingsContent(
                         onDismiss = { pickingGuideSize = false }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_times_in_the_guide),
-                        context.getString(R.string.iptv_settings_each_show_s_start_and_end_time_under),
+                        localizedResources.getString(R.string.iptv_settings_show_times_in_the_guide),
+                        localizedResources.getString(R.string.iptv_settings_each_show_s_start_and_end_time_under),
                         s.showProgramTimes,
                         { update { it.copy(showProgramTimes = !it.showProgramTimes) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_episode_numbers),
-                        context.getString(R.string.iptv_settings_episode_numbers_like_s2_e5_after_show_titles),
+                        localizedResources.getString(R.string.iptv_settings_show_episode_numbers),
+                        localizedResources.getString(R.string.iptv_settings_episode_numbers_like_s2_e5_after_show_titles),
                         s.showEpisodeNumbers,
                         { update { it.copy(showEpisodeNumbers = !it.showEpisodeNumbers) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_show_the_now_line),
-                        context.getString(R.string.iptv_settings_the_line_that_marks_the_current_time_across),
+                        localizedResources.getString(R.string.iptv_settings_show_the_now_line),
+                        localizedResources.getString(R.string.iptv_settings_the_line_that_marks_the_current_time_across),
                         s.showNowLine,
                         { update { it.copy(showNowLine = !it.showNowLine) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_quality_badges),
-                        context.getString(R.string.iptv_settings_4k_fhd_hd_or_sd_next_to_channels),
+                        localizedResources.getString(R.string.iptv_settings_quality_badges),
+                        localizedResources.getString(R.string.iptv_settings_4k_fhd_hd_or_sd_next_to_channels),
                         s.showQualityBadges,
                         { update { it.copy(showQualityBadges = !it.showQualityBadges) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_frame_rate_on_the_info_bar),
-                        context.getString(R.string.iptv_settings_shows_how_smooth_the_channel_is_25_30),
+                        localizedResources.getString(R.string.iptv_settings_frame_rate_on_the_info_bar),
+                        localizedResources.getString(R.string.iptv_settings_shows_how_smooth_the_channel_is_25_30),
                         s.showFrameRate,
                         { update { it.copy(showFrameRate = !it.showFrameRate) } }
                     )
-                    SubHeading(context.getString(R.string.iptv_settings_look))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_look))
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_guide_sports_background),
-                        subtitle = context.getString(R.string.iptv_settings_the_backdrop_behind_the_tv_guide_and_the),
+                        title = localizedResources.getString(R.string.iptv_settings_guide_sports_background),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_the_backdrop_behind_the_tv_guide_and_the),
                         value = guideBackdropLabel(context, s.guideBackdrop),
                         onClick = { update { it.copy(guideBackdrop = com.nuvio.tv.livetv.ui.GuideBackdrops.next(it.guideBackdrop)) } }
                     )
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_highlight_style),
-                        subtitle = context.getString(R.string.iptv_settings_how_the_selected_show_is_marked_an_outline),
-                        value = if (s.solidHighlight) context.getString(R.string.iptv_settings_solid) else context.getString(R.string.iptv_settings_outline),
+                        title = localizedResources.getString(R.string.iptv_settings_highlight_style),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_how_the_selected_show_is_marked_an_outline),
+                        value = if (s.solidHighlight) localizedResources.getString(R.string.iptv_settings_solid) else localizedResources.getString(R.string.iptv_settings_outline),
                         onClick = { dialog = LiveDialog.HighlightChoice }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_24_hour_clock),
-                        context.getString(R.string.iptv_settings_times_like_20_30_instead_of_8_30),
+                        localizedResources.getString(R.string.iptv_settings_24_hour_clock),
+                        localizedResources.getString(R.string.iptv_settings_times_like_20_30_instead_of_8_30),
                         s.use24HourClock,
                         { update { it.copy(use24HourClock = !it.use24HourClock) } }
                     )
@@ -1092,96 +1095,96 @@ internal fun LiveTvSettingsContent(
             // ------------------------------------------------------------ Watching
             if (show(LiveTvPage.PLAYBACK)) item(key = "watching") {
                 LiveSection(
-                    title = context.getString(R.string.iptv_settings_opening_channel_surfing),
-                    summary = context.getString(R.string.iptv_settings_opening_live_tv_changing_channels_the_info_bar),
+                    title = localizedResources.getString(R.string.iptv_settings_opening_channel_surfing),
+                    summary = localizedResources.getString(R.string.iptv_settings_opening_live_tv_changing_channels_the_info_bar),
                     icon = Icons.Default.PlayCircleFilled,
                     open = "watching" in open,
                     onToggle = { toggle("watching") },
                     focusFirst = firstFocus(LiveTvPage.PLAYBACK),
                 ) {
-                    SubHeading(context.getString(R.string.iptv_settings_opening_live_tv))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_opening_live_tv))
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_open_on_last_group),
-                        context.getString(R.string.iptv_settings_live_tv_opens_on_the_group_you_last),
+                        localizedResources.getString(R.string.iptv_settings_open_on_last_group),
+                        localizedResources.getString(R.string.iptv_settings_live_tv_opens_on_the_group_you_last),
                         s.rememberLastGroup,
                         { update { it.copy(rememberLastGroup = !it.rememberLastGroup) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_play_last_channel_in_the_preview),
-                        context.getString(R.string.iptv_settings_opening_live_tv_starts_the_channel_you_watched),
+                        localizedResources.getString(R.string.iptv_settings_play_last_channel_in_the_preview),
+                        localizedResources.getString(R.string.iptv_settings_opening_live_tv_starts_the_channel_you_watched),
                         s.resumeLastInPreview,
                         { update { it.copy(resumeLastInPreview = !it.resumeLastInPreview) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_start_in_full_screen),
-                        context.getString(R.string.iptv_settings_the_first_time_you_open_live_tv_after),
+                        localizedResources.getString(R.string.iptv_settings_start_in_full_screen),
+                        localizedResources.getString(R.string.iptv_settings_the_first_time_you_open_live_tv_after),
                         s.autoPlayLastChannel,
                         { update { it.copy(autoPlayLastChannel = !it.autoPlayLastChannel) } }
                     )
-                    SubHeading(context.getString(R.string.iptv_settings_moving_around))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_moving_around))
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_ok_opens_full_screen),
-                        context.getString(R.string.iptv_settings_ok_on_a_show_goes_straight_to_full),
+                        localizedResources.getString(R.string.iptv_settings_ok_opens_full_screen),
+                        localizedResources.getString(R.string.iptv_settings_ok_on_a_show_goes_straight_to_full),
                         s.openFullscreenOnSelect,
                         { update { it.copy(openFullscreenOnSelect = !it.openFullscreenOnSelect) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_land_on_channel_names_like_a_cable_box),
-                        context.getString(R.string.iptv_settings_picking_a_group_lands_on_the_channel_names),
+                        localizedResources.getString(R.string.iptv_settings_land_on_channel_names_like_a_cable_box),
+                        localizedResources.getString(R.string.iptv_settings_picking_a_group_lands_on_the_channel_names),
                         s.browseByChannelName,
                         { update { it.copy(browseByChannelName = !it.browseByChannelName) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_overlay_mode),
-                        context.getString(R.string.iptv_settings_left_while_watching_shows_channels_and_schedules_over),
+                        localizedResources.getString(R.string.iptv_settings_overlay_mode),
+                        localizedResources.getString(R.string.iptv_settings_left_while_watching_shows_channels_and_schedules_over),
                         s.overlayMode,
                         { update { it.copy(overlayMode = !it.overlayMode) } }
                     )
                     if (s.overlayMode) {
                         SettingsToggleRow(
-                            context.getString(R.string.iptv_settings_overlay_keep_list_open_when_changing_channel),
-                            context.getString(R.string.iptv_settings_ok_on_another_channel_switches_to_it_and),
+                            localizedResources.getString(R.string.iptv_settings_overlay_keep_list_open_when_changing_channel),
+                            localizedResources.getString(R.string.iptv_settings_ok_on_another_channel_switches_to_it_and),
                             s.overlayKeepOpen,
                             { update { it.copy(overlayKeepOpen = !it.overlayKeepOpen) } }
                         )
                         SettingsToggleRow(
-                            context.getString(R.string.iptv_settings_overlay_show_schedule_and_details_beside_the_list),
-                            context.getString(R.string.iptv_settings_the_highlighted_channel_s_upcoming_shows_and_what),
+                            localizedResources.getString(R.string.iptv_settings_overlay_show_schedule_and_details_beside_the_list),
+                            localizedResources.getString(R.string.iptv_settings_the_highlighted_channel_s_upcoming_shows_and_what),
                             s.overlayShowDetails,
                             { update { it.copy(overlayShowDetails = !it.overlayShowDetails) } }
                         )
                     }
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_channel_up_down_moves_within),
-                        subtitle = context.getString(R.string.iptv_settings_which_channels_up_and_down_or_ch_and),
-                        value = if (s.zapMode == ZapMode.GROUP) context.getString(R.string.iptv_settings_current_group) else context.getString(R.string.iptv_settings_all_channels),
+                        title = localizedResources.getString(R.string.iptv_settings_channel_up_down_moves_within),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_which_channels_up_and_down_or_ch_and),
+                        value = if (s.zapMode == ZapMode.GROUP) localizedResources.getString(R.string.iptv_settings_current_group) else localizedResources.getString(R.string.iptv_settings_all_channels),
                         onClick = { dialog = LiveDialog.ZapModeChoice }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_channel_surfing_browse_before_switching),
-                        context.getString(R.string.iptv_settings_up_down_and_ch_ch_show_what_s),
+                        localizedResources.getString(R.string.iptv_settings_channel_surfing_browse_before_switching),
+                        localizedResources.getString(R.string.iptv_settings_up_down_and_ch_ch_show_what_s),
                         s.channelSurf,
                         { update { it.copy(channelSurf = !it.channelSurf) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_reverse_channel_up_down),
-                        context.getString(R.string.iptv_settings_up_goes_to_the_previous_channel_instead_of),
+                        localizedResources.getString(R.string.iptv_settings_reverse_channel_up_down),
+                        localizedResources.getString(R.string.iptv_settings_up_goes_to_the_previous_channel_instead_of),
                         s.reverseZap,
                         { update { it.copy(reverseZap = !it.reverseZap) } }
                     )
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_quick_channels),
-                        subtitle = context.getString(R.string.iptv_settings_shortcuts_under_the_play_bar_press_ok_while),
-                        value = if (!com.nuvio.tv.livetv.model.PanelRowLists.shown(s)) context.getString(R.string.playback_afr_off) else {
+                        title = localizedResources.getString(R.string.iptv_settings_quick_channels),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_shortcuts_under_the_play_bar_press_ok_while),
+                        value = if (!com.nuvio.tv.livetv.model.PanelRowLists.shown(s)) localizedResources.getString(R.string.playback_afr_off) else {
                             val n = com.nuvio.tv.livetv.model.PanelRowLists.parse(s).count { it.on }
-                            if (n == 1) context.getString(R.string.iptv_settings_1_list) else context.getString(R.string.iptv_settings_1_s_lists, n)
+                            if (n == 1) localizedResources.getString(R.string.iptv_settings_1_list) else localizedResources.getString(R.string.iptv_settings_1_s_lists, n.toString())
                         },
                         onClick = { dialog = LiveDialog.ChannelRow }
                     )
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_play_bar_background),
-                        subtitle = context.getString(R.string.iptv_settings_how_dark_the_play_bar_is_standard_or),
-                        value = when (s.panelBackground) { "darker" -> context.getString(R.string.iptv_settings_standard); "solid" -> context.getString(R.string.iptv_settings_darkest); else -> context.getString(R.string.iptv_settings_lightest) },
+                        title = localizedResources.getString(R.string.iptv_settings_play_bar_background),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_how_dark_the_play_bar_is_standard_or),
+                        value = when (s.panelBackground) { "darker" -> localizedResources.getString(R.string.iptv_settings_standard); "solid" -> localizedResources.getString(R.string.iptv_settings_darkest); else -> localizedResources.getString(R.string.iptv_settings_lightest) },
                         onClick = {
                             update {
                                 it.copy(panelBackground = when (it.panelBackground) { "standard" -> "darker"; "darker" -> "solid"; else -> "standard" })
@@ -1189,9 +1192,9 @@ internal fun LiveTvSettingsContent(
                         }
                     )
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_info_bar_stays_for),
-                        subtitle = context.getString(R.string.iptv_settings_how_long_the_show_info_stays_on_screen),
-                        value = context.getString(R.string.iptv_settings_1_s_seconds, s.infoBannerSeconds),
+                        title = localizedResources.getString(R.string.iptv_settings_info_bar_stays_for),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_how_long_the_show_info_stays_on_screen),
+                        value = localizedResources.getString(R.string.iptv_settings_1_s_seconds, s.infoBannerSeconds.toString()),
                         onClick = { dialog = LiveDialog.BannerTime }
                     )
                 }
@@ -1200,74 +1203,74 @@ internal fun LiveTvSettingsContent(
             // ------------------------------------------------------------ Picture, Sound & Clock
             if (show(LiveTvPage.PLAYBACK)) item(key = "picture") {
                 LiveSection(
-                    title = context.getString(R.string.iptv_settings_picture_sound_clock),
-                    summary = context.getString(R.string.iptv_settings_the_clock_frame_rate_pausing_and_catch_up),
+                    title = localizedResources.getString(R.string.iptv_settings_picture_sound_clock),
+                    summary = localizedResources.getString(R.string.iptv_settings_the_clock_frame_rate_pausing_and_catch_up),
                     icon = Icons.Default.PlayCircleFilled,
                     open = "picture" in open,
                     onToggle = { toggle("picture") }
                 ) {
-                    SubHeading(context.getString(R.string.iptv_settings_on_screen_clock))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_on_screen_clock))
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_show_clock),
-                        subtitle = context.getString(R.string.iptv_settings_a_clock_in_the_corner_while_you_watch),
-                        value = clockModes(context).firstOrNull { it.first == s.clockMode }?.second ?: context.getString(R.string.iptv_settings_with_player_controls),
+                        title = localizedResources.getString(R.string.iptv_settings_show_clock),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_a_clock_in_the_corner_while_you_watch),
+                        value = clockModes(context).firstOrNull { it.first == s.clockMode }?.second ?: localizedResources.getString(R.string.iptv_settings_with_player_controls),
                         onClick = { dialog = LiveDialog.ClockMode }
                     )
                     if (s.clockMode == "always") {
                         SettingsActionRow(
-                            title = context.getString(R.string.iptv_settings_clock_position),
-                            subtitle = context.getString(R.string.iptv_settings_which_corner_of_the_screen),
-                            value = clockPositions(context).firstOrNull { it.first == s.clockPosition }?.second ?: context.getString(R.string.iptv_settings_top_right),
+                            title = localizedResources.getString(R.string.iptv_settings_clock_position),
+                            subtitle = localizedResources.getString(R.string.iptv_settings_which_corner_of_the_screen),
+                            value = clockPositions(context).firstOrNull { it.first == s.clockPosition }?.second ?: localizedResources.getString(R.string.iptv_settings_top_right),
                             onClick = { dialog = LiveDialog.ClockPosition }
                         )
                         SettingsActionRow(
-                            title = context.getString(R.string.iptv_settings_clock_size),
-                            subtitle = context.getString(R.string.iptv_settings_how_big_the_time_is),
-                            value = clockSizes(context).firstOrNull { it.first == s.clockSize }?.second ?: context.getString(R.string.iptv_settings_medium),
+                            title = localizedResources.getString(R.string.iptv_settings_clock_size),
+                            subtitle = localizedResources.getString(R.string.iptv_settings_how_big_the_time_is),
+                            value = clockSizes(context).firstOrNull { it.first == s.clockSize }?.second ?: localizedResources.getString(R.string.iptv_settings_medium),
                             onClick = { dialog = LiveDialog.ClockSize }
                         )
                         SettingsActionRow(
-                            title = context.getString(R.string.iptv_settings_clock_opacity),
-                            subtitle = context.getString(R.string.iptv_settings_lower_is_more_see_through_so_it_doesn),
+                            title = localizedResources.getString(R.string.iptv_settings_clock_opacity),
+                            subtitle = localizedResources.getString(R.string.iptv_settings_lower_is_more_see_through_so_it_doesn),
                             value = "${s.clockOpacity}%",
                             onClick = { dialog = LiveDialog.ClockOpacity }
                         )
                         SettingsToggleRow(
-                            context.getString(R.string.iptv_settings_clock_background),
-                            context.getString(R.string.iptv_settings_a_soft_dark_box_behind_the_time_so),
+                            localizedResources.getString(R.string.iptv_settings_clock_background),
+                            localizedResources.getString(R.string.iptv_settings_a_soft_dark_box_behind_the_time_so),
                             s.clockBackground,
                             { update { it.copy(clockBackground = !it.clockBackground) } }
                         )
                     }
-                    SubHeading(context.getString(R.string.iptv_settings_picture_sound))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_picture_sound))
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_captions_on_by_default),
-                        context.getString(R.string.iptv_settings_turns_captions_on_when_a_channel_has_them),
+                        localizedResources.getString(R.string.iptv_settings_captions_on_by_default),
+                        localizedResources.getString(R.string.iptv_settings_turns_captions_on_when_a_channel_has_them),
                         s.captionsByDefault,
                         { update { it.copy(captionsByDefault = !it.captionsByDefault) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_audio_passthrough),
-                        context.getString(R.string.iptv_settings_sends_dolby_audio_untouched_to_your_tv_or),
+                        localizedResources.getString(R.string.iptv_settings_audio_passthrough),
+                        localizedResources.getString(R.string.iptv_settings_sends_dolby_audio_untouched_to_your_tv_or),
                         s.audioPassthrough,
                         { update { it.copy(audioPassthrough = !it.audioPassthrough) } }
                     )
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_match_frame_rate),
-                        subtitle = context.getString(R.string.iptv_settings_switches_the_tv_to_the_video_s_frame),
-                        value = frameRateModes(context).firstOrNull { it.first == s.frameRateMode }?.second ?: context.getString(R.string.playback_afr_off),
+                        title = localizedResources.getString(R.string.iptv_settings_match_frame_rate),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_switches_the_tv_to_the_video_s_frame),
+                        value = frameRateModes(context).firstOrNull { it.first == s.frameRateMode }?.second ?: localizedResources.getString(R.string.playback_afr_off),
                         onClick = { dialog = LiveDialog.FrameRate }
                     )
-                    SubHeading(context.getString(R.string.iptv_settings_pause_catch_up))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_pause_catch_up))
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_pause_and_rewind_live_tv),
-                        context.getString(R.string.iptv_settings_on_channels_without_catch_up_pausing_records_the),
+                        localizedResources.getString(R.string.iptv_settings_pause_and_rewind_live_tv),
+                        localizedResources.getString(R.string.iptv_settings_on_channels_without_catch_up_pausing_records_the),
                         s.timeshiftEnabled,
                         { update { it.copy(timeshiftEnabled = !it.timeshiftEnabled) } }
                     )
                     if (s.timeshiftEnabled) SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_rewind_anytime),
-                        context.getString(R.string.iptv_settings_full_screen_channels_keep_a_rolling_recording_so),
+                        localizedResources.getString(R.string.iptv_settings_rewind_anytime),
+                        localizedResources.getString(R.string.iptv_settings_full_screen_channels_keep_a_rolling_recording_so),
                         s.rewindAlways,
                         { update { it.copy(rewindAlways = !it.rewindAlways) } }
                     )
@@ -1277,9 +1280,9 @@ internal fun LiveTvSettingsContent(
                         // 10 minutes by default: Fire TV Sticks and similar have little free space.
                         val lengths = if (onDrive) listOf(10, 15, 30, 60, 120, 240) else listOf(10, 15, 30, 60, 120)
                         SettingsActionRow(
-                            title = context.getString(R.string.iptv_settings_keep_up_to),
-                            subtitle = context.getString(R.string.iptv_settings_how_far_back_you_can_go_saved_to),
-                            value = context.getString(R.string.iptv_settings_buffer_estimate, context.resources.getQuantityString(R.plurals.iptv_settings_minutes_short, s.timeshiftMinutes, s.timeshiftMinutes), (s.timeshiftMinutes * 35).let { mb -> if (mb >= 1000) context.getString(R.string.iptv_settings_1f_gb, mb / 1024f) else context.getString(R.string.iptv_settings_1_s_mb, mb) }),
+                            title = localizedResources.getString(R.string.iptv_settings_keep_up_to),
+                            subtitle = localizedResources.getString(R.string.iptv_settings_how_far_back_you_can_go_saved_to),
+                            value = localizedResources.getString(R.string.iptv_settings_buffer_estimate, localizedResources.getQuantityString(R.plurals.iptv_settings_minutes_short, s.timeshiftMinutes, s.timeshiftMinutes), (s.timeshiftMinutes * 35).let { mb -> if (mb >= 1000) localizedResources.getString(R.string.iptv_settings_1f_gb, mb / 1024f) else localizedResources.getString(R.string.iptv_settings_1_s_mb, mb.toString()) }),
                             onClick = {
                                 update { st ->
                                     val i = lengths.indexOf(st.timeshiftMinutes)
@@ -1289,36 +1292,36 @@ internal fun LiveTvSettingsContent(
                         )
                     }
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_faster_catch_up_skipping),
-                        context.getString(R.string.iptv_settings_saves_a_replay_to_the_device_while_you),
+                        localizedResources.getString(R.string.iptv_settings_faster_catch_up_skipping),
+                        localizedResources.getString(R.string.iptv_settings_saves_a_replay_to_the_device_while_you),
                         s.catchupCache,
                         { update { it.copy(catchupCache = !it.catchupCache) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_prefer_hls_for_catch_up),
-                        context.getString(R.string.iptv_settings_asks_xtream_providers_for_replays_in_hls_m3u8),
+                        localizedResources.getString(R.string.iptv_settings_prefer_hls_for_catch_up),
+                        localizedResources.getString(R.string.iptv_settings_asks_xtream_providers_for_replays_in_hls_m3u8),
                         s.catchupPreferHls,
                         { update { it.copy(catchupPreferHls = !it.catchupPreferHls) } }
                     )
-                    SettingsNote(context.getString(R.string.iptv_settings_catch_up_time_shift_is_set_for_each))
-                    SubHeading(context.getString(R.string.iptv_settings_connection))
+                    SettingsNote(localizedResources.getString(R.string.iptv_settings_catch_up_time_shift_is_set_for_each))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_connection))
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_buffer_size),
-                        subtitle = context.getString(R.string.iptv_settings_larger_rides_out_a_slow_connection_or_provider),
-                        value = when (s.bufferSize) { "none" -> context.getString(R.string.iptv_settings_none); "small" -> context.getString(R.string.iptv_settings_small); "large" -> context.getString(R.string.iptv_settings_large); "xlarge" -> context.getString(R.string.iptv_settings_extra_large_2); else -> context.getString(R.string.iptv_settings_normal) },
+                        title = localizedResources.getString(R.string.iptv_settings_buffer_size),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_larger_rides_out_a_slow_connection_or_provider),
+                        value = when (s.bufferSize) { "none" -> localizedResources.getString(R.string.iptv_settings_none); "small" -> localizedResources.getString(R.string.iptv_settings_small); "large" -> localizedResources.getString(R.string.iptv_settings_large); "xlarge" -> localizedResources.getString(R.string.iptv_settings_extra_large_2); else -> localizedResources.getString(R.string.iptv_settings_normal) },
                         onClick = {
                             update { st -> st.copy(bufferSize = when (st.bufferSize) { "none" -> "small"; "small" -> "normal"; "normal" -> "large"; "large" -> "xlarge"; else -> "none" }) }
                         }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_reconnect_automatically),
-                        context.getString(R.string.iptv_settings_tries_the_stream_again_by_itself_if_it),
+                        localizedResources.getString(R.string.iptv_settings_reconnect_automatically),
+                        localizedResources.getString(R.string.iptv_settings_tries_the_stream_again_by_itself_if_it),
                         s.autoReconnect,
                         { update { it.copy(autoReconnect = !it.autoReconnect) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_switch_to_a_backup_channel),
-                        context.getString(R.string.iptv_settings_backup_channel_description),
+                        localizedResources.getString(R.string.iptv_settings_switch_to_a_backup_channel),
+                        localizedResources.getString(R.string.iptv_settings_backup_channel_description),
                         s.autoBackupChannel,
                         { update { it.copy(autoBackupChannel = !it.autoBackupChannel) } }
                     )
@@ -1328,33 +1331,33 @@ internal fun LiveTvSettingsContent(
             // ------------------------------------------------------------ Guide Listings
             if (show(LiveTvPage.GUIDE)) item(key = "listings") {
                 LiveSection(
-                    title = context.getString(R.string.iptv_settings_guide_listings),
-                    summary = context.getString(R.string.iptv_settings_how_far_the_guide_reaches),
+                    title = localizedResources.getString(R.string.iptv_settings_guide_listings),
+                    summary = localizedResources.getString(R.string.iptv_settings_how_far_the_guide_reaches),
                     icon = Icons.Default.Schedule,
                     open = "listings" in open,
                     onToggle = { toggle("listings") }
                 ) {
                     SettingsActionRow(
-                        context.getString(R.string.iptv_settings_days_ahead), context.getString(R.string.iptv_settings_how_far_into_the_future_the_guide_keeps),
-                        if (s.epgFutureDays == 1) context.getString(R.string.iptv_settings_1_day) else context.getString(R.string.iptv_settings_1_s_days, s.epgFutureDays), onClick = { dialog = LiveDialog.FutureDays }
+                        localizedResources.getString(R.string.iptv_settings_days_ahead), localizedResources.getString(R.string.iptv_settings_how_far_into_the_future_the_guide_keeps),
+                        if (s.epgFutureDays == 1) localizedResources.getString(R.string.iptv_settings_1_day) else localizedResources.getString(R.string.iptv_settings_1_s_days, s.epgFutureDays.toString()), onClick = { dialog = LiveDialog.FutureDays }
                     )
                     SettingsActionRow(
-                        context.getString(R.string.iptv_settings_past_shows_kept), context.getString(R.string.iptv_settings_how_far_back_the_guide_keeps_shows_for),
+                        localizedResources.getString(R.string.iptv_settings_past_shows_kept), localizedResources.getString(R.string.iptv_settings_how_far_back_the_guide_keeps_shows_for),
                         hoursLabel(context, s.epgPastHours), onClick = { dialog = LiveDialog.PastHours }
                     )
-                    SettingsNote(context.getString(R.string.iptv_settings_guide_time_shift_is_set_for_each_guide))
+                    SettingsNote(localizedResources.getString(R.string.iptv_settings_guide_time_shift_is_set_for_each_guide))
                     val clearContext = androidx.compose.ui.platform.LocalContext.current
                     SettingsActionRow(
-                        context.getString(R.string.iptv_settings_clear_posters_and_show_info),
-                        context.getString(R.string.iptv_settings_forgets_the_posters_and_show_info_found_for),
+                        localizedResources.getString(R.string.iptv_settings_clear_posters_and_show_info),
+                        localizedResources.getString(R.string.iptv_settings_forgets_the_posters_and_show_info_found_for),
                         onClick = {
                             confirm(
-                                context.getString(R.string.iptv_settings_clear_posters_and_show_info_2),
-                                context.getString(R.string.iptv_settings_live_tv_forgets_every_poster_and_show_description),
-                                context.getString(R.string.action_clear)
+                                localizedResources.getString(R.string.iptv_settings_clear_posters_and_show_info_2),
+                                localizedResources.getString(R.string.iptv_settings_live_tv_forgets_every_poster_and_show_description),
+                                localizedResources.getString(R.string.action_clear)
                             ) {
                                 viewModel.clearPosterData()
-                                android.widget.Toast.makeText(clearContext, context.getString(R.string.iptv_settings_posters_and_show_info_cleared), android.widget.Toast.LENGTH_SHORT).show()
+                                android.widget.Toast.makeText(clearContext, localizedResources.getString(R.string.iptv_settings_posters_and_show_info_cleared), android.widget.Toast.LENGTH_SHORT).show()
                             }
                         }
                     )
@@ -1364,8 +1367,8 @@ internal fun LiveTvSettingsContent(
             // ------------------------------------------------------------ Home Screen & Nuvio
             if (show(LiveTvPage.INTEGRATION)) item(key = "nuvio") {
                 LiveSection(
-                    title = context.getString(R.string.iptv_settings_home_screen_nuvio),
-                    summary = context.getString(R.string.iptv_settings_the_live_tv_row_inside_nuvio_s_home),
+                    title = localizedResources.getString(R.string.iptv_settings_home_screen_nuvio),
+                    summary = localizedResources.getString(R.string.iptv_settings_the_live_tv_row_inside_nuvio_s_home),
                     icon = Icons.Default.Home,
                     open = "nuvio" in open,
                     onToggle = { toggle("nuvio") },
@@ -1380,20 +1383,20 @@ internal fun LiveTvSettingsContent(
                         ).profileManager()
                     }.activeProfileId.collectAsStateWithLifecycle()
                     val homeRowOn = homeProfileId !in s.homeRowHiddenProfiles
-                    SubHeading(context.getString(R.string.iptv_settings_rows_on_your_tv_s_home_screen))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_rows_on_your_tv_s_home_screen))
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_card_shape),
-                        subtitle = context.getString(R.string.iptv_settings_match_your_launcher_s_row_wide_for_google),
-                        value = when (s.launcherCardShape) { "TALL" -> context.getString(R.string.iptv_settings_tall); "SQUARE" -> context.getString(R.string.iptv_settings_square); else -> context.getString(R.string.iptv_settings_wide) },
+                        title = localizedResources.getString(R.string.iptv_settings_card_shape),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_match_your_launcher_s_row_wide_for_google),
+                        value = when (s.launcherCardShape) { "TALL" -> localizedResources.getString(R.string.iptv_settings_tall); "SQUARE" -> localizedResources.getString(R.string.iptv_settings_square); else -> localizedResources.getString(R.string.iptv_settings_wide) },
                         onClick = {
                             update { st -> st.copy(launcherCardShape = when (st.launcherCardShape) { "WIDE" -> "TALL"; "TALL" -> "SQUARE"; else -> "WIDE" }) }
                             com.nuvio.tv.livetv.home.LiveTvLauncherRows.refresh(homeProfileContext, afterMs = 1_500)
                         }
                     )
-                    SubHeading(context.getString(R.string.iptv_settings_row_inside_nuvio_s_home_page))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_row_inside_nuvio_s_home_page))
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_live_tv_row_on_the_home_screen),
-                        context.getString(R.string.iptv_settings_for_this_profile_tucked_above_your_top_row),
+                        localizedResources.getString(R.string.iptv_settings_live_tv_row_on_the_home_screen),
+                        localizedResources.getString(R.string.iptv_settings_for_this_profile_tucked_above_your_top_row),
                         homeRowOn,
                         {
                             update { st ->
@@ -1406,58 +1409,58 @@ internal fun LiveTvSettingsContent(
                     )
                     if (homeRowOn) {
                         SettingsActionRow(
-                            title = context.getString(R.string.iptv_settings_channels_in_the_row),
-                            subtitle = context.getString(R.string.iptv_settings_which_channels_appear_favorites_recently_watched_or_one),
+                            title = localizedResources.getString(R.string.iptv_settings_channels_in_the_row),
+                            subtitle = localizedResources.getString(R.string.iptv_settings_which_channels_appear_favorites_recently_watched_or_one),
                             value = when (s.homeRowSource) {
-                                "favorites", "" -> context.getString(R.string.iptv_settings_favorites)
-                                "recent" -> context.getString(R.string.iptv_settings_recently_watched)
-                                else -> user.customGroups.firstOrNull { it.id == s.homeRowSource }?.name ?: context.getString(R.string.iptv_settings_favorites)
+                                "favorites", "" -> localizedResources.getString(R.string.iptv_settings_favorites)
+                                "recent" -> localizedResources.getString(R.string.iptv_settings_recently_watched)
+                                else -> user.customGroups.firstOrNull { it.id == s.homeRowSource }?.name ?: localizedResources.getString(R.string.iptv_settings_favorites)
                             },
                             onClick = { dialog = LiveDialog.HomeRowSource }
                         )
                         SettingsActionRow(
-                            title = context.getString(R.string.iptv_settings_row_title),
-                            subtitle = context.getString(R.string.iptv_settings_the_name_shown_above_the_row),
-                            value = s.homeRowTitle.ifBlank { context.getString(R.string.iptv_settings_live_tv) },
+                            title = localizedResources.getString(R.string.iptv_settings_row_title),
+                            subtitle = localizedResources.getString(R.string.iptv_settings_the_name_shown_above_the_row),
+                            value = s.homeRowTitle.ifBlank { localizedResources.getString(R.string.iptv_settings_live_tv) },
                             onClick = { dialog = LiveDialog.HomeRowTitle }
                         )
                         SettingsActionRow(
-                            title = context.getString(R.string.iptv_settings_row_order),
-                            subtitle = context.getString(R.string.iptv_settings_your_order_channel_number_or_the_shows_ending),
-                            value = when (s.homeRowSort) { "number" -> context.getString(R.string.iptv_settings_channel_number); "ending" -> context.getString(R.string.iptv_settings_ending_soonest); else -> context.getString(R.string.iptv_settings_your_order) },
+                            title = localizedResources.getString(R.string.iptv_settings_row_order),
+                            subtitle = localizedResources.getString(R.string.iptv_settings_your_order_channel_number_or_the_shows_ending),
+                            value = when (s.homeRowSort) { "number" -> localizedResources.getString(R.string.iptv_settings_channel_number); "ending" -> localizedResources.getString(R.string.iptv_settings_ending_soonest); else -> localizedResources.getString(R.string.iptv_settings_your_order) },
                             onClick = {
                                 update { st -> st.copy(homeRowSort = when (st.homeRowSort) { "yours" -> "number"; "number" -> "ending"; else -> "yours" }) }
                             }
                         )
                         SettingsActionRow(
-                            title = context.getString(R.string.iptv_settings_channels_in_the_row),
-                            subtitle = context.getString(R.string.iptv_settings_how_many_channels_the_row_shows),
-                            value = if (s.homeRowLimit == 0) context.getString(R.string.iptv_settings_all) else "${s.homeRowLimit}",
+                            title = localizedResources.getString(R.string.iptv_settings_channels_in_the_row),
+                            subtitle = localizedResources.getString(R.string.iptv_settings_how_many_channels_the_row_shows),
+                            value = if (s.homeRowLimit == 0) localizedResources.getString(R.string.iptv_settings_all) else "${s.homeRowLimit}",
                             onClick = {
                                 update { st -> st.copy(homeRowLimit = when (st.homeRowLimit) { 10 -> 20; 20 -> 40; 40 -> 0; else -> 10 }) }
                             }
                         )
                         SettingsToggleRow(
-                            context.getString(R.string.iptv_settings_hide_channels_with_no_listings),
-                            context.getString(R.string.iptv_settings_leaves_out_channels_showing_only_programming_or_no),
+                            localizedResources.getString(R.string.iptv_settings_hide_channels_with_no_listings),
+                            localizedResources.getString(R.string.iptv_settings_leaves_out_channels_showing_only_programming_or_no),
                             s.homeRowHidePlaceholders,
                             { update { it.copy(homeRowHidePlaceholders = !it.homeRowHidePlaceholders) } }
                         )
                         SettingsToggleRow(
-                            context.getString(R.string.iptv_settings_ok_opens_the_guide),
-                            context.getString(R.string.iptv_settings_off_ok_plays_the_channel_full_screen_on),
+                            localizedResources.getString(R.string.iptv_settings_ok_opens_the_guide),
+                            localizedResources.getString(R.string.iptv_settings_off_ok_plays_the_channel_full_screen_on),
                             s.homeRowOpensGuide,
                             { update { it.copy(homeRowOpensGuide = !it.homeRowOpensGuide) } }
                         )
                         SettingsToggleRow(
-                            context.getString(R.string.iptv_settings_show_what_s_next),
-                            context.getString(R.string.iptv_settings_a_next_9_00_the_news_line_on),
+                            localizedResources.getString(R.string.iptv_settings_show_what_s_next),
+                            localizedResources.getString(R.string.iptv_settings_a_next_9_00_the_news_line_on),
                             s.homeRowShowNext,
                             { update { it.copy(homeRowShowNext = !it.homeRowShowNext) } }
                         )
                         SettingsToggleRow(
-                            context.getString(R.string.iptv_settings_compact_cards),
-                            context.getString(R.string.iptv_settings_just_the_logo_and_the_show_name),
+                            localizedResources.getString(R.string.iptv_settings_compact_cards),
+                            localizedResources.getString(R.string.iptv_settings_just_the_logo_and_the_show_name),
                             s.homeRowCompact,
                             { update { it.copy(homeRowCompact = !it.homeRowCompact) } }
                         )
@@ -1469,84 +1472,84 @@ internal fun LiveTvSettingsContent(
             if (show(LiveTvPage.INTEGRATION)) item(key = "search_streams") {
                 var pickingStreamsPosition by remember { mutableStateOf(false) }
                 LiveSection(
-                    title = context.getString(R.string.iptv_settings_search_streams),
-                    summary = context.getString(R.string.iptv_settings_search_order_on_demand_in_streams),
+                    title = localizedResources.getString(R.string.iptv_settings_search_streams),
+                    summary = localizedResources.getString(R.string.iptv_settings_search_order_on_demand_in_streams),
                     icon = Icons.Default.Search,
                     open = "search_streams" in open,
                     onToggle = { toggle("search_streams") }
                 ) {
-                    SubHeading(context.getString(R.string.iptv_settings_search_results_order))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_search_results_order))
                     SearchOrderList(
                         order = com.nuvio.tv.livetv.ui.parseSearchOrder(s.searchOrder),
                         onChange = { newOrder -> update { it.copy(searchOrder = newOrder.joinToString(",")) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_preview_channels_behind_search),
-                        context.getString(R.string.iptv_settings_ok_on_a_channel_plays_it_behind_the),
+                        localizedResources.getString(R.string.iptv_settings_preview_channels_behind_search),
+                        localizedResources.getString(R.string.iptv_settings_ok_on_a_channel_plays_it_behind_the),
                         s.searchPreview,
                         { update { it.copy(searchPreview = !it.searchPreview) } }
                     )
                     // Search from Home and the side menu always shows everything; these set what
                     // search shows when it's opened from the guide or from On Demand.
-                    SubHeading(context.getString(R.string.iptv_settings_search_from_the_guide_shows))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_search_from_the_guide_shows))
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_live_tv),
-                        context.getString(R.string.iptv_settings_channels_and_shows_in_the_guide),
+                        localizedResources.getString(R.string.iptv_settings_live_tv),
+                        localizedResources.getString(R.string.iptv_settings_channels_and_shows_in_the_guide),
                         s.guideSearchLive,
                         { update { it.copy(guideSearchLive = !it.guideSearchLive) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_movies_series_2),
-                        context.getString(R.string.iptv_settings_titles_from_your_nuvio_addons),
+                        localizedResources.getString(R.string.iptv_settings_movies_series_2),
+                        localizedResources.getString(R.string.iptv_settings_titles_from_your_nuvio_addons),
                         s.guideSearchCatalog,
                         { update { it.copy(guideSearchCatalog = !it.guideSearchCatalog) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_on_demand),
-                        context.getString(R.string.iptv_settings_your_provider_s_own_movies_and_series),
+                        localizedResources.getString(R.string.iptv_settings_on_demand),
+                        localizedResources.getString(R.string.iptv_settings_your_provider_s_own_movies_and_series),
                         s.guideSearchOnDemand,
                         { update { it.copy(guideSearchOnDemand = !it.guideSearchOnDemand) } }
                     )
-                    SubHeading(context.getString(R.string.iptv_settings_search_from_on_demand_shows))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_search_from_on_demand_shows))
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_live_tv),
-                        context.getString(R.string.iptv_settings_channels_and_shows_in_the_guide),
+                        localizedResources.getString(R.string.iptv_settings_live_tv),
+                        localizedResources.getString(R.string.iptv_settings_channels_and_shows_in_the_guide),
                         s.onDemandSearchLive,
                         { update { it.copy(onDemandSearchLive = !it.onDemandSearchLive) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_movies_series_2),
-                        context.getString(R.string.iptv_settings_titles_from_your_nuvio_addons),
+                        localizedResources.getString(R.string.iptv_settings_movies_series_2),
+                        localizedResources.getString(R.string.iptv_settings_titles_from_your_nuvio_addons),
                         s.onDemandSearchCatalog,
                         { update { it.copy(onDemandSearchCatalog = !it.onDemandSearchCatalog) } }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_on_demand),
-                        context.getString(R.string.iptv_settings_your_provider_s_own_movies_and_series),
+                        localizedResources.getString(R.string.iptv_settings_on_demand),
+                        localizedResources.getString(R.string.iptv_settings_your_provider_s_own_movies_and_series),
                         s.onDemandSearchOnDemand,
                         { update { it.copy(onDemandSearchOnDemand = !it.onDemandSearchOnDemand) } }
                     )
-                    SubHeading(context.getString(R.string.iptv_settings_streams_list))
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_streams_list))
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_on_demand_in_streams),
-                        context.getString(R.string.iptv_settings_your_provider_s_copy_offered_with_your_addon),
+                        localizedResources.getString(R.string.iptv_settings_on_demand_in_streams),
+                        localizedResources.getString(R.string.iptv_settings_your_provider_s_copy_offered_with_your_addon),
                         s.onDemandInStreams,
                         { update { it.copy(onDemandInStreams = !it.onDemandInStreams) } }
                     )
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_on_demand_tab_position),
-                        subtitle = context.getString(R.string.iptv_settings_where_its_tab_goes_in_the_stream_list),
+                        title = localizedResources.getString(R.string.iptv_settings_on_demand_tab_position),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_where_its_tab_goes_in_the_stream_list),
                         value = streamsPositionLabel(context, s.onDemandStreamsPosition),
                         onClick = { pickingStreamsPosition = true }
                     )
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_let_auto_play_pick_on_demand),
-                        context.getString(R.string.iptv_settings_only_when_its_tab_is_first_and_auto),
+                        localizedResources.getString(R.string.iptv_settings_let_auto_play_pick_on_demand),
+                        localizedResources.getString(R.string.iptv_settings_only_when_its_tab_is_first_and_auto),
                         s.onDemandAutoPlay,
                         { update { it.copy(onDemandAutoPlay = !it.onDemandAutoPlay) } }
                     )
                     if (pickingStreamsPosition) SettingsSingleChoiceDialog(
-                        title = context.getString(R.string.iptv_settings_on_demand_tab_position_2),
+                        title = localizedResources.getString(R.string.iptv_settings_on_demand_tab_position_2),
                         options = listOf("FIRST", "AFTER_FIRST", "LAST").map { SettingsPickerOption(it, streamsPositionLabel(context, it)) },
                         selectedValue = s.onDemandStreamsPosition,
                         onOptionSelected = { v -> update { it.copy(onDemandStreamsPosition = v) }; pickingStreamsPosition = false },
@@ -1558,33 +1561,33 @@ internal fun LiveTvSettingsContent(
             // ------------------------------------------------------------ Parental Controls
             if (show(LiveTvPage.MAIN)) item(key = "parental") {
                 LiveSection(
-                    title = context.getString(R.string.iptv_settings_parental_controls),
-                    summary = if (hasPin) context.getString(R.string.iptv_settings_on_1_s_locked, user.lockedGroups.size) else context.getString(R.string.playback_afr_off),
+                    title = localizedResources.getString(R.string.iptv_settings_parental_controls),
+                    summary = if (hasPin) localizedResources.getString(R.string.iptv_settings_on_1_s_locked, user.lockedGroups.size.toString()) else localizedResources.getString(R.string.playback_afr_off),
                     icon = Icons.Default.Lock,
                     open = "parental" in open,
                     onToggle = { toggle("parental") }
                 ) {
                     Text(
-                        text = context.getString(R.string.iptv_settings_locked_groups_and_categories_need_the_pin_to),
+                        text = localizedResources.getString(R.string.iptv_settings_locked_groups_and_categories_need_the_pin_to),
                         style = MaterialTheme.typography.bodySmall,
                         color = NuvioTheme.colors.TextSecondary,
                         modifier = Modifier.padding(horizontal = NuvioTheme.spacing.lg, vertical = NuvioTheme.spacing.sm)
                     )
                     SettingsActionRow(
-                        if (hasPin) context.getString(R.string.iptv_settings_change_pin) else context.getString(R.string.iptv_settings_set_a_pin),
-                        if (hasPin) context.getString(R.string.iptv_settings_parental_controls_are_on) else context.getString(R.string.iptv_settings_turns_parental_controls_on),
+                        if (hasPin) localizedResources.getString(R.string.iptv_settings_change_pin) else localizedResources.getString(R.string.iptv_settings_set_a_pin),
+                        if (hasPin) localizedResources.getString(R.string.iptv_settings_parental_controls_are_on) else localizedResources.getString(R.string.iptv_settings_turns_parental_controls_on),
                         onClick = { pinWrong = false; dialog = if (hasPin) LiveDialog.PinCheck else LiveDialog.PinNew }
                     )
                     if (hasPin) {
                         SettingsToggleRow(
-                            context.getString(R.string.iptv_settings_lock_adult_content_automatically),
-                            context.getString(R.string.iptv_settings_locks_groups_and_categories_with_names_like_adult),
+                            localizedResources.getString(R.string.iptv_settings_lock_adult_content_automatically),
+                            localizedResources.getString(R.string.iptv_settings_locks_groups_and_categories_with_names_like_adult),
                             s.lockAdultContent,
                             { update { it.copy(lockAdultContent = !it.lockAdultContent) } }
                         )
                         SettingsActionRow(
-                            context.getString(R.string.iptv_settings_turn_off_parental_controls), context.getString(R.string.iptv_settings_removes_the_pin_your_locked_groups_are_remembered),
-                            context.getString(R.string.iptv_settings_1_s_locked, user.lockedGroups.size),
+                            localizedResources.getString(R.string.iptv_settings_turn_off_parental_controls), localizedResources.getString(R.string.iptv_settings_removes_the_pin_your_locked_groups_are_remembered),
+                            localizedResources.getString(R.string.iptv_settings_1_s_locked, user.lockedGroups.size.toString()),
                             onClick = { pinWrong = false; dialog = LiveDialog.PinRemove }
                         )
                     }
@@ -1594,15 +1597,15 @@ internal fun LiveTvSettingsContent(
             // ------------------------------------------------------------ Reminders
             if (show(LiveTvPage.GUIDE)) item(key = "reminders") {
                 LiveSection(
-                    title = context.getString(R.string.iptv_settings_reminders),
-                    summary = if (user.reminders.isEmpty()) context.getString(R.string.iptv_settings_none_set) else context.getString(R.string.iptv_settings_1_s_upcoming, user.reminders.size),
+                    title = localizedResources.getString(R.string.iptv_settings_reminders),
+                    summary = if (user.reminders.isEmpty()) localizedResources.getString(R.string.iptv_settings_none_set) else localizedResources.getString(R.string.iptv_settings_1_s_upcoming, user.reminders.size.toString()),
                     icon = Icons.Default.Notifications,
                     open = "reminders" in open,
                     onToggle = { toggle("reminders") }
                 ) {
                     SettingsActionRow(
-                        context.getString(R.string.iptv_settings_upcoming_reminders),
-                        context.getString(R.string.iptv_settings_set_from_a_show_s_info_in_the),
+                        localizedResources.getString(R.string.iptv_settings_upcoming_reminders),
+                        localizedResources.getString(R.string.iptv_settings_set_from_a_show_s_info_in_the),
                         "${user.reminders.size}",
                         onClick = { dialog = LiveDialog.Reminders }
                     )
@@ -1617,51 +1620,51 @@ internal fun LiveTvSettingsContent(
                 val driveProblems = remember("recordings" in open) { com.nuvio.tv.livetv.record.RecordingStorage.problems(recContext) }
                 val chosen = drives.firstOrNull { it.id == s.recordingStorage }
                 fun driveLabel(c: com.nuvio.tv.livetv.record.RecordingStorage.Choice) =
-                    c.label + " · " + com.nuvio.tv.livetv.record.RecordingStorage.sizeLabel(c.freeBytes, context.settingsLocale) + context.getString(R.string.iptv_settings_free)
+                    c.label + " · " + com.nuvio.tv.livetv.record.RecordingStorage.sizeLabel(c.freeBytes, context.settingsLocale) + localizedResources.getString(R.string.iptv_settings_free)
                 var pickingDrive by remember { mutableStateOf(false) }
                 LiveSection(
-                    title = context.getString(R.string.iptv_settings_recordings),
-                    summary = context.getString(R.string.iptv_settings_saved_to) + (chosen?.label ?: if (s.recordingStorage.isEmpty()) context.getString(R.string.iptv_settings_this_device) else context.getString(R.string.iptv_settings_a_drive_that_isn_t_plugged_in)),
+                    title = localizedResources.getString(R.string.iptv_settings_recordings),
+                    summary = localizedResources.getString(R.string.iptv_settings_saved_to) + (chosen?.label ?: if (s.recordingStorage.isEmpty()) localizedResources.getString(R.string.iptv_settings_this_device) else localizedResources.getString(R.string.iptv_settings_a_drive_that_isn_t_plugged_in)),
                     icon = Icons.Default.FiberManualRecord,
                     open = "recordings" in open,
                     onToggle = { toggle("recordings") }
                 ) {
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_save_recordings_to),
+                        title = localizedResources.getString(R.string.iptv_settings_save_recordings_to),
                         subtitle = if (chosen == null && s.recordingStorage.isNotEmpty())
-                            context.getString(R.string.iptv_settings_the_chosen_drive_isn_t_plugged_in_recordings)
-                        else context.getString(R.string.iptv_settings_where_new_recordings_go_to_move_ones_already),
-                        value = chosen?.label ?: context.getString(R.string.iptv_settings_this_device),
+                            localizedResources.getString(R.string.iptv_settings_the_chosen_drive_isn_t_plugged_in_recordings)
+                        else localizedResources.getString(R.string.iptv_settings_where_new_recordings_go_to_move_ones_already),
+                        value = chosen?.label ?: localizedResources.getString(R.string.iptv_settings_this_device),
                         onClick = { pickingDrive = true }
                     )
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_start_recording_early),
-                        subtitle = context.getString(R.string.iptv_settings_starts_this_long_before_the_show_in_case),
+                        title = localizedResources.getString(R.string.iptv_settings_start_recording_early),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_starts_this_long_before_the_show_in_case),
                         value = padLabel(context, s.recordPreMinutes),
                         onClick = { dialog = LiveDialog.RecordPre }
                     )
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_keep_recording_after),
-                        subtitle = context.getString(R.string.iptv_settings_keeps_going_this_long_after_the_show_in),
+                        title = localizedResources.getString(R.string.iptv_settings_keep_recording_after),
+                        subtitle = localizedResources.getString(R.string.iptv_settings_keeps_going_this_long_after_the_show_in),
                         value = padLabel(context, s.recordPostMinutes),
                         onClick = { dialog = LiveDialog.RecordPost }
                     )
                     SettingsActionRow(
-                        title = context.getString(R.string.iptv_settings_when_storage_runs_low),
-                        subtitle = if (s.recordingSpaceRule == "DELETE_OLDEST") context.getString(R.string.iptv_settings_the_oldest_recordings_on_that_drive_are_deleted)
-                        else context.getString(R.string.iptv_settings_recording_stops_nothing_is_deleted),
-                        value = if (s.recordingSpaceRule == "DELETE_OLDEST") context.getString(R.string.iptv_settings_delete_oldest) else context.getString(R.string.iptv_settings_stop_recording),
+                        title = localizedResources.getString(R.string.iptv_settings_when_storage_runs_low),
+                        subtitle = if (s.recordingSpaceRule == "DELETE_OLDEST") localizedResources.getString(R.string.iptv_settings_the_oldest_recordings_on_that_drive_are_deleted)
+                        else localizedResources.getString(R.string.iptv_settings_recording_stops_nothing_is_deleted),
+                        value = if (s.recordingSpaceRule == "DELETE_OLDEST") localizedResources.getString(R.string.iptv_settings_delete_oldest) else localizedResources.getString(R.string.iptv_settings_stop_recording),
                         onClick = {
                             if (s.recordingSpaceRule == "DELETE_OLDEST") update { it.copy(recordingSpaceRule = "STOP") }
                             else confirm(
-                                context.getString(R.string.iptv_settings_delete_old_recordings),
-                                context.getString(R.string.iptv_settings_when_space_runs_low_the_oldest_recordings_on),
-                                context.getString(R.string.iptv_settings_turn_on)
+                                localizedResources.getString(R.string.iptv_settings_delete_old_recordings),
+                                localizedResources.getString(R.string.iptv_settings_when_space_runs_low_the_oldest_recordings_on),
+                                localizedResources.getString(R.string.iptv_settings_turn_on)
                             ) { update { it.copy(recordingSpaceRule = "DELETE_OLDEST") } }
                         }
                     )
                     if (pickingDrive) ActionListDialog(
-                        title = context.getString(R.string.iptv_settings_save_recordings_to),
+                        title = localizedResources.getString(R.string.iptv_settings_save_recordings_to),
                         actions = drives.map { c ->
                             (driveLabel(c) + if (c.id == (chosen?.id ?: "")) "  ✓" else "") to {
                                 pickingDrive = false
@@ -1669,17 +1672,17 @@ internal fun LiveTvSettingsContent(
                             }
                         } + driveProblems.map { p ->
                             // Plugged in but not usable: say why instead of leaving it out.
-                            context.getString(R.string.iptv_settings_1_s_can_t_be_used, p.label) to {
+                            localizedResources.getString(R.string.iptv_settings_1_s_can_t_be_used, p.label) to {
                                 pickingDrive = false
-                                confirm(context.getString(R.string.iptv_settings_1_s_can_t_be_used_2, p.label), p.reason, context.getString(android.R.string.ok)) { }
+                                confirm(localizedResources.getString(R.string.iptv_settings_1_s_can_t_be_used_2, p.label), p.reason, localizedResources.getString(android.R.string.ok)) { }
                             }
                         } + listOf(
-                            context.getString(R.string.iptv_settings_drive_not_listed) to {
+                            localizedResources.getString(R.string.iptv_settings_drive_not_listed) to {
                                 pickingDrive = false
                                 confirm(
-                                    context.getString(R.string.iptv_settings_drive_not_listed),
-                                    context.getString(R.string.iptv_settings_missing_drive_help),
-                                    context.getString(android.R.string.ok)
+                                    localizedResources.getString(R.string.iptv_settings_drive_not_listed),
+                                    localizedResources.getString(R.string.iptv_settings_missing_drive_help),
+                                    localizedResources.getString(android.R.string.ok)
                                 ) { }
                             }
                         ),
@@ -1692,34 +1695,34 @@ internal fun LiveTvSettingsContent(
             if (show(LiveTvPage.MAIN)) item(key = "help") {
                 val crashContext = androidx.compose.ui.platform.LocalContext.current
                 LiveSection(
-                    title = context.getString(R.string.iptv_settings_help),
-                    summary = context.getString(R.string.iptv_settings_crash_report_start_up_report),
+                    title = localizedResources.getString(R.string.iptv_settings_help),
+                    summary = localizedResources.getString(R.string.iptv_settings_crash_report_start_up_report),
                     icon = Icons.AutoMirrored.Filled.Help,
                     open = "help" in open,
                     onToggle = { toggle("help") }
                 ) {
                     SettingsActionRow(
-                        context.getString(R.string.iptv_settings_crash_report),
-                        context.getString(R.string.iptv_settings_the_last_time_the_app_crashed_froze_or),
+                        localizedResources.getString(R.string.iptv_settings_crash_report),
+                        localizedResources.getString(R.string.iptv_settings_the_last_time_the_app_crashed_froze_or),
                         onClick = { com.nuvio.tv.livetv.crash.CrashCatcher.openLastReport(crashContext) }
                     )
                     SettingsActionRow(
-                        context.getString(R.string.iptv_settings_start_up_report),
-                        context.getString(R.string.iptv_settings_what_live_tv_did_while_loading_this_time),
+                        localizedResources.getString(R.string.iptv_settings_start_up_report),
+                        localizedResources.getString(R.string.iptv_settings_what_live_tv_did_while_loading_this_time),
                         onClick = { dialog = LiveDialog.LoadReport }
                     )
                     // Hidden developer tools: only shown after typing the secret word into the
                     // channel name cleanup (see NameEditor below).
                     if (developerToolsOn) {
-                        SubHeading(context.getString(R.string.iptv_settings_developer_tools))
+                        SubHeading(localizedResources.getString(R.string.iptv_settings_developer_tools))
                         SettingsActionRow(
-                            context.getString(R.string.iptv_settings_test_poster_lookup),
-                            context.getString(R.string.iptv_settings_what_your_addons_return_for_a_title),
+                            localizedResources.getString(R.string.iptv_settings_test_poster_lookup),
+                            localizedResources.getString(R.string.iptv_settings_what_your_addons_return_for_a_title),
                             onClick = { dialog = LiveDialog.PosterTest }
                         )
                         SettingsActionRow(
-                            context.getString(R.string.iptv_settings_remote_button_tester),
-                            context.getString(R.string.iptv_settings_shows_every_button_the_remote_sends),
+                            localizedResources.getString(R.string.iptv_settings_remote_button_tester),
+                            localizedResources.getString(R.string.iptv_settings_shows_every_button_the_remote_sends),
                             onClick = { dialog = LiveDialog.ButtonTester }
                         )
                     }
@@ -1739,27 +1742,27 @@ internal fun LiveTvSettingsContent(
     when (val d = dialog) {
         null -> Unit
         LiveDialog.AddM3u -> SourceFormDialog(
-            title = context.getString(R.string.iptv_settings_add_m3u_playlist_2),
+            title = localizedResources.getString(R.string.iptv_settings_add_m3u_playlist_2),
             fields = listOf(
-                FormField(context.getString(R.string.iptv_settings_name), context.getString(R.string.iptv_settings_my_provider)),
-                FormField(context.getString(R.string.iptv_settings_playlist_url), "http://…/playlist.m3u"),
-                FormField(context.getString(R.string.iptv_settings_user_agent_optional), context.getString(R.string.iptv_settings_leave_empty_for_default))
+                FormField(localizedResources.getString(R.string.iptv_settings_name), localizedResources.getString(R.string.iptv_settings_my_provider)),
+                FormField(localizedResources.getString(R.string.iptv_settings_playlist_url), "http://…/playlist.m3u"),
+                FormField(localizedResources.getString(R.string.iptv_settings_user_agent_optional), localizedResources.getString(R.string.iptv_settings_leave_empty_for_default))
             ),
             onDismiss = close,
             onSave = { v, _ -> if (v[1].isNotBlank()) viewModel.addPlaylist(v[0], v[1], v[2]); close() }
         )
         LiveDialog.AddXtream -> SourceFormDialog(
-            title = context.getString(R.string.iptv_settings_add_xtream_codes_login_2),
+            title = localizedResources.getString(R.string.iptv_settings_add_xtream_codes_login_2),
             fields = listOf(
-                FormField(context.getString(R.string.iptv_settings_name), context.getString(R.string.iptv_settings_my_provider)),
-                FormField(context.getString(R.string.iptv_settings_server), "http://host:port"),
-                FormField(context.getString(R.string.iptv_settings_username), ""),
-                FormField(context.getString(R.string.iptv_settings_password), "")
+                FormField(localizedResources.getString(R.string.iptv_settings_name), localizedResources.getString(R.string.iptv_settings_my_provider)),
+                FormField(localizedResources.getString(R.string.iptv_settings_server), "http://host:port"),
+                FormField(localizedResources.getString(R.string.iptv_settings_username), ""),
+                FormField(localizedResources.getString(R.string.iptv_settings_password), "")
             ),
             onDismiss = close,
             onSave = { v, _ -> if (v[1].isNotBlank()) viewModel.addXtream(v[0], v[1], v[2], v[3]); close() },
-            toggleLive = context.getString(R.string.iptv_settings_include_tv_channels) to true,
-            toggle2 = context.getString(R.string.iptv_settings_include_movies_series_on_demand) to true,
+            toggleLive = localizedResources.getString(R.string.iptv_settings_include_tv_channels) to true,
+            toggle2 = localizedResources.getString(R.string.iptv_settings_include_movies_series_on_demand) to true,
             onSaveAll = { v, _, vod, live ->
                 if (v[1].isNotBlank()) viewModel.addXtream(v[0], v[1], v[2], v[3], importVod = vod, importLive = live)
                 close()
@@ -1774,8 +1777,8 @@ internal fun LiveTvSettingsContent(
         )
         LiveDialog.AddFromPhone -> AddFromPhoneDialog(viewModel = viewModel, onDismiss = close)
         LiveDialog.AddEpg -> SourceFormDialog(
-            title = context.getString(R.string.iptv_settings_add_epg_source_2),
-            fields = listOf(FormField(context.getString(R.string.iptv_settings_name), context.getString(R.string.iptv_settings_guide)), FormField(context.getString(R.string.iptv_settings_xmltv_url), "http://…/epg.xml.gz")),
+            title = localizedResources.getString(R.string.iptv_settings_add_epg_source_2),
+            fields = listOf(FormField(localizedResources.getString(R.string.iptv_settings_name), localizedResources.getString(R.string.iptv_settings_guide)), FormField(localizedResources.getString(R.string.iptv_settings_xmltv_url), "http://…/epg.xml.gz")),
             onDismiss = close,
             onSave = { v, _ -> if (v[1].isNotBlank()) viewModel.addEpg(v[0], v[1]); close() }
         )
@@ -1794,26 +1797,26 @@ internal fun LiveTvSettingsContent(
                 accounts[d.source.id]?.let { a ->
                     val parts = listOfNotNull(
                         a.status.takeIf { it.isNotBlank() },
-                        expiryLabel(context, a)?.let { context.getString(R.string.iptv_settings_expires_1_s_2, it) } ?: context.getString(R.string.iptv_settings_no_expiry_date),
-                        a.maxConnections.takeIf { it > 0 }?.let { context.getString(R.string.iptv_settings_1_s_of_2_s_connections_in_use, a.activeConnections, it) }
+                        expiryLabel(context, a)?.let { localizedResources.getString(R.string.iptv_settings_expires_1_s_2, it) } ?: localizedResources.getString(R.string.iptv_settings_no_expiry_date),
+                        a.maxConnections.takeIf { it > 0 }?.let { localizedResources.getString(R.string.iptv_settings_1_s_of_2_s_connections_in_use, a.activeConnections.toString(), it.toString()) }
                     )
-                    (context.getString(R.string.iptv_settings_account_details, parts.joinToString(" · "))) to { viewModel.updatePlaylistNow(d.source); close() }
+                    (localizedResources.getString(R.string.iptv_settings_account_details, parts.joinToString(" · "))) to { viewModel.updatePlaylistNow(d.source); close() }
                 },
-                context.getString(R.string.iptv_settings_edit) to { dialog = LiveDialog.EditPlaylist(d.source) },
-                context.getString(R.string.iptv_settings_update_now) to { viewModel.updatePlaylistNow(d.source); close() },
-                (if (d.source.enabled) context.getString(R.string.iptv_settings_disable) else context.getString(R.string.iptv_settings_enable)) to { viewModel.setPlaylistEnabled(d.source.id, !d.source.enabled); close() },
-                context.getString(R.string.iptv_settings_delete_playlist) to { dialog = LiveDialog.ConfirmDeletePlaylist(d.source) },
+                localizedResources.getString(R.string.iptv_settings_edit) to { dialog = LiveDialog.EditPlaylist(d.source) },
+                localizedResources.getString(R.string.iptv_settings_update_now) to { viewModel.updatePlaylistNow(d.source); close() },
+                (if (d.source.enabled) localizedResources.getString(R.string.iptv_settings_disable) else localizedResources.getString(R.string.iptv_settings_enable)) to { viewModel.setPlaylistEnabled(d.source.id, !d.source.enabled); close() },
+                localizedResources.getString(R.string.iptv_settings_delete_playlist) to { dialog = LiveDialog.ConfirmDeletePlaylist(d.source) },
                 // Whose channel logos to show: the playlist's own or the guide's (each falls back
                 // to the other when it has none).
-                (if (d.source.logoSource == "epg") context.getString(R.string.iptv_settings_logos_prefer_logos_from_epg) else context.getString(R.string.iptv_settings_logos_prefer_logos_from_playlist)) to {
+                (if (d.source.logoSource == "epg") localizedResources.getString(R.string.iptv_settings_logos_prefer_logos_from_epg) else localizedResources.getString(R.string.iptv_settings_logos_prefer_logos_from_playlist)) to {
                     viewModel.setPlaylistLogoSource(d.source.id, if (d.source.logoSource == "epg") "playlist" else "epg")
                     close()
                 },
                 // Which stream format to ask for. Xtream: Auto follows what the account allows.
                 // M3U links: Auto keeps the playlist's own links; TS / HLS switch links that can
                 // be switched (Xtream-style links, Dispatcharr).
-                if (!d.source.isStalker) (context.getString(R.string.iptv_settings_stream_format) + when (d.source.streamFormat) {
-                    "ts" -> "TS"; "m3u8" -> "HLS (m3u8)"; else -> if (d.source.isXtream) context.getString(R.string.iptv_settings_auto) else context.getString(R.string.iptv_settings_as_in_playlist)
+                if (!d.source.isStalker) (localizedResources.getString(R.string.iptv_settings_stream_format) + when (d.source.streamFormat) {
+                    "ts" -> "TS"; "m3u8" -> "HLS (m3u8)"; else -> if (d.source.isXtream) localizedResources.getString(R.string.iptv_settings_auto) else localizedResources.getString(R.string.iptv_settings_as_in_playlist)
                 }) to {
                     val next = when (d.source.streamFormat) { "auto" -> "ts"; "ts" -> "m3u8"; else -> "auto" }
                     viewModel.savePlaylist(d.source.copy(streamFormat = next))
@@ -1821,26 +1824,26 @@ internal fun LiveTvSettingsContent(
                 } else null,
                 // Which clock replay links are written in. Automatic: the one the provider's
                 // server reports (or that the app worked out); pick one when that's wrong.
-                if (!d.source.isStalker) (context.getString(R.string.iptv_settings_catchup_zone_value, catchupZoneLabel(context, d.source))) to { dialog = LiveDialog.CatchupZone(d.source) } else null,
+                if (!d.source.isStalker) (localizedResources.getString(R.string.iptv_settings_catchup_zone_value, catchupZoneLabel(context, d.source))) to { dialog = LiveDialog.CatchupZone(d.source) } else null,
                 // Time shifts for this playlist: its built-in guide, and its catch-up.
-                (context.getString(R.string.iptv_settings_guide_shift_value, offsetLabel(context, d.source.guideShiftMinutes))).takeIf { d.source.liveEnabled }?.let {
+                (localizedResources.getString(R.string.iptv_settings_guide_shift_value, offsetLabel(context, d.source.guideShiftMinutes))).takeIf { d.source.liveEnabled }?.let {
                     it to { dialog = LiveDialog.PlaylistGuideShift(d.source) }
                 },
-                (context.getString(R.string.iptv_settings_catchup_shift_value, offsetLabel(context, d.source.catchupShiftMinutes))).takeIf { d.source.liveEnabled && !d.source.isStalker }?.let {
+                (localizedResources.getString(R.string.iptv_settings_catchup_shift_value, offsetLabel(context, d.source.catchupShiftMinutes))).takeIf { d.source.liveEnabled && !d.source.isStalker }?.let {
                     it to { dialog = LiveDialog.PlaylistCatchupShift(d.source) }
                 },
-                context.getString(R.string.iptv_settings_move_up) to { viewModel.movePlaylist(d.source.id, -1); close() },
-                context.getString(R.string.iptv_settings_move_down) to { viewModel.movePlaylist(d.source.id, 1); close() }
+                localizedResources.getString(R.string.iptv_settings_move_up) to { viewModel.movePlaylist(d.source.id, -1); close() },
+                localizedResources.getString(R.string.iptv_settings_move_down) to { viewModel.movePlaylist(d.source.id, 1); close() }
             ),
             onDismiss = close
         )
         is LiveDialog.CatchupZone -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_catch_up_time_zone_2),
-            subtitle = context.getString(R.string.iptv_settings_catchup_zone_description, d.source.name),
+            title = localizedResources.getString(R.string.iptv_settings_catch_up_time_zone_2),
+            subtitle = localizedResources.getString(R.string.iptv_settings_catchup_zone_description, d.source.name),
             options = listOf(
                 SettingsPickerOption(
-                    "", context.getString(R.string.iptv_settings_automatic),
-                    description = d.source.serverTimezone.takeIf { it.isNotBlank() }?.let { context.getString(R.string.iptv_settings_found_1_s, zoneName(context, it)) } ?: context.getString(R.string.iptv_settings_not_found_yet)
+                    "", localizedResources.getString(R.string.iptv_settings_automatic),
+                    description = d.source.serverTimezone.takeIf { it.isNotBlank() }?.let { localizedResources.getString(R.string.iptv_settings_found_1_s, zoneName(context, it)) } ?: localizedResources.getString(R.string.iptv_settings_not_found_yet)
                 )
             ) + catchupZones(context).map { (id, name) -> SettingsPickerOption(id, name, trailing = zoneClock(context, id)) },
             selectedValue = d.source.catchupTimezone,
@@ -1858,17 +1861,17 @@ internal fun LiveTvSettingsContent(
                 })
             } else if (src.isXtream) {
                 SourceFormDialog(
-                    title = context.getString(R.string.iptv_settings_edit_xtream_login),
+                    title = localizedResources.getString(R.string.iptv_settings_edit_xtream_login),
                     fields = listOf(
-                        FormField(context.getString(R.string.iptv_settings_name), "", src.name),
-                        FormField(context.getString(R.string.iptv_settings_server), "", src.xtreamServer),
-                        FormField(context.getString(R.string.iptv_settings_username), "", src.xtreamUsername),
-                        FormField(context.getString(R.string.iptv_settings_password), "", src.xtreamPassword),
-                        FormField(context.getString(R.string.iptv_settings_user_agent_optional), "", src.userAgent)
+                        FormField(localizedResources.getString(R.string.iptv_settings_name), "", src.name),
+                        FormField(localizedResources.getString(R.string.iptv_settings_server), "", src.xtreamServer),
+                        FormField(localizedResources.getString(R.string.iptv_settings_username), "", src.xtreamUsername),
+                        FormField(localizedResources.getString(R.string.iptv_settings_password), "", src.xtreamPassword),
+                        FormField(localizedResources.getString(R.string.iptv_settings_user_agent_optional), "", src.userAgent)
                     ),
-                    toggle = context.getString(R.string.iptv_settings_load_built_in_guide) to src.useEmbeddedEpg,
-                    toggleLive = context.getString(R.string.iptv_settings_include_tv_channels) to src.importLive,
-                    toggle2 = context.getString(R.string.iptv_settings_include_movies_series_on_demand) to src.importVod,
+                    toggle = localizedResources.getString(R.string.iptv_settings_load_built_in_guide) to src.useEmbeddedEpg,
+                    toggleLive = localizedResources.getString(R.string.iptv_settings_include_tv_channels) to src.importLive,
+                    toggle2 = localizedResources.getString(R.string.iptv_settings_include_movies_series_on_demand) to src.importVod,
                     onDismiss = close,
                     onSave = { v, t ->
                         viewModel.savePlaylist(src.copy(name = v[0], xtreamServer = v[1], xtreamUsername = v[2], xtreamPassword = v[3], userAgent = v[4], useEmbeddedEpg = t))
@@ -1886,13 +1889,13 @@ internal fun LiveTvSettingsContent(
                 )
             } else {
                 SourceFormDialog(
-                    title = context.getString(R.string.iptv_settings_edit_playlist),
+                    title = localizedResources.getString(R.string.iptv_settings_edit_playlist),
                     fields = listOf(
-                        FormField(context.getString(R.string.iptv_settings_name), "", src.name),
-                        FormField(context.getString(R.string.iptv_settings_playlist_url), "", src.url),
-                        FormField(context.getString(R.string.iptv_settings_user_agent_optional), "", src.userAgent)
+                        FormField(localizedResources.getString(R.string.iptv_settings_name), "", src.name),
+                        FormField(localizedResources.getString(R.string.iptv_settings_playlist_url), "", src.url),
+                        FormField(localizedResources.getString(R.string.iptv_settings_user_agent_optional), "", src.userAgent)
                     ),
-                    toggle = context.getString(R.string.iptv_settings_load_guide_linked_in_playlist) to src.useEmbeddedEpg,
+                    toggle = localizedResources.getString(R.string.iptv_settings_load_guide_linked_in_playlist) to src.useEmbeddedEpg,
                     onDismiss = close,
                     onSave = { v, t ->
                         viewModel.savePlaylist(src.copy(name = v[0], url = v[1], userAgent = v[2], useEmbeddedEpg = t))
@@ -1904,23 +1907,23 @@ internal fun LiveTvSettingsContent(
         is LiveDialog.EpgActions -> ActionListDialog(
             title = d.source.name,
             actions = listOf(
-                context.getString(R.string.iptv_settings_edit) to { dialog = LiveDialog.EditEpg(d.source) },
-                context.getString(R.string.iptv_settings_update_now) to { viewModel.saveEpg(d.source); close() },
-                (context.getString(R.string.iptv_settings_time_shift_value, offsetLabel(context, d.source.shiftMinutes))) to { dialog = LiveDialog.EpgSourceShift(d.source) },
-                (if (d.source.enabled) context.getString(R.string.iptv_settings_disable) else context.getString(R.string.iptv_settings_enable)) to { viewModel.setEpgEnabled(d.source.id, !d.source.enabled); close() },
-                context.getString(R.string.iptv_settings_delete_epg_source) to { dialog = LiveDialog.ConfirmDeleteEpg(d.source) }
+                localizedResources.getString(R.string.iptv_settings_edit) to { dialog = LiveDialog.EditEpg(d.source) },
+                localizedResources.getString(R.string.iptv_settings_update_now) to { viewModel.saveEpg(d.source); close() },
+                (localizedResources.getString(R.string.iptv_settings_time_shift_value, offsetLabel(context, d.source.shiftMinutes))) to { dialog = LiveDialog.EpgSourceShift(d.source) },
+                (if (d.source.enabled) localizedResources.getString(R.string.iptv_settings_disable) else localizedResources.getString(R.string.iptv_settings_enable)) to { viewModel.setEpgEnabled(d.source.id, !d.source.enabled); close() },
+                localizedResources.getString(R.string.iptv_settings_delete_epg_source) to { dialog = LiveDialog.ConfirmDeleteEpg(d.source) }
             ),
             onDismiss = close
         )
         LiveDialog.PinCheck -> TextInputDialog(
-            title = if (pinWrong) context.getString(R.string.iptv_settings_wrong_pin_try_again) else context.getString(R.string.iptv_settings_enter_your_current_pin),
-            initial = "", hint = context.getString(R.string.iptv_settings_current_pin), confirmLabel = context.getString(R.string.iptv_settings_next), numeric = true,
+            title = if (pinWrong) localizedResources.getString(R.string.iptv_settings_wrong_pin_try_again) else localizedResources.getString(R.string.iptv_settings_enter_your_current_pin),
+            initial = "", hint = localizedResources.getString(R.string.iptv_settings_current_pin), confirmLabel = localizedResources.getString(R.string.iptv_settings_next), numeric = true,
             onDismiss = close,
             onConfirm = { if (it.trim() == s.parentalPin) { pinWrong = false; dialog = LiveDialog.PinNew } else pinWrong = true }
         )
         LiveDialog.PinNew -> TextInputDialog(
-            title = if (pinWrong) context.getString(R.string.iptv_settings_the_pin_needs_4_to_8_digits) else context.getString(R.string.iptv_settings_choose_a_pin_4_to_8_digits),
-            initial = "", hint = context.getString(R.string.iptv_settings_new_pin), confirmLabel = context.getString(R.string.action_save), numeric = true,
+            title = if (pinWrong) localizedResources.getString(R.string.iptv_settings_the_pin_needs_4_to_8_digits) else localizedResources.getString(R.string.iptv_settings_choose_a_pin_4_to_8_digits),
+            initial = "", hint = localizedResources.getString(R.string.iptv_settings_new_pin), confirmLabel = localizedResources.getString(R.string.action_save), numeric = true,
             onDismiss = close,
             onConfirm = { pin ->
                 val p = pin.trim()
@@ -1928,16 +1931,16 @@ internal fun LiveTvSettingsContent(
             }
         )
         LiveDialog.PinRemove -> TextInputDialog(
-            title = if (pinWrong) context.getString(R.string.iptv_settings_wrong_pin_try_again) else context.getString(R.string.iptv_settings_enter_your_pin_to_turn_parental_controls_off),
-            initial = "", hint = "PIN", confirmLabel = context.getString(R.string.iptv_settings_turn_off), numeric = true,
+            title = if (pinWrong) localizedResources.getString(R.string.iptv_settings_wrong_pin_try_again) else localizedResources.getString(R.string.iptv_settings_enter_your_pin_to_turn_parental_controls_off),
+            initial = "", hint = "PIN", confirmLabel = localizedResources.getString(R.string.iptv_settings_turn_off), numeric = true,
             onDismiss = close,
             onConfirm = { if (it.trim() == s.parentalPin) { update { st -> st.copy(parentalPin = "") }; close() } else pinWrong = true }
         )
         LiveDialog.HomeRowSource -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_channels_in_the_row_2),
+            title = localizedResources.getString(R.string.iptv_settings_channels_in_the_row_2),
             options = buildList {
-                add(SettingsPickerOption("favorites", context.getString(R.string.iptv_settings_favorites)))
-                add(SettingsPickerOption("recent", context.getString(R.string.iptv_settings_recently_watched)))
+                add(SettingsPickerOption("favorites", localizedResources.getString(R.string.iptv_settings_favorites)))
+                add(SettingsPickerOption("recent", localizedResources.getString(R.string.iptv_settings_recently_watched)))
                 user.customGroups.forEach { add(SettingsPickerOption(it.id, it.name)) }
             },
             selectedValue = s.homeRowSource.ifBlank { "favorites" },
@@ -1945,10 +1948,10 @@ internal fun LiveTvSettingsContent(
             onDismiss = close
         )
         LiveDialog.HomeRowTitle -> TextInputDialog(
-            title = context.getString(R.string.iptv_settings_home_row_title),
+            title = localizedResources.getString(R.string.iptv_settings_home_row_title),
             initial = s.homeRowTitle,
-            hint = context.getString(R.string.iptv_settings_live_tv),
-            confirmLabel = context.getString(R.string.action_save),
+            hint = localizedResources.getString(R.string.iptv_settings_live_tv),
+            confirmLabel = localizedResources.getString(R.string.action_save),
             onDismiss = close,
             onConfirm = { t -> update { it.copy(homeRowTitle = t.trim()) }; close() }
         )
@@ -1958,15 +1961,15 @@ internal fun LiveTvSettingsContent(
             val result by viewModel.posterTest.collectAsStateWithLifecycle()
             if (result == null) {
                 TextInputDialog(
-                    title = context.getString(R.string.iptv_settings_test_poster_lookup_2),
+                    title = localizedResources.getString(R.string.iptv_settings_test_poster_lookup_2),
                     initial = "",
-                    hint = context.getString(R.string.iptv_settings_e_g_family_guy),
-                    confirmLabel = context.getString(R.string.iptv_settings_test),
+                    hint = localizedResources.getString(R.string.iptv_settings_e_g_family_guy),
+                    confirmLabel = localizedResources.getString(R.string.iptv_settings_test),
                     onDismiss = close,
                     onConfirm = { viewModel.testPoster(it) }
                 )
             } else {
-                NuvioDialog(onDismiss = { viewModel.posterTest.value = null; close() }, title = context.getString(R.string.iptv_settings_poster_lookup), width = 720.dp) {
+                NuvioDialog(onDismiss = { viewModel.posterTest.value = null; close() }, title = localizedResources.getString(R.string.iptv_settings_poster_lookup), width = 720.dp) {
                     Text(
                         text = result.orEmpty(),
                         style = MaterialTheme.typography.bodySmall,
@@ -1974,16 +1977,16 @@ internal fun LiveTvSettingsContent(
                         modifier = Modifier.heightIn(max = 320.dp).verticalScroll(androidx.compose.foundation.rememberScrollState())
                     )
                     SettingsDialogActionRow {
-                        SettingsDialogActionButton(text = context.getString(R.string.action_close), onClick = { viewModel.posterTest.value = null; close() }, primary = true)
+                        SettingsDialogActionButton(text = localizedResources.getString(R.string.action_close), onClick = { viewModel.posterTest.value = null; close() }, primary = true)
                     }
                 }
             }
         }
         LiveDialog.NameEditor -> TextInputDialog(
-            title = context.getString(R.string.iptv_settings_prefixes_and_suffixes_to_remove),
+            title = localizedResources.getString(R.string.iptv_settings_prefixes_and_suffixes_to_remove),
             initial = s.nameRemovals,
-            hint = context.getString(R.string.iptv_settings_e_g_usa_us_uk_24_7_fhd),
-            confirmLabel = context.getString(R.string.action_save),
+            hint = localizedResources.getString(R.string.iptv_settings_e_g_usa_us_uk_24_7_fhd),
+            confirmLabel = localizedResources.getString(R.string.action_save),
             onDismiss = close,
             onConfirm = { text ->
                 // Secret word: turns the hidden developer tools on or off instead of saving.
@@ -1996,24 +1999,24 @@ internal fun LiveTvSettingsContent(
             }
         )
         LiveDialog.StartPage -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_open_the_app_on),
+            title = localizedResources.getString(R.string.iptv_settings_open_the_app_on),
             // Live TV while it's in the menu; On Demand once something has been imported.
             options = buildList {
-                add(SettingsPickerOption("HOME", context.getString(R.string.nav_home)))
-                if (s.showInSidebar) add(SettingsPickerOption("LIVE_TV", context.getString(R.string.iptv_settings_live_tv)))
-                if (onDemandHas) add(SettingsPickerOption("ON_DEMAND", context.getString(R.string.iptv_settings_on_demand)))
-                add(SettingsPickerOption("SPORTS", context.getString(R.string.iptv_settings_sports)))
+                add(SettingsPickerOption("HOME", localizedResources.getString(R.string.nav_home)))
+                if (s.showInSidebar) add(SettingsPickerOption("LIVE_TV", localizedResources.getString(R.string.iptv_settings_live_tv)))
+                if (onDemandHas) add(SettingsPickerOption("ON_DEMAND", localizedResources.getString(R.string.iptv_settings_on_demand)))
+                add(SettingsPickerOption("SPORTS", localizedResources.getString(R.string.iptv_settings_sports)))
             },
             selectedValue = s.openOn,
             onOptionSelected = { v -> update { it.copy(openOn = v) }; close() },
             onDismiss = close
         )
         LiveDialog.Reminders -> ActionListDialog(
-            title = if (user.reminders.isEmpty()) context.getString(R.string.iptv_settings_no_reminders) else context.getString(R.string.iptv_settings_reminders_select_to_remove),
+            title = if (user.reminders.isEmpty()) localizedResources.getString(R.string.iptv_settings_no_reminders) else localizedResources.getString(R.string.iptv_settings_reminders_select_to_remove),
             actions = user.reminders.map { r ->
                 val whenText = java.text.SimpleDateFormat(android.text.format.DateFormat.getBestDateTimePattern(context.settingsLocale, "EEEjm"), context.settingsLocale).format(java.util.Date(r.startMs))
                 "$whenText · ${r.title} · ${r.channelName}" to { viewModel.removeReminder(r.channelKey, r.startMs); Unit }
-            }.ifEmpty { listOf(context.getString(R.string.action_close) to close) },
+            }.ifEmpty { listOf(localizedResources.getString(R.string.action_close) to close) },
             onDismiss = close
         )
         is LiveDialog.Confirm -> ConfirmDeleteDialog(
@@ -2033,151 +2036,151 @@ internal fun LiveTvSettingsContent(
                 loaded = true
             }
             ConfirmDeleteDialog(
-                title = context.getString(R.string.iptv_settings_restore_from_google_drive),
+                title = localizedResources.getString(R.string.iptv_settings_restore_from_google_drive),
                 message = restoreMessage(context, loaded, info, viewModel.driveSync.localChangedAt()),
                 onDismiss = close,
                 onConfirm = { viewModel.driveSync.restoreNow(); close() },
-                confirmLabel = context.getString(R.string.iptv_settings_restore)
+                confirmLabel = localizedResources.getString(R.string.iptv_settings_restore)
             )
         }
         is LiveDialog.ConfirmDeletePlaylist -> ConfirmDeleteDialog(
-            title = context.getString(R.string.iptv_settings_delete_1_s, d.source.name),
-            message = context.getString(R.string.iptv_settings_its_1_s_channels_leave_the_guide_favorites, d.source.channelCount),
+            title = localizedResources.getString(R.string.iptv_settings_delete_1_s, d.source.name),
+            message = localizedResources.getString(R.string.iptv_settings_its_1_s_channels_leave_the_guide_favorites, d.source.channelCount.toString()),
             onDismiss = close,
             onConfirm = { viewModel.removePlaylist(d.source.id); close() }
         )
         is LiveDialog.ConfirmDeleteEpg -> ConfirmDeleteDialog(
-            title = context.getString(R.string.iptv_settings_delete_1_s, d.source.name),
-            message = context.getString(R.string.iptv_settings_channels_using_this_guide_go_back_to_other),
+            title = localizedResources.getString(R.string.iptv_settings_delete_1_s, d.source.name),
+            message = localizedResources.getString(R.string.iptv_settings_channels_using_this_guide_go_back_to_other),
             onDismiss = close,
             onConfirm = { viewModel.removeEpg(d.source.id); close() }
         )
         is LiveDialog.EditEpg -> SourceFormDialog(
-            title = context.getString(R.string.iptv_settings_edit_epg_source),
-            fields = listOf(FormField(context.getString(R.string.iptv_settings_name), "", d.source.name), FormField(context.getString(R.string.iptv_settings_xmltv_url), "", d.source.url)),
+            title = localizedResources.getString(R.string.iptv_settings_edit_epg_source),
+            fields = listOf(FormField(localizedResources.getString(R.string.iptv_settings_name), "", d.source.name), FormField(localizedResources.getString(R.string.iptv_settings_xmltv_url), "", d.source.url)),
             onDismiss = close,
             onSave = { v, _ -> viewModel.saveEpg(d.source.copy(name = v[0], url = v[1])); close() }
         )
         LiveDialog.HiddenChannels -> UnhideDialog(
-            title = context.getString(R.string.iptv_settings_hidden_channels_2),
+            title = localizedResources.getString(R.string.iptv_settings_hidden_channels_2),
             entries = user.hiddenChannels.sorted().map { it to viewModel.channelLabel(it) },
             onUnhide = { viewModel.unhideChannel(it) },
             onUnhideAll = { viewModel.unhideAllChannels(); close() },
             onDismiss = close
         )
         LiveDialog.HiddenGroups -> UnhideDialog(
-            title = context.getString(R.string.iptv_settings_hidden_groups_2),
+            title = localizedResources.getString(R.string.iptv_settings_hidden_groups_2),
             entries = user.hiddenGroups.sorted().map { it to viewModel.groupLabel(it) },
             onUnhide = { viewModel.unhideGroup(it) },
             onUnhideAll = { viewModel.unhideAllGroups(); close() },
             onDismiss = close
         )
         is LiveDialog.PlaylistGuideShift -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_guide_time_shift_1_s, d.source.name),
-            subtitle = context.getString(R.string.iptv_settings_moves_this_playlist_s_built_in_guide_earlier),
+            title = localizedResources.getString(R.string.iptv_settings_guide_time_shift_1_s, d.source.name),
+            subtitle = localizedResources.getString(R.string.iptv_settings_moves_this_playlist_s_built_in_guide_earlier),
             options = EPG_OFFSETS.map { SettingsPickerOption(it, offsetLabel(context, it)) },
             selectedValue = d.source.guideShiftMinutes,
             onOptionSelected = { v -> viewModel.setPlaylistGuideShift(d.source.id, v); close() },
             onDismiss = close
         )
         is LiveDialog.EpgSourceShift -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_time_shift_1_s, d.source.name),
-            subtitle = context.getString(R.string.iptv_settings_moves_this_guide_s_listings_earlier_or_later),
+            title = localizedResources.getString(R.string.iptv_settings_time_shift_1_s, d.source.name),
+            subtitle = localizedResources.getString(R.string.iptv_settings_moves_this_guide_s_listings_earlier_or_later),
             options = EPG_OFFSETS.map { SettingsPickerOption(it, offsetLabel(context, it)) },
             selectedValue = d.source.shiftMinutes,
             onOptionSelected = { v -> viewModel.setEpgShift(d.source.id, v); close() },
             onDismiss = close
         )
         LiveDialog.RecordPre -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_start_recording_early_2),
+            title = localizedResources.getString(R.string.iptv_settings_start_recording_early_2),
             options = listOf(0, 1, 2, 5, 10, 15).map { SettingsPickerOption(it, padLabel(context, it)) },
             selectedValue = s.recordPreMinutes,
             onOptionSelected = { v -> update { it.copy(recordPreMinutes = v) }; close() },
             onDismiss = close
         )
         LiveDialog.RecordPost -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_keep_recording_after_2),
+            title = localizedResources.getString(R.string.iptv_settings_keep_recording_after_2),
             options = listOf(0, 2, 5, 10, 15, 30).map { SettingsPickerOption(it, padLabel(context, it)) },
             selectedValue = s.recordPostMinutes,
             onOptionSelected = { v -> update { it.copy(recordPostMinutes = v) }; close() },
             onDismiss = close
         )
         LiveDialog.FrameRate -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_match_frame_rate),
+            title = localizedResources.getString(R.string.iptv_settings_match_frame_rate),
             options = frameRateModes(context).map { (v, t, d) -> SettingsPickerOption(v, t, description = d) },
             selectedValue = s.frameRateMode,
             onOptionSelected = { v -> update { it.copy(frameRateMode = v) }; close() },
             onDismiss = close
         )
         LiveDialog.ClockMode -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_show_clock_2),
+            title = localizedResources.getString(R.string.iptv_settings_show_clock_2),
             options = clockModes(context).map { SettingsPickerOption(it.first, it.second) },
             selectedValue = s.clockMode,
             onOptionSelected = { v -> update { it.copy(clockMode = v) }; close() },
             onDismiss = close
         )
         LiveDialog.ClockPosition -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_clock_position_2),
+            title = localizedResources.getString(R.string.iptv_settings_clock_position_2),
             options = clockPositions(context).map { SettingsPickerOption(it.first, it.second) },
             selectedValue = s.clockPosition,
             onOptionSelected = { v -> update { it.copy(clockPosition = v) }; close() },
             onDismiss = close
         )
         LiveDialog.ClockSize -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_clock_size_2),
+            title = localizedResources.getString(R.string.iptv_settings_clock_size_2),
             options = clockSizes(context).map { SettingsPickerOption(it.first, it.second) },
             selectedValue = s.clockSize,
             onOptionSelected = { v -> update { it.copy(clockSize = v) }; close() },
             onDismiss = close
         )
         LiveDialog.ClockOpacity -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_clock_opacity_2),
+            title = localizedResources.getString(R.string.iptv_settings_clock_opacity_2),
             options = listOf(30, 50, 70, 100).map { SettingsPickerOption(it, "$it%") },
             selectedValue = s.clockOpacity,
             onOptionSelected = { v -> update { it.copy(clockOpacity = v) }; close() },
             onDismiss = close
         )
         is LiveDialog.PlaylistCatchupShift -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_catch_up_time_shift_1_s, d.source.name),
-            subtitle = context.getString(R.string.iptv_settings_if_replays_start_the_show_before_or_after),
+            title = localizedResources.getString(R.string.iptv_settings_catch_up_time_shift_1_s, d.source.name),
+            subtitle = localizedResources.getString(R.string.iptv_settings_if_replays_start_the_show_before_or_after),
             options = EPG_OFFSETS.map { SettingsPickerOption(it, offsetLabel(context, it)) },
             selectedValue = d.source.catchupShiftMinutes,
             onOptionSelected = { v -> viewModel.setPlaylistCatchupShift(d.source.id, v); close() },
             onDismiss = close
         )
         LiveDialog.ZapModeChoice -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_channel_up_down_switches_within),
+            title = localizedResources.getString(R.string.iptv_settings_channel_up_down_switches_within),
             options = listOf(
-                SettingsPickerOption(ZapMode.GROUP, context.getString(R.string.iptv_settings_current_group)),
-                SettingsPickerOption(ZapMode.ALL, context.getString(R.string.iptv_settings_all_channels))
+                SettingsPickerOption(ZapMode.GROUP, localizedResources.getString(R.string.iptv_settings_current_group)),
+                SettingsPickerOption(ZapMode.ALL, localizedResources.getString(R.string.iptv_settings_all_channels))
             ),
             selectedValue = s.zapMode,
             onOptionSelected = { v -> update { it.copy(zapMode = v) }; close() },
             onDismiss = close
         )
         LiveDialog.BannerTime -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_info_banner_duration),
+            title = localizedResources.getString(R.string.iptv_settings_info_banner_duration),
             options = BANNER_SECONDS.map { SettingsPickerOption(it, context.resources.getQuantityString(R.plurals.iptv_settings_seconds, it, it)) },
             selectedValue = s.infoBannerSeconds,
             onOptionSelected = { v -> update { it.copy(infoBannerSeconds = v) }; close() },
             onDismiss = close
         )
         LiveDialog.PlaylistRefresh -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_update_playlists_every),
+            title = localizedResources.getString(R.string.iptv_settings_update_playlists_every),
             options = REFRESH_HOURS.map { SettingsPickerOption(it, hoursLabel(context, it)) },
             selectedValue = s.playlistRefreshHours,
             onOptionSelected = { v -> update { it.copy(playlistRefreshHours = v) }; close() },
             onDismiss = close
         )
         LiveDialog.EpgRefresh -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_update_guides_every),
+            title = localizedResources.getString(R.string.iptv_settings_update_guides_every),
             options = REFRESH_HOURS.map { SettingsPickerOption(it, hoursLabel(context, it)) },
             selectedValue = s.epgRefreshHours,
             onOptionSelected = { v -> update { it.copy(epgRefreshHours = v) }; close() },
             onDismiss = close
         )
         LiveDialog.FutureDays -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_guide_days_ahead),
+            title = localizedResources.getString(R.string.iptv_settings_guide_days_ahead),
             options = FUTURE_DAYS.map { SettingsPickerOption(it, context.resources.getQuantityString(R.plurals.iptv_settings_days, it, it)) },
             selectedValue = s.epgFutureDays,
             onOptionSelected = { v -> viewModel.updateAndReloadEpg { it.copy(epgFutureDays = v) }; close() },
@@ -2195,36 +2198,36 @@ internal fun LiveTvSettingsContent(
             onDismiss = close
         )
         LiveDialog.SortChoice -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_channel_order_2),
+            title = localizedResources.getString(R.string.iptv_settings_channel_order_2),
             options = listOf(
-                SettingsPickerOption(ChannelSort.PLAYLIST, context.getString(R.string.iptv_settings_playlist_order)),
-                SettingsPickerOption(ChannelSort.NUMBER, context.getString(R.string.iptv_settings_channel_number)),
-                SettingsPickerOption(ChannelSort.NAME, context.getString(R.string.iptv_settings_name_a_z))
+                SettingsPickerOption(ChannelSort.PLAYLIST, localizedResources.getString(R.string.iptv_settings_playlist_order)),
+                SettingsPickerOption(ChannelSort.NUMBER, localizedResources.getString(R.string.iptv_settings_channel_number)),
+                SettingsPickerOption(ChannelSort.NAME, localizedResources.getString(R.string.iptv_settings_name_a_z))
             ),
             selectedValue = s.channelSort,
             onOptionSelected = { v -> update { it.copy(channelSort = v) }; close() },
             onDismiss = close
         )
         LiveDialog.HighlightChoice -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_highlight_style_2),
+            title = localizedResources.getString(R.string.iptv_settings_highlight_style_2),
             options = listOf(
-                SettingsPickerOption(false, context.getString(R.string.iptv_settings_outline), context.getString(R.string.iptv_settings_dark_tint_with_a_colored_border_logos_stay)),
-                SettingsPickerOption(true, context.getString(R.string.iptv_settings_solid), context.getString(R.string.iptv_settings_fill_with_the_theme_s_accent_color))
+                SettingsPickerOption(false, localizedResources.getString(R.string.iptv_settings_outline), localizedResources.getString(R.string.iptv_settings_dark_tint_with_a_colored_border_logos_stay)),
+                SettingsPickerOption(true, localizedResources.getString(R.string.iptv_settings_solid), localizedResources.getString(R.string.iptv_settings_fill_with_the_theme_s_accent_color))
             ),
             selectedValue = s.solidHighlight,
             onOptionSelected = { v -> update { it.copy(solidHighlight = v) }; close() },
             onDismiss = close
         )
         LiveDialog.CustomGroups -> UnhideDialog(
-            title = context.getString(R.string.iptv_settings_my_groups_2),
+            title = localizedResources.getString(R.string.iptv_settings_my_groups_2),
             entries = user.customGroups.map { it.id to "${it.name} (${it.channelKeys.size})" },
             onUnhide = { viewModel.deleteCustomGroup(it) },
             onUnhideAll = { user.customGroups.forEach { g -> viewModel.deleteCustomGroup(g.id) }; close() },
             onDismiss = close,
-            itemAction = context.getString(R.string.action_delete),
-            allLabel = context.getString(R.string.iptv_settings_delete_all),
-            emptyText = context.getString(R.string.iptv_settings_you_haven_t_made_any_groups_yet_long),
-            hintText = context.getString(R.string.iptv_settings_select_a_group_to_delete_it_the_channels)
+            itemAction = localizedResources.getString(R.string.action_delete),
+            allLabel = localizedResources.getString(R.string.iptv_settings_delete_all),
+            emptyText = localizedResources.getString(R.string.iptv_settings_you_haven_t_made_any_groups_yet_long),
+            hintText = localizedResources.getString(R.string.iptv_settings_select_a_group_to_delete_it_the_channels)
         )
         LiveDialog.ChannelRow -> ChannelRowDialog(
             settings = s,
@@ -2233,7 +2236,7 @@ internal fun LiveTvSettingsContent(
             onDismiss = close
         )
         LiveDialog.PastHours -> SettingsSingleChoiceDialog(
-            title = context.getString(R.string.iptv_settings_past_guide_kept),
+            title = localizedResources.getString(R.string.iptv_settings_past_guide_kept),
             options = PAST_HOURS.map { SettingsPickerOption(it, hoursLabel(context, it)) },
             selectedValue = s.epgPastHours,
             onOptionSelected = { v -> viewModel.updateAndReloadEpg { it.copy(epgPastHours = v) }; close() },
@@ -2273,16 +2276,17 @@ private fun DriveSyncCard(
     onDisconnect: () -> Unit
 ) {
     val context = LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     val status = when {
-        !state.available -> context.getString(R.string.iptv_settings_not_available_in_this_build)
-        !state.connected -> context.getString(R.string.playback_afr_off)
-        state.busy -> context.getString(R.string.iptv_settings_syncing)
-        state.lastSyncMs > 0 -> context.getString(R.string.iptv_settings_last_synced_at, DateFormat.getTimeInstance(DateFormat.SHORT, context.settingsLocale).format(Date(state.lastSyncMs)))
-        else -> context.getString(R.string.iptv_settings_on)
+        !state.available -> localizedResources.getString(R.string.iptv_settings_not_available_in_this_build)
+        !state.connected -> localizedResources.getString(R.string.playback_afr_off)
+        state.busy -> localizedResources.getString(R.string.iptv_settings_syncing)
+        state.lastSyncMs > 0 -> localizedResources.getString(R.string.iptv_settings_last_synced_at, DateFormat.getTimeInstance(DateFormat.SHORT, context.settingsLocale).format(Date(state.lastSyncMs)))
+        else -> localizedResources.getString(R.string.iptv_settings_on)
     }
     LiveSection(
-        title = context.getString(R.string.iptv_settings_backup_sync),
-        summary = context.getString(R.string.iptv_settings_drive_status, status),
+        title = localizedResources.getString(R.string.iptv_settings_backup_sync),
+        summary = localizedResources.getString(R.string.iptv_settings_drive_status, status),
         icon = Icons.Default.Backup,
         open = expanded,
         onToggle = onToggleExpanded,
@@ -2291,29 +2295,29 @@ private fun DriveSyncCard(
         run {
             when {
                 !state.available -> Text(
-                    text = context.getString(R.string.iptv_settings_google_drive_sync_needs_to_be_set_up),
+                    text = localizedResources.getString(R.string.iptv_settings_google_drive_sync_needs_to_be_set_up),
                     style = MaterialTheme.typography.bodySmall,
                     color = NuvioTheme.colors.TextSecondary
                 )
                 !state.connected -> {
                     Text(
-                        text = context.getString(R.string.iptv_settings_your_playlists_guides_favorites_hidden_channels_and_live),
+                        text = localizedResources.getString(R.string.iptv_settings_your_playlists_guides_favorites_hidden_channels_and_live),
                         style = MaterialTheme.typography.bodySmall,
                         color = NuvioTheme.colors.TextSecondary
                     )
-                    SettingsActionRow(context.getString(R.string.iptv_settings_connect_google_drive), context.getString(R.string.iptv_settings_keeps_your_live_tv_setup_the_same_on), onClick = onConnect)
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_connect_google_drive), localizedResources.getString(R.string.iptv_settings_keeps_your_live_tv_setup_the_same_on), onClick = onConnect)
                 }
                 else -> {
-                    SettingsActionRow(context.getString(R.string.iptv_settings_account_2), context.getString(R.string.iptv_settings_the_google_account_your_live_tv_setup_is), state.email ?: context.getString(R.string.iptv_settings_connected), onClick = {})
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_account_2), localizedResources.getString(R.string.iptv_settings_the_google_account_your_live_tv_setup_is), state.email ?: localizedResources.getString(R.string.iptv_settings_connected), onClick = {})
                     SettingsToggleRow(
-                        context.getString(R.string.iptv_settings_sync_automatically),
-                        context.getString(R.string.iptv_settings_back_up_changes_and_pick_up_changes_made),
+                        localizedResources.getString(R.string.iptv_settings_sync_automatically),
+                        localizedResources.getString(R.string.iptv_settings_back_up_changes_and_pick_up_changes_made),
                         state.autoSync,
                         { onAutoSync(!state.autoSync) }
                     )
-                    SettingsActionRow(context.getString(R.string.iptv_settings_back_up_now_2), context.getString(R.string.iptv_settings_save_this_tv_s_setup_to_google_drive), onClick = onBackUp)
-                    SettingsActionRow(context.getString(R.string.iptv_settings_restore_from_google_drive_2), context.getString(R.string.iptv_settings_replace_this_tv_s_setup_with_the_saved), onClick = onRestore)
-                    SettingsActionRow(context.getString(R.string.iptv_settings_disconnect), context.getString(R.string.iptv_settings_stop_syncing_on_this_tv_your_backup_stays), onClick = onDisconnect)
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_back_up_now_2), localizedResources.getString(R.string.iptv_settings_save_this_tv_s_setup_to_google_drive), onClick = onBackUp)
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_restore_from_google_drive_2), localizedResources.getString(R.string.iptv_settings_replace_this_tv_s_setup_with_the_saved), onClick = onRestore)
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_disconnect), localizedResources.getString(R.string.iptv_settings_stop_syncing_on_this_tv_your_backup_stays), onClick = onDisconnect)
                 }
             }
             state.message?.let {
@@ -2340,15 +2344,16 @@ private fun CloudSyncCard(
     onDelete: () -> Unit
 ) {
     val context = LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     val status = when {
-        !state.signedIn -> context.getString(R.string.iptv_settings_sign_in_to_nuvio_to_use_it)
-        !state.enabled -> context.getString(R.string.playback_afr_off)
-        state.busy -> context.getString(R.string.iptv_settings_syncing)
-        state.lastSyncMs > 0 -> context.getString(R.string.iptv_settings_last_synced_at, DateFormat.getTimeInstance(DateFormat.SHORT, context.settingsLocale).format(Date(state.lastSyncMs)))
-        else -> context.getString(R.string.iptv_settings_on)
+        !state.signedIn -> localizedResources.getString(R.string.iptv_settings_sign_in_to_nuvio_to_use_it)
+        !state.enabled -> localizedResources.getString(R.string.playback_afr_off)
+        state.busy -> localizedResources.getString(R.string.iptv_settings_syncing)
+        state.lastSyncMs > 0 -> localizedResources.getString(R.string.iptv_settings_last_synced_at, DateFormat.getTimeInstance(DateFormat.SHORT, context.settingsLocale).format(Date(state.lastSyncMs)))
+        else -> localizedResources.getString(R.string.iptv_settings_on)
     }
     LiveSection(
-        title = context.getString(R.string.iptv_settings_setup_sync),
+        title = localizedResources.getString(R.string.iptv_settings_setup_sync),
         summary = status,
         icon = Icons.Default.Cloud,
         open = expanded,
@@ -2358,36 +2363,36 @@ private fun CloudSyncCard(
         run {
             when {
                 !state.signedIn -> Text(
-                    text = context.getString(R.string.iptv_settings_sign_in_to_your_nuvio_account_settings_account),
+                    text = localizedResources.getString(R.string.iptv_settings_sign_in_to_your_nuvio_account_settings_account),
                     style = MaterialTheme.typography.bodySmall,
                     color = NuvioTheme.colors.TextSecondary
                 )
                 !state.enabled -> {
                     Text(
-                        text = context.getString(R.string.iptv_settings_your_playlists_including_their_logins_guides_favorites_sports),
+                        text = localizedResources.getString(R.string.iptv_settings_your_playlists_including_their_logins_guides_favorites_sports),
                         style = MaterialTheme.typography.bodySmall,
                         color = NuvioTheme.colors.TextSecondary
                     )
-                    SettingsActionRow(context.getString(R.string.iptv_settings_turn_on), context.getString(R.string.iptv_settings_save_this_tv_s_setup_and_keep_every), onClick = onTurnOn)
-                    if (driveAvailable) SettingsActionRow(context.getString(R.string.iptv_settings_import_from_google_drive_2), context.getString(R.string.iptv_settings_bring_your_google_drive_backup_over_to_this), onClick = onImportDrive)
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_turn_on), localizedResources.getString(R.string.iptv_settings_save_this_tv_s_setup_and_keep_every), onClick = onTurnOn)
+                    if (driveAvailable) SettingsActionRow(localizedResources.getString(R.string.iptv_settings_import_from_google_drive_2), localizedResources.getString(R.string.iptv_settings_bring_your_google_drive_backup_over_to_this), onClick = onImportDrive)
                 }
                 else -> {
                     Text(
-                        text = context.getString(R.string.iptv_settings_keeps_your_playlists_and_settings_the_same_on),
+                        text = localizedResources.getString(R.string.iptv_settings_keeps_your_playlists_and_settings_the_same_on),
                         style = MaterialTheme.typography.bodySmall,
                         color = NuvioTheme.colors.TextSecondary
                     )
-                    SettingsActionRow(context.getString(R.string.iptv_settings_account_2), context.getString(R.string.iptv_settings_the_nuvio_sign_in_this_setup_follows), state.email ?: context.getString(R.string.iptv_settings_signed_in), onClick = {})
-                    SubHeading(context.getString(R.string.iptv_settings_what_to_sync))
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_account_2), localizedResources.getString(R.string.iptv_settings_the_nuvio_sign_in_this_setup_follows), state.email ?: localizedResources.getString(R.string.iptv_settings_signed_in), onClick = {})
+                    SubHeading(localizedResources.getString(R.string.iptv_settings_what_to_sync))
                     com.nuvio.tv.livetv.sync.SyncPart.values().forEach { part ->
                         val (title, description) = syncPartLabels(context, part)
                         SettingsToggleRow(title, description, part in enabledParts, { onTogglePart(part) })
                     }
-                    SettingsActionRow(context.getString(R.string.iptv_settings_sync_now), context.getString(R.string.iptv_settings_changes_also_sync_by_themselves_a_few_seconds), onClick = onSyncNow)
-                    SettingsActionRow(context.getString(R.string.iptv_settings_restore_earlier_copy), context.getString(R.string.iptv_settings_go_back_to_the_copy_saved_before_the), onClick = onRestorePrevious)
-                    if (driveAvailable) SettingsActionRow(context.getString(R.string.iptv_settings_import_from_google_drive_2), context.getString(R.string.iptv_settings_bring_your_google_drive_backup_over_to_this), onClick = onImportDrive)
-                    SettingsActionRow(context.getString(R.string.iptv_settings_turn_off_setup_sync), context.getString(R.string.iptv_settings_stop_syncing_on_this_tv_the_saved_copy), onClick = onTurnOff)
-                    SettingsActionRow(context.getString(R.string.iptv_settings_delete_saved_setup), context.getString(R.string.iptv_settings_remove_the_saved_copy_and_stop_syncing), onClick = onDelete)
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_sync_now), localizedResources.getString(R.string.iptv_settings_changes_also_sync_by_themselves_a_few_seconds), onClick = onSyncNow)
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_restore_earlier_copy), localizedResources.getString(R.string.iptv_settings_go_back_to_the_copy_saved_before_the), onClick = onRestorePrevious)
+                    if (driveAvailable) SettingsActionRow(localizedResources.getString(R.string.iptv_settings_import_from_google_drive_2), localizedResources.getString(R.string.iptv_settings_bring_your_google_drive_backup_over_to_this), onClick = onImportDrive)
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_turn_off_setup_sync), localizedResources.getString(R.string.iptv_settings_stop_syncing_on_this_tv_the_saved_copy), onClick = onTurnOff)
+                    SettingsActionRow(localizedResources.getString(R.string.iptv_settings_delete_saved_setup), localizedResources.getString(R.string.iptv_settings_remove_the_saved_copy_and_stop_syncing), onClick = onDelete)
                 }
             }
             state.message?.let {
@@ -2400,6 +2405,7 @@ private fun CloudSyncCard(
 @Composable
 private fun DriveSignInDialog(prompt: com.nuvio.tv.livetv.sync.SignInPrompt, onCancel: () -> Unit) {
     val context = LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     val cancelFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         delay(80)
@@ -2410,9 +2416,9 @@ private fun DriveSignInDialog(prompt: com.nuvio.tv.livetv.sync.SignInPrompt, onC
         runCatching { com.nuvio.tv.core.qr.QrCodeGenerator.generate(prompt.qrUrl, 420, margin = 1) }.getOrNull()
     }
     val shortUrl = prompt.url.removePrefix("https://").removePrefix("http://")
-    NuvioDialog(onDismiss = onCancel, title = context.getString(R.string.iptv_settings_connect_google_drive), width = 560.dp) {
+    NuvioDialog(onDismiss = onCancel, title = localizedResources.getString(R.string.iptv_settings_connect_google_drive), width = 560.dp) {
         Text(
-            text = context.getString(R.string.iptv_settings_scan_the_qr_code_with_your_phone_or, shortUrl),
+            text = localizedResources.getString(R.string.iptv_settings_scan_the_qr_code_with_your_phone_or, shortUrl),
             style = MaterialTheme.typography.bodyMedium,
             color = NuvioTheme.colors.TextSecondary,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -2421,7 +2427,7 @@ private fun DriveSignInDialog(prompt: com.nuvio.tv.livetv.sync.SignInPrompt, onC
         if (qrBitmap != null) {
             androidx.compose.foundation.Image(
                 bitmap = qrBitmap.asImageBitmap(),
-                contentDescription = context.getString(R.string.iptv_settings_qr_code),
+                contentDescription = localizedResources.getString(R.string.iptv_settings_qr_code),
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .size(196.dp),
@@ -2443,7 +2449,7 @@ private fun DriveSignInDialog(prompt: com.nuvio.tv.livetv.sync.SignInPrompt, onC
             modifier = Modifier.fillMaxWidth()
         )
         Text(
-            text = context.getString(R.string.iptv_settings_waiting_for_you_to_allow_access_this_screen),
+            text = localizedResources.getString(R.string.iptv_settings_waiting_for_you_to_allow_access_this_screen),
             style = MaterialTheme.typography.bodySmall,
             color = NuvioTheme.colors.TextSecondary,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -2451,7 +2457,7 @@ private fun DriveSignInDialog(prompt: com.nuvio.tv.livetv.sync.SignInPrompt, onC
         )
         SettingsDialogActionRow(horizontalAlignment = Alignment.CenterHorizontally) {
             androidx.compose.foundation.layout.Box(Modifier.focusRequester(cancelFocus)) {
-                SettingsDialogActionButton(text = context.getString(R.string.action_cancel), onClick = onCancel)
+                SettingsDialogActionButton(text = localizedResources.getString(R.string.action_cancel), onClick = onCancel)
             }
         }
     }
@@ -2467,6 +2473,7 @@ private fun DriveSignInDialog(prompt: com.nuvio.tv.livetv.sync.SignInPrompt, onC
 @Composable
 private fun AddFromPhoneDialog(viewModel: LiveTvSettingsViewModel, onDismiss: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     val closeFocus = remember { FocusRequester() }
     var handle by remember { mutableStateOf<com.nuvio.tv.livetv.crash.AddFromPhoneServer.Handle?>(null) }
     var noNetwork by remember { mutableStateOf(false) }
@@ -2477,7 +2484,7 @@ private fun AddFromPhoneDialog(viewModel: LiveTvSettingsViewModel, onDismiss: ()
     val tvName = remember(context) {
         runCatching { android.provider.Settings.Global.getString(context.contentResolver, "device_name") }
             .getOrNull()?.takeIf { it.isNotBlank() } ?: android.os.Build.MODEL
-            ?: context.getString(R.string.iptv_settings_your_tv)
+            ?: localizedResources.getString(R.string.iptv_settings_your_tv)
     }
     val phoneTexts = remember(context, tvName) {
         com.nuvio.tv.livetv.crash.AddFromPhoneServer.Texts.from(context.resources, tvName)
@@ -2495,7 +2502,7 @@ private fun AddFromPhoneDialog(viewModel: LiveTvSettingsViewModel, onDismiss: ()
             R.string.iptv_settings_playlist_1_s,
             R.string.iptv_settings_tv_guide_1_s,
             R.string.iptv_settings_xtream_login_1_s
-        ).associateWith { context.getString(it) }
+        ).associateWith { localizedResources.getString(it) }
     }
     androidx.compose.runtime.DisposableEffect(phoneTexts, phoneLocale, logoBytes, accentArgb, viewModel) {
         fun receipt(id: Int, vararg args: Any): String =
@@ -2537,10 +2544,10 @@ private fun AddFromPhoneDialog(viewModel: LiveTvSettingsViewModel, onDismiss: ()
     val qrBitmap = remember(handle?.url) {
         handle?.url?.let { runCatching { com.nuvio.tv.core.qr.QrCodeGenerator.generate(it, 420, margin = 1) }.getOrNull() }
     }
-    NuvioDialog(onDismiss = onDismiss, title = context.getString(R.string.iptv_settings_add_from_your_phone), width = 620.dp) {
+    NuvioDialog(onDismiss = onDismiss, title = localizedResources.getString(R.string.iptv_settings_add_from_your_phone), width = 620.dp) {
         if (noNetwork) {
             Text(
-                text = context.getString(R.string.iptv_settings_connect_this_tv_to_your_home_wi_fi),
+                text = localizedResources.getString(R.string.iptv_settings_connect_this_tv_to_your_home_wi_fi),
                 style = MaterialTheme.typography.bodyMedium,
                 color = NuvioTheme.colors.TextSecondary,
                 modifier = Modifier.fillMaxWidth()
@@ -2553,7 +2560,7 @@ private fun AddFromPhoneDialog(viewModel: LiveTvSettingsViewModel, onDismiss: ()
                 qrBitmap?.let {
                     androidx.compose.foundation.Image(
                         bitmap = it.asImageBitmap(),
-                        contentDescription = context.getString(R.string.iptv_settings_qr_code),
+                        contentDescription = localizedResources.getString(R.string.iptv_settings_qr_code),
                         modifier = Modifier.size(196.dp),
                         contentScale = androidx.compose.ui.layout.ContentScale.Fit
                     )
@@ -2563,13 +2570,13 @@ private fun AddFromPhoneDialog(viewModel: LiveTvSettingsViewModel, onDismiss: ()
                     verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.sm)
                 ) {
                     Text(
-                        text = context.getString(R.string.iptv_settings_1_put_your_phone_on_the_same_wi),
+                        text = localizedResources.getString(R.string.iptv_settings_1_put_your_phone_on_the_same_wi),
                         style = MaterialTheme.typography.bodyMedium,
                         color = NuvioTheme.colors.TextSecondary
                     )
                     handle?.url?.let {
                         Text(
-                            text = context.getString(R.string.iptv_settings_phone_address, it.removePrefix("http://")),
+                            text = localizedResources.getString(R.string.iptv_settings_phone_address, it.removePrefix("http://")),
                             style = MaterialTheme.typography.bodySmall,
                             color = NuvioTheme.colors.TextPrimary
                         )
@@ -2577,8 +2584,8 @@ private fun AddFromPhoneDialog(viewModel: LiveTvSettingsViewModel, onDismiss: ()
                 }
             }
             Text(
-                text = if (added.isEmpty()) context.getString(R.string.iptv_settings_waiting_for_your_phone_you_can_add_more)
-                else context.getString(R.string.iptv_settings_added_items, added.joinToString(" · ")),
+                text = if (added.isEmpty()) localizedResources.getString(R.string.iptv_settings_waiting_for_your_phone_you_can_add_more)
+                else localizedResources.getString(R.string.iptv_settings_added_items, added.joinToString(" · ")),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (added.isEmpty()) NuvioTheme.colors.TextSecondary else NuvioTheme.colors.Secondary,
                 modifier = Modifier.fillMaxWidth()
@@ -2586,7 +2593,7 @@ private fun AddFromPhoneDialog(viewModel: LiveTvSettingsViewModel, onDismiss: ()
         }
         SettingsDialogActionRow(horizontalAlignment = Alignment.CenterHorizontally) {
             androidx.compose.foundation.layout.Box(Modifier.focusRequester(closeFocus)) {
-                SettingsDialogActionButton(text = if (added.isEmpty()) context.getString(R.string.action_close) else context.getString(R.string.iptv_settings_done), onClick = onDismiss)
+                SettingsDialogActionButton(text = if (added.isEmpty()) localizedResources.getString(R.string.action_close) else localizedResources.getString(R.string.iptv_settings_done), onClick = onDismiss)
             }
         }
     }
@@ -2600,35 +2607,36 @@ private fun StalkerSourceDialog(
     onSave: (String, com.nuvio.stalker.StalkerConfig, Boolean, Boolean, Boolean) -> Unit
 ) {
     val context = LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     val config = source?.stalkerConfig
     SourceFormDialog(
-        title = if (source == null) context.getString(R.string.iptv_settings_add_stalker_ministra_portal_2) else context.getString(R.string.iptv_settings_edit_stalker_ministra_portal),
+        title = if (source == null) localizedResources.getString(R.string.iptv_settings_add_stalker_ministra_portal_2) else localizedResources.getString(R.string.iptv_settings_edit_stalker_ministra_portal),
         fields = listOf(
-            FormField(context.getString(R.string.iptv_settings_name), context.getString(R.string.iptv_settings_my_provider), source?.name.orEmpty()),
-            FormField(context.getString(R.string.iptv_settings_portal_url), "https://…/stalker_portal/c/", config?.portalUrl.orEmpty()),
-            FormField(context.getString(R.string.iptv_settings_provider_issued_mac_address), "00:00:00:00:00:00", config?.mac.orEmpty()),
-            FormField(context.getString(R.string.iptv_settings_username_optional), "", config?.username.orEmpty()),
-            FormField(context.getString(R.string.iptv_settings_password_optional), "", config?.password.orEmpty()),
-            FormField(context.getString(R.string.iptv_settings_serial_number_optional), "", config?.serialNumber.orEmpty()),
-            FormField(context.getString(R.string.iptv_settings_device_id_optional), "", config?.deviceId.orEmpty()),
-            FormField(context.getString(R.string.iptv_settings_device_id_2_optional), "", config?.deviceId2.orEmpty()),
-            FormField(context.getString(R.string.iptv_settings_signature_optional), "", config?.signature.orEmpty()),
-            FormField(context.getString(R.string.iptv_settings_provider_time_zone), "UTC", config?.timezone ?: "UTC"),
-            FormField(context.getString(R.string.iptv_settings_language), "en", config?.language ?: "en")
+            FormField(localizedResources.getString(R.string.iptv_settings_name), localizedResources.getString(R.string.iptv_settings_my_provider), source?.name.orEmpty()),
+            FormField(localizedResources.getString(R.string.iptv_settings_portal_url), "https://…/stalker_portal/c/", config?.portalUrl.orEmpty()),
+            FormField(localizedResources.getString(R.string.iptv_settings_provider_issued_mac_address), "00:00:00:00:00:00", config?.mac.orEmpty()),
+            FormField(localizedResources.getString(R.string.iptv_settings_username_optional), "", config?.username.orEmpty()),
+            FormField(localizedResources.getString(R.string.iptv_settings_password_optional), "", config?.password.orEmpty()),
+            FormField(localizedResources.getString(R.string.iptv_settings_serial_number_optional), "", config?.serialNumber.orEmpty()),
+            FormField(localizedResources.getString(R.string.iptv_settings_device_id_optional), "", config?.deviceId.orEmpty()),
+            FormField(localizedResources.getString(R.string.iptv_settings_device_id_2_optional), "", config?.deviceId2.orEmpty()),
+            FormField(localizedResources.getString(R.string.iptv_settings_signature_optional), "", config?.signature.orEmpty()),
+            FormField(localizedResources.getString(R.string.iptv_settings_provider_time_zone), "UTC", config?.timezone ?: "UTC"),
+            FormField(localizedResources.getString(R.string.iptv_settings_language), "en", config?.language ?: "en")
         ),
         advancedFrom = 3,
         preserveWhitespaceAt = setOf(3, 4, 5, 6, 7, 8),
         validate = { values ->
             val address = runCatching { java.net.URI(values[1]) }.getOrNull()
             when {
-                address?.scheme?.lowercase() !in listOf("http", "https") || address?.host.isNullOrBlank() || address?.rawUserInfo != null -> context.getString(R.string.iptv_settings_enter_the_full_http_or_https_portal_url)
-                !Regex("^[0-9a-fA-F]{2}([:-][0-9a-fA-F]{2}){5}$").matches(values[2]) -> context.getString(R.string.iptv_settings_enter_the_mac_address_supplied_by_your_provider)
+                address?.scheme?.lowercase() !in listOf("http", "https") || address?.host.isNullOrBlank() || address?.rawUserInfo != null -> localizedResources.getString(R.string.iptv_settings_enter_the_full_http_or_https_portal_url)
+                !Regex("^[0-9a-fA-F]{2}([:-][0-9a-fA-F]{2}){5}$").matches(values[2]) -> localizedResources.getString(R.string.iptv_settings_enter_the_mac_address_supplied_by_your_provider)
                 else -> null
             }
         },
-        toggle = context.getString(R.string.iptv_settings_load_built_in_guide) to (source?.useEmbeddedEpg ?: true),
-        toggleLive = context.getString(R.string.iptv_settings_include_tv_channels) to (source?.importLive ?: true),
-        toggle2 = context.getString(R.string.iptv_settings_include_movies_series_on_demand) to (source?.importVod ?: true),
+        toggle = localizedResources.getString(R.string.iptv_settings_load_built_in_guide) to (source?.useEmbeddedEpg ?: true),
+        toggleLive = localizedResources.getString(R.string.iptv_settings_include_tv_channels) to (source?.importLive ?: true),
+        toggle2 = localizedResources.getString(R.string.iptv_settings_include_movies_series_on_demand) to (source?.importVod ?: true),
         onDismiss = onDismiss,
         onSave = { _, _ -> },
         onSaveAll = { values, guide, vod, live ->
@@ -2658,6 +2666,7 @@ private fun SourceFormDialog(
     preserveWhitespaceAt: Set<Int> = emptySet()
 ) {
     val context = LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     val values = remember { fields.map { mutableStateOf(it.initial) } }
     var showAdvanced by remember { mutableStateOf(false) }
     var formError by remember { mutableStateOf<String?>(null) }
@@ -2681,7 +2690,7 @@ private fun SourceFormDialog(
         ) {
         fields.forEachIndexed { i, field ->
             if (advancedFrom != null && i == advancedFrom) SettingsToggleRow(
-                title = context.getString(R.string.iptv_settings_advanced_provider_settings), subtitle = context.getString(R.string.iptv_settings_only_enter_values_supplied_by_your_provider),
+                title = localizedResources.getString(R.string.iptv_settings_advanced_provider_settings), subtitle = localizedResources.getString(R.string.iptv_settings_only_enter_values_supplied_by_your_provider),
                 checked = showAdvanced, onToggle = { showAdvanced = !showAdvanced })
             if (advancedFrom == null || i < advancedFrom || showAdvanced) Column(verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.xs)) {
                 Text(
@@ -2701,7 +2710,7 @@ private fun SourceFormDialog(
         if (toggleLive != null) {
             SettingsToggleRow(
                 title = toggleLive.first,
-                subtitle = context.getString(R.string.iptv_settings_adds_the_provider_s_live_channels_to_the),
+                subtitle = localizedResources.getString(R.string.iptv_settings_adds_the_provider_s_live_channels_to_the),
                 checked = toggleLiveValue,
                 onToggle = { toggleLiveValue = !toggleLiveValue }
             )
@@ -2718,7 +2727,7 @@ private fun SourceFormDialog(
         if (toggle2 != null) {
             SettingsToggleRow(
                 title = toggle2.first,
-                subtitle = context.getString(R.string.iptv_settings_adds_the_provider_s_movies_and_series_to),
+                subtitle = localizedResources.getString(R.string.iptv_settings_adds_the_provider_s_movies_and_series_to),
                 checked = toggle2Value,
                 onToggle = { toggle2Value = !toggle2Value }
             )
@@ -2726,9 +2735,9 @@ private fun SourceFormDialog(
         }
         formError?.let { Text(it, color = NuvioTheme.colors.Error, style = MaterialTheme.typography.bodySmall) }
         SettingsDialogActionRow {
-            SettingsDialogActionButton(text = context.getString(R.string.action_cancel), onClick = onDismiss)
+            SettingsDialogActionButton(text = localizedResources.getString(R.string.action_cancel), onClick = onDismiss)
             SettingsDialogActionButton(
-                text = context.getString(R.string.action_save),
+                text = localizedResources.getString(R.string.action_save),
                 onClick = {
                     val v = values.mapIndexed { i, value -> if (i in preserveWhitespaceAt) value.value else value.value.trim() }
                     formError = validate?.invoke(v)
@@ -2840,6 +2849,7 @@ private fun ConfirmDeleteDialog(
     confirmLabel: String = stringResource(R.string.action_delete)
 ) {
     val context = LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     val cancelFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         delay(80)
@@ -2849,7 +2859,7 @@ private fun ConfirmDeleteDialog(
         SettingsDialogActionRow {
             // Cancel is focused first, so a stray OK press can't delete anything.
             androidx.compose.foundation.layout.Box(Modifier.focusRequester(cancelFocus)) {
-                SettingsDialogActionButton(text = context.getString(R.string.action_cancel), onClick = onDismiss)
+                SettingsDialogActionButton(text = localizedResources.getString(R.string.action_cancel), onClick = onDismiss)
             }
             SettingsDialogActionButton(text = confirmLabel, onClick = onConfirm, primary = true)
         }
@@ -2897,6 +2907,7 @@ private fun UnhideDialog(
     hintText: String = stringResource(R.string.iptv_settings_select_an_item_to_show_it_again)
 ) {
     val context = LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     val first = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         delay(80)
@@ -2910,7 +2921,7 @@ private fun UnhideDialog(
     ) {
         if (entries.isEmpty()) {
             SettingsDialogActionRow {
-                SettingsDialogActionButton(text = context.getString(R.string.action_close), onClick = onDismiss, primary = true)
+                SettingsDialogActionButton(text = localizedResources.getString(R.string.action_close), onClick = onDismiss, primary = true)
             }
         } else {
             LazyColumn(
@@ -3004,6 +3015,7 @@ private fun SettingsNote(text: String) {
 @Composable
 private fun SubHeading(text: String) {
     val context = LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     Text(
         text = text,
         style = MaterialTheme.typography.labelMedium,
@@ -3031,14 +3043,15 @@ private fun searchSectionLabel(context: Context, kind: String): String = when (k
 @Composable
 private fun SearchOrderList(order: List<String>, onChange: (List<String>) -> Unit) {
     val context = LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     var moving by remember { mutableStateOf<String?>(null) }
     val requesters = remember { order.associateWith { FocusRequester() } }
     order.forEachIndexed { i, kind -> androidx.compose.runtime.key(kind) {
         val isMoving = moving == kind
         SettingsActionRow(
             title = "${i + 1}   ${searchSectionLabel(context, kind)}",
-            subtitle = if (isMoving) context.getString(R.string.iptv_settings_up_down_to_move_it_ok_to_put) else null,
-            value = if (isMoving) context.getString(R.string.iptv_settings_moving) else null,
+            subtitle = if (isMoving) localizedResources.getString(R.string.iptv_settings_up_down_to_move_it_ok_to_put) else null,
+            value = if (isMoving) localizedResources.getString(R.string.iptv_settings_moving) else null,
             onClick = { moving = if (isMoving) null else kind },
             modifier = Modifier
                 .focusRequester(requesters.getValue(kind))

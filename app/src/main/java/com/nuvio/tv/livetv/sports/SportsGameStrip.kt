@@ -212,9 +212,9 @@ internal fun SportsGameStrip(
         if (onChannels != null) add(StripControl("channels", "Channels", false, onClick = onChannels))
         add(StripControl("close", "Close", false, onClick = onClose))
     }
-    controls.forEach { controlFocus.getOrPut(it.id) { FocusRequester() } }
-    rowGames.forEach { gameFocus.getOrPut(it.event.id) { FocusRequester() } }
-    streams.forEach { streamFocus.getOrPut(it.channel.key) { FocusRequester() } }
+    controls.forEach { com.nuvio.tv.ui.components.rememberCachedFocusRequester(controlFocus, it.id) }
+    rowGames.forEach { com.nuvio.tv.ui.components.rememberCachedFocusRequester(gameFocus, it.event.id) }
+    streams.forEach { com.nuvio.tv.ui.components.rememberCachedFocusRequester(streamFocus, it.channel.key) }
     val gameIds = rowGames.map { it.event.id }
     val rowKeys = rows.map { it.key }
     val streamKeys = streams.map { it.channel.key }

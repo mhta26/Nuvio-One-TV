@@ -28,6 +28,7 @@ import java.util.Date
 @Composable
 internal fun PlaybackSeekThumbnailSection() {
     val context = LocalContext.current
+    val localizedResources = androidx.compose.ui.platform.LocalResources.current
     LaunchedEffect(Unit) { SeekThumbSettings.load(context) }
     val s by SeekThumbSettings.values.collectAsState()
     val scope = rememberCoroutineScope()
@@ -40,29 +41,29 @@ internal fun PlaybackSeekThumbnailSection() {
     fun update(change: (SeekThumbSettings.Values) -> SeekThumbSettings.Values) = SeekThumbSettings.update(context, change)
 
     SettingsToggleRow(
-        title = context.getString(R.string.iptv_thumbs_title),
-        subtitle = context.getString(R.string.iptv_thumbs_subtitle),
+        title = localizedResources.getString(R.string.iptv_thumbs_title),
+        subtitle = localizedResources.getString(R.string.iptv_thumbs_subtitle),
         checked = s.enabled,
         onToggle = { update { it.copy(enabled = !it.enabled) } }
     )
-    SettingsNote(context.getString(R.string.iptv_thumbs_works_on))
+    SettingsNote(localizedResources.getString(R.string.iptv_thumbs_works_on))
     if (lowMemoryBox) {
         SettingsNote(
-            context.getString(R.string.iptv_thumbs_low_memory_note),
+            localizedResources.getString(R.string.iptv_thumbs_low_memory_note),
             tone = SettingsNoteTone.Warning
         )
     }
     SettingsToggleRow(
-        title = context.getString(R.string.iptv_thumbs_include_4k),
-        subtitle = context.getString(R.string.iptv_thumbs_include_4k_desc),
+        title = localizedResources.getString(R.string.iptv_thumbs_include_4k),
+        subtitle = localizedResources.getString(R.string.iptv_thumbs_include_4k_desc),
         checked = s.include4k,
         enabled = s.enabled,
         onToggle = { update { it.copy(include4k = !it.include4k) } }
     )
     SettingsActionRow(
-        title = context.getString(R.string.iptv_thumbs_when_to_make),
-        subtitle = context.getString(whenDetailRes(s.whenToMake)),
-        value = context.getString(whenLabelRes(s.whenToMake)),
+        title = localizedResources.getString(R.string.iptv_thumbs_when_to_make),
+        subtitle = localizedResources.getString(whenDetailRes(s.whenToMake)),
+        value = localizedResources.getString(whenLabelRes(s.whenToMake)),
         enabled = s.enabled,
         leadingIcon = Icons.Default.Schedule,
         onClick = {
@@ -71,9 +72,9 @@ internal fun PlaybackSeekThumbnailSection() {
         }
     )
     SettingsActionRow(
-        title = context.getString(R.string.iptv_thumbs_storage_limit),
-        subtitle = context.getString(R.string.iptv_thumbs_storage_limit_desc),
-        value = context.getString(R.string.iptv_thumbs_size_mb, s.storageMb.toString()),
+        title = localizedResources.getString(R.string.iptv_thumbs_storage_limit),
+        subtitle = localizedResources.getString(R.string.iptv_thumbs_storage_limit_desc),
+        value = localizedResources.getString(R.string.iptv_thumbs_size_mb, s.storageMb.toString()),
         enabled = s.enabled,
         leadingIcon = Icons.Default.SdStorage,
         onClick = {
@@ -82,8 +83,8 @@ internal fun PlaybackSeekThumbnailSection() {
         }
     )
     SettingsActionRow(
-        title = context.getString(R.string.iptv_thumbs_clear),
-        subtitle = context.getString(R.string.iptv_thumbs_clear_desc),
+        title = localizedResources.getString(R.string.iptv_thumbs_clear),
+        subtitle = localizedResources.getString(R.string.iptv_thumbs_clear_desc),
         value = savedBytes?.let { formatSize(context, it) },
         leadingIcon = Icons.Default.DeleteSweep,
         onClick = {
@@ -96,7 +97,7 @@ internal fun PlaybackSeekThumbnailSection() {
     if (s.lastLowMemoryAt > 0L) {
         val date = Date(s.lastLowMemoryAt)
         SettingsNote(
-            context.getString(
+            localizedResources.getString(
                 R.string.iptv_thumbs_last_paused,
                 DateFormat.getMediumDateFormat(context).format(date),
                 DateFormat.getTimeFormat(context).format(date)
