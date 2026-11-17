@@ -4,13 +4,13 @@
 
 <img src="branding/nuvio-one-tv/tv-banner.png" width="320" alt="Nuvio One TV" />
 
-**[تحميل ARM 64-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/v1.1.0%2Bbuild.43870184356/Nuvio-One-TV-arm64-v8a.apk)** · **[تحميل ARM 32-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/v1.1.0%2Bbuild.43870184356/Nuvio-One-TV-armeabi-v7a.apk)**
+**[تحميل ARM 64-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/v1.1.2%2Bbuild.44029938672/Nuvio-One-TV-arm64-v8a.apk)** · **[تحميل ARM 32-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/v1.1.2%2Bbuild.44029938672/Nuvio-One-TV-armeabi-v7a.apk)**
 
 [الإصدارات / Releases](https://github.com/mhta26/Nuvio-One-TV/releases) · Android TV 7+ · ARM 32/64
 
-اختر ملفًا واحدًا يناسب معمارية جهازك. الإصدار المستقر **1.1.0** بشعار وإقلاع جديدين، وإصلاحات لذاكرة التشغيل والكاش وتحديث القوائم، مع R8 وتقليص الموارد ودون أدوات تصحيح. يتضمن إعدادات ربط Nuvio وTrakt وMDBList وSimkl. حدّث النسخة الشخصية السابقة مباشرة دون حذف بياناتها؛ وتبقى منفصلة عن التطبيق الأصلي.
+اختر ملفًا واحدًا يناسب معمارية جهازك. الإصدار المستقر **1.1.2** يصلح اتساق البوسترات في متابعة المشاهدة والقادم والمكتبة، ويقلل العمل الزائد لـIPTV خارج شاشته وضغط الإقلاع، ويضيف IBM Plex Sans Arabic Medium للترجمات الخارجية مع دعم الرموز وحفظ الترجمات المدمجة. يتضمن إصلاحات الذاكرة والكاش السابقة وR8 وتقليص الموارد. يتضمن إعدادات ربط Nuvio وTrakt وMDBList وSimkl. حدّث النسخة الشخصية السابقة مباشرة دون حذف بياناتها؛ وتبقى منفصلة عن التطبيق الأصلي.
 
-[تقرير مراجعة الكود ونتائج الفحوص](CODE-AUDIT-NUVIO-ONE-TV.md) · [صفحة هذا الإصدار](https://github.com/mhta26/Nuvio-One-TV/releases/tag/v1.1.0%2Bbuild.43870184356)
+[إصلاح البوسترات](POSTER-CONSISTENCY-REVIEW.md) · [مراجعة أداء IPTV](IPTV-PERFORMANCE-REVIEW.md) · [خط الترجمات وفحوص المحارف](SUBTITLE-FONTS.md) · [مراجعة الكود الأساسية](CODE-AUDIT-NUVIO-ONE-TV.md) · [صفحة هذا الإصدار](https://github.com/mhta26/Nuvio-One-TV/releases/tag/v1.1.2%2Bbuild.44029938672)
 
 **Personal Nuvio One TV fork for Android TV, Google TV and Fire TV.**
 
