@@ -31,6 +31,8 @@ internal const val MODERN_HERO_FOCUS_DEBOUNCE_MS = 450L
 internal val MODERN_ROW_HEADER_FOCUS_INSET = 40.dp
 internal const val MODERN_CONTINUE_WATCHING_ROW_KEY = "continue_watching"
 internal const val MODERN_UPCOMING_ROW_KEY = "upcoming_section"
+/** Live TV fork: the On Demand titles you started, in their own row. */
+internal const val MODERN_ON_DEMAND_ROW_KEY = "on_demand_continue_watching"
 internal val MODERN_LANDSCAPE_LOGO_GRADIENT = Brush.verticalGradient(
     colorStops = arrayOf(
         0.0f to Color.Transparent,
@@ -197,6 +199,11 @@ class ModernCarouselRowBuildCache {
     var upcomingUseLandscapePosters: Boolean = false
     var upcomingShowImdbRatings: Boolean = true
     var upcomingRow: HeroCarouselRow? = null
+    var onDemandItems: List<ContinueWatchingItem> = emptyList()
+    var onDemandTitle: String = ""
+    var onDemandUseLandscapePosters: Boolean = false
+    var onDemandShowImdbRatings: Boolean = true
+    var onDemandRow: HeroCarouselRow? = null
     internal val catalogRows = java.util.concurrent.ConcurrentHashMap<String, ModernCatalogRowBuildCacheEntry>()
     internal val collectionRows = java.util.concurrent.ConcurrentHashMap<String, ModernCollectionRowBuildCacheEntry>()
     // per-item cache: rowKey -> (itemId -> cached carousel item + source MetaPreview)
@@ -585,13 +592,10 @@ internal fun buildCollectionFolderItem(
     )
 }
 
+// One key per show, like the shuffle key: when its card moves to another episode it stays the
+// same row item, so focus stays on it instead of passing to the next card.
 internal fun continueWatchingItemKey(item: ContinueWatchingItem): String {
-    return item.shuffleFocusKey ?: when (item) {
-        is ContinueWatchingItem.InProgress ->
-            "cw_inprogress_${item.progress.contentId}_${item.progress.season ?: -1}_${item.progress.episode ?: -1}"
-        is ContinueWatchingItem.NextUp ->
-            "cw_nextup_${item.info.contentId}_${item.info.season}_${item.info.episode}"
-    }
+    return item.shuffleFocusKey ?: "cw_${item.contentId()}"
 }
 
 internal fun catalogRowKey(row: CatalogRow): String {

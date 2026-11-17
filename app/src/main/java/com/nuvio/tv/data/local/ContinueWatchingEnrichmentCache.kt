@@ -41,7 +41,9 @@ data class CachedNextUpItem(
     val seedSeason: Int? = null,
     val seedEpisode: Int? = null,
     val contentLanguage: String? = null,
-    val ratingVisible: Boolean = true
+    val ratingVisible: Boolean = true,
+    /** The last known "N EP left" count, so the badge can show before the next meta fetch. */
+    val remainingEpisodes: Int? = null
 )
 
 data class CachedInProgressItem(
@@ -65,7 +67,9 @@ data class CachedInProgressItem(
     val genres: List<String> = emptyList(),
     val releaseInfo: String? = null,
     val contentLanguage: String? = null,
-    val ratingVisible: Boolean = true
+    val ratingVisible: Boolean = true,
+    /** The last known "N EP left" count, so the badge can show before the next meta fetch. */
+    val remainingEpisodes: Int? = null
 )
 
 /**
@@ -215,6 +219,41 @@ class ContinueWatchingEnrichmentCache @Inject constructor(
         }
     }
 
+    // --- Series confirmed to have no next-up episode ---
+
+    private fun noNextUpFile(profileId: Int): File {
+        val dir = File(context.filesDir, "cw_enrichment")
+        dir.mkdirs()
+        return File(dir, "nonextup_${profileId}.json")
+    }
+
+    /** Next-up seed keys confirmed to have no next episode, with the time to look them up again. */
+    suspend fun getNoNextUpSeeds(profileId: Int = profileManager.activeProfileId.value): Map<String, Long> = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            try {
+                val file = noNextUpFile(profileId)
+                if (!file.exists()) return@withContext emptyMap()
+                gson.fromJson<Map<String, Long>>(
+                    file.readText(),
+                    object : TypeToken<Map<String, Long>>() {}.type
+                ) ?: emptyMap()
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to read no next-up cache: ${e.message}")
+                emptyMap()
+            }
+        }
+    }
+
+    suspend fun saveNoNextUpSeeds(seeds: Map<String, Long>, profileId: Int = profileManager.activeProfileId.value) = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            try {
+                atomicWrite(noNextUpFile(profileId), gson.toJson(seeds))
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to write no next-up cache: ${e.message}")
+            }
+        }
+    }
+
     /**
      * Deletes all CW enrichment cache files for the active profile.
      */
@@ -225,6 +264,7 @@ class ContinueWatchingEnrichmentCache @Inject constructor(
             try {
                 nextUpFile(profileId).delete()
                 inProgressFile(profileId).delete()
+                noNextUpFile(profileId).delete()
                 nextUpWrites.remove(profileId)
                 inProgressWrites.remove(profileId)
                 Log.d(TAG, "Cleared CW enrichment cache for profile ${profileId}")

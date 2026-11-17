@@ -154,8 +154,8 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1076
-        versionName = "1.1.0-beta.13"
+        versionCode = 1078
+        versionName = "1.2.0-beta.1"
 
         buildConfigField("String", "PARENTAL_GUIDE_API_URL", "\"${localProperties.getProperty("PARENTAL_GUIDE_API_URL", "")}\"")
         buildConfigField("String", "INTRODB_API_URL", "\"${localProperties.getProperty("INTRODB_API_URL", "")}\"")
@@ -168,6 +168,10 @@ android {
         buildConfigField("String", "SIMKL_CLIENT_ID", buildConfigString(resolveProperty(devProperties, localProperties, "SIMKL_CLIENT_ID")))
         buildConfigField("String", "SIMKL_APP_NAME", buildConfigString(resolveProperty(devProperties, localProperties, "SIMKL_APP_NAME", "nuvio")))
         buildConfigField("String", "MDBLIST_CLIENT_ID", buildConfigString(resolveProperty(devProperties, localProperties, "MDBLIST_CLIENT_ID")))
+        // Music: Spotify Authorization Code + PKCE. The client ID is public; no secret on the TV.
+        buildConfigField("String", "SPOTIFY_CLIENT_ID", buildConfigString(resolveProperty(devProperties, localProperties, "SPOTIFY_CLIENT_ID")))
+        // Static HTTPS page used as the Spotify redirect (e.g. https://user.github.io/repo/spotify-link).
+        buildConfigField("String", "SPOTIFY_LINK_BASE_URL", buildConfigString(resolveProperty(devProperties, localProperties, "SPOTIFY_LINK_BASE_URL")))
         buildConfigField("String", "TMDB_API_KEY", "\"${localProperties.getProperty("TMDB_API_KEY", "")}\"")
         buildConfigField("String", "TV_LOGIN_WEB_BASE_URL", "\"${localProperties.getProperty("TV_LOGIN_WEB_BASE_URL", "https://nuvio.tv/tv-login")}\"")
         buildConfigField("String", "DEVICE_LOGIN_WEB_BASE_URL", "\"${localProperties.getProperty("DEVICE_LOGIN_WEB_BASE_URL", "https://nuvio.tv/link")}\"")
@@ -415,6 +419,13 @@ android.defaultConfig.buildConfigField(
     "String", "NUVIO_BASE_VERSION", "\"${android.defaultConfig.versionName ?: ""}\""
 )
 
+// Live TV setup sync service. Lets a test build point at a staging Worker without
+// changing the default used by everyone else.
+val livetvSyncUrl = (findProperty("livetvSyncUrl") as String?)
+    ?.takeIf { it.isNotBlank() }
+    ?: "https://nuvioone-sync.nuviotv-sync.workers.dev"
+android.defaultConfig.buildConfigField("String", "LIVETV_SYNC_URL", "\"$livetvSyncUrl\"")
+
 val livetvBuildNumber = (findProperty("livetvBuildNumber") as String?)?.toIntOrNull() ?: 0
 android.defaultConfig.versionCode = (android.defaultConfig.versionCode ?: 1) * 100 + livetvBuildNumber
 (findProperty("livetvVersionName") as String?)?.takeIf { it.isNotBlank() }?.let {
@@ -433,7 +444,9 @@ val livetvTesterKey = if (livetvIsTestBuild) {
     (System.getenv("LIVETV_TESTER_KEY") ?: localProperties.getProperty("LIVETV_TESTER_KEY", "")).trim()
 } else ""
 android.defaultConfig.buildConfigField("String", "NUVIO_CHANNEL", "\"${if (livetvIsTestBuild) "test" else "stable"}\"")
-android.defaultConfig.buildConfigField("String", "TEST_UPDATES_URL", "\"https://livetv-cloud.nuvioplusiptv.workers.dev\"")
+// Empty until our own tester update service exists. Test builds then report no update
+// instead of calling another project's Worker.
+android.defaultConfig.buildConfigField("String", "TEST_UPDATES_URL", "\"\"")
 android.defaultConfig.buildConfigField("String", "TESTER_KEY", buildConfigString(livetvTesterKey))
 if (livetvIsTestBuild || personalDistribution) {
     // Keep the personal app upgrade-compatible with the preview versionCode track.
@@ -716,6 +729,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
     testImplementation("junit:junit:4.13.2")
+    testImplementation(kotlin("test-junit"))
     testImplementation("org.json:json:20240303")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     testImplementation("io.mockk:mockk:1.13.12")

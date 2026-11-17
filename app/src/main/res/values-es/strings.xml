@@ -381,7 +381,6 @@
     <plurals name="ambient_mode_timeout_minutes">
         <item quantity="one">%1$d minuto</item>
         <item quantity="other">%1$d minutos</item>
-        <item quantity="many">%1$d minutos</item>
     </plurals>
     <string name="ambient_mode_catalogs">Catálogos</string>
     <string name="ambient_mode_catalogs_subtitle">Elige hasta 3 catálogos de los que obtener imágenes</string>
@@ -813,9 +812,8 @@
     <string name="video_section">Vídeo</string>
     <string name="playback_true_black_letterbox">Barras negras puras</string>
     <string name="playback_true_black_letterbox_sub">Deja sin pintar las barras alrededor de la imagen para que el HDR mantenga un negro puro. Mantén esto desactivado si aparece una línea brillante en las barras.</string>
-    <string name="playback_chapters_label">Capítulos</string>
-    <string name="playback_exo_chapters_title">Mostrar capítulos (ExoPlayer)</string>
-    <string name="playback_exo_chapters_sub">Lee los capítulos de los archivos MKV para marcarlos en la barra de progreso y saltar entre ellos. Realiza unas pocas peticiones adicionales una vez iniciada la reproducción. mpv siempre muestra los capítulos.</string>
+    <string name="playback_exo_chapters_title">Mostrar capítulos</string>
+    <string name="playback_exo_chapters_sub">Lee los capítulos de los archivos MKV para marcarlos en la barra de progreso y saltar entre ellos.</string>
     <string name="audio_trailer_section">Tráiler</string>
     <string name="audio_autoplay_trailers">Reproducción automática de tráilers</string>
     <string name="audio_autoplay_trailers_sub">Reproduce automáticamente tráilers en la pantalla de detalles después de un período de inactividad</string>
@@ -1897,7 +1895,6 @@ Utilizas esta función bajo tu entera responsabilidad. P2P se puede desactivar e
     <plurals name="player_report_loading_issue_prompt">
         <item quantity="one">Sigue cargando tras %1$d segundo</item>
         <item quantity="other">Sigue cargando tras %1$d segundos</item>
-        <item quantity="many">Sigue cargando tras %1$d segundos</item>
     </plurals>
     <string name="player_speed_title">Velocidad de reproducción</string>
     <string name="player_more_actions_title">Más acciones</string>
@@ -2949,6 +2946,7 @@ Utilizas esta función bajo tu entera responsabilidad. P2P se puede desactivar e
     <string name="player_error_stream_unavailable">\n\nEl servidor de la transmisión no está disponible en este momento. Prueba con otra fuente.</string>
     <string name="player_error_source_invalid_content">Error de fuente: la fuente de la transmisión devolvió contenido inválido o no reproducible. Es posible que el enlace haya caducado o que el servidor haya devuelto una página de error en lugar de vídeo.\n\nPrueba con otra fuente. [%1$s]</string>
     <string name="player_error_decoder">Error del decodificador</string>
+    <string name="player_error_decoder_message">El decodificador de vídeo de este televisor no pudo reproducir esta transmisión (%1$s). Prueba otra fuente o usa MPV Player si está disponible.</string>
     <string name="player_error_unsupported_format">Esta transmisión usa un formato que tu dispositivo podría no admitir. Prueba con otra fuente. [%1$s]</string>
     <string name="player_error_initialize_failed">Error al inicializar el reproductor</string>
     <string name="player_error_mpv_surface_failed">Error al inicializar la superficie de libmpv</string>
@@ -3208,7 +3206,6 @@ Utilizas esta función bajo tu entera responsabilidad. P2P se puede desactivar e
     <plurals name="debrid_selection_count_value">
         <item quantity="one">%d seleccionado</item>
         <item quantity="other">%d seleccionados</item>
-        <item quantity="many">%d seleccionados</item>
     </plurals>
     <string name="debrid_size_range_any">Cualquiera</string>
     <string name="debrid_size_range_up_to">Hasta %1$dGB</string>
@@ -3432,5 +3429,9 @@ Utilizas esta función bajo tu entera responsabilidad. P2P se puede desactivar e
     <string name="stream_resume_from_time">Reanudar desde %1$s</string>
     <string name="stream_resume_from_percent">Reanudar desde %1$d%%</string>
 
+    <string name="on_demand_continue_watching">Continuar viendo · On Demand</string>
+    <string name="iptv_settings_continue_watching_on_home">Continuar viendo en Inicio</string>
+    <string name="iptv_settings_show_on_demand_titles_you_started">Muestra en una fila de la pantalla de Inicio de Nuvio los títulos On Demand que empezaste.</string>
+    <string name="on_demand_continue_unavailable">Este título ya no está en el catálogo On Demand de tu proveedor.</string>
     <string name="one_tv_startup_tagline">Tu mundo. Una pantalla.</string>
 </resources>

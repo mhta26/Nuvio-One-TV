@@ -319,7 +319,7 @@ internal fun MusicLibraryScreen(
                         }
                     } else {
                         itemsIndexed(
-                            items = recents.take(30),
+                            items = recents,
                             key = { index, song -> "recent:${song.videoId}#$index" }
                         ) { index, song ->
                             MusicTrackRow(

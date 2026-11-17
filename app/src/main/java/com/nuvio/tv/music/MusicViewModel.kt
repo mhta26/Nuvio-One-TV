@@ -79,6 +79,8 @@ data class MusicDetailState(
     val thumbnailUrl: String? = null,
     val type: BrowseType = BrowseType.OTHER,
     val songs: List<Song> = emptyList(),
+    /** The artist page's own blurb, when it has one. */
+    val description: String = "",
     val suggested: List<Song> = emptyList(),
     val sections: List<HomeShelf> = emptyList(),
     val continuation: String? = null,
@@ -138,7 +140,38 @@ class MusicViewModel @Inject constructor(
     init {
         MusicAccountRepository.init(context)
         MusicAddonRegistry.init(context)
-        loadHome()
+        viewModelScope.launch {
+            // Show the last feed at once; the network refresh replaces it when it arrives.
+            val cached = withContext(Dispatchers.IO) { MusicFeedCache.load(context) }
+            if (cached != null) {
+                _state.update {
+                    it.copy(
+                        home = it.home.copy(
+                            shelves = cached.home,
+                            loading = cached.home.isEmpty(),
+                            account = cached.account
+                        ),
+                        explore = it.explore.copy(
+                            sections = cached.explore,
+                            loading = cached.explore.isEmpty()
+                        )
+                    )
+                }
+            }
+            loadHome()
+        }
+    }
+
+    private fun friendlyMusicError(error: Throwable?, fallback: String): String {
+        val raw = error?.message.orEmpty()
+        val lower = raw.lowercase()
+        return when {
+            raw.contains("403") || lower.contains("automated queries") ||
+                raw.contains("<html", ignoreCase = true) || lower.contains("unusual traffic") ->
+                "YouTube Music is temporarily limiting requests. Wait a few minutes, then try again."
+            raw.isBlank() -> fallback
+            else -> raw
+        }
     }
 
     // ---- tabs ----
@@ -188,6 +221,7 @@ class MusicViewModel @Inject constructor(
                         )
                     )
                 }
+                persistFeedCache()
                 return@launch
             }
             val result = withContext(Dispatchers.IO) { YtMusicRepository.home() }
@@ -205,13 +239,14 @@ class MusicViewModel @Inject constructor(
                             )
                         )
                     }
+                    persistFeedCache()
                 },
                 onFailure = { error ->
                     _state.update {
                         it.copy(
                             home = it.home.copy(
                                 loading = false,
-                                error = error.message ?: "Couldn't load your music.",
+                                error = friendlyMusicError(error, "Couldn't load your music."),
                                 account = false
                             )
                         )
@@ -311,7 +346,7 @@ class MusicViewModel @Inject constructor(
                         it.copy(
                             accountLibrary = it.accountLibrary.copy(
                                 loading = false,
-                                error = error.message ?: "Couldn't load your music library."
+                                error = friendlyMusicError(error, "Couldn't load your music library.")
                             )
                         )
                     }
@@ -386,7 +421,7 @@ class MusicViewModel @Inject constructor(
                         else it.copy(
                             search = it.search.copy(
                                 loading = false,
-                                error = error.message ?: "Search failed."
+                                error = friendlyMusicError(error, "Search failed.")
                             )
                         )
                     }
@@ -519,7 +554,8 @@ class MusicViewModel @Inject constructor(
                             thumbnailUrl = page.thumbnailUrl ?: thumbnailUrl,
                             type = BrowseType.ARTIST,
                             songs = page.songs,
-                            sections = page.sections
+                            sections = page.sections,
+                            description = page.description.orEmpty()
                         )
                     }
                 } else {
@@ -528,11 +564,16 @@ class MusicViewModel @Inject constructor(
                             open = true,
                             loading = false,
                             browseId = browseId,
-                            title = title,
-                            subtitle = subtitle,
-                            thumbnailUrl = thumbnailUrl,
+                            // The page's own header is more accurate than the card that opened
+                            // it: a tapped album link arrives with only a browse id, and a
+                            // playlist card can carry a preview track's title.
+                            title = page.header?.title?.takeIf { it.isNotBlank() } ?: title,
+                            subtitle = page.header?.subtitle?.takeIf { it.isNotBlank() }
+                                ?: subtitle,
+                            thumbnailUrl = page.header?.thumbnailUrl ?: thumbnailUrl,
                             type = type,
                             songs = page.songs,
+                            description = page.description.orEmpty(),
                             suggested = page.suggested,
                             continuation = page.continuation
                         )
@@ -553,7 +594,7 @@ class MusicViewModel @Inject constructor(
                         else it.copy(
                             detail = it.detail.copy(
                                 loading = false,
-                                error = error.message ?: "Couldn't open this page."
+                                error = friendlyMusicError(error, "Couldn't open this page.")
                             )
                         )
                     }
@@ -600,6 +641,38 @@ class MusicViewModel @Inject constructor(
                 )
                 onOpened()
             }
+        }
+    }
+
+    /** Opens [song]'s album page, looking the link up when the row didn't carry one. */
+    fun openAlbum(song: Song, onOpened: () -> Unit = {}) {
+        if (song.localUri != null) return
+        val direct = song.albumId?.takeIf { it.isNotBlank() }
+        if (direct != null) {
+            openDetail(
+                browseId = direct,
+                title = song.albumName?.takeIf { it.isNotBlank() } ?: "Album",
+                subtitle = song.artist,
+                thumbnailUrl = song.thumbnailUrl,
+                type = BrowseType.ALBUM
+            )
+            onOpened()
+            return
+        }
+        viewModelScope.launch {
+            val full = withContext(Dispatchers.IO) {
+                runCatching { YtMusicRepository.trackLinks(song.videoId) }
+                    .getOrNull()?.getOrNull()
+            }
+            val id = full?.albumId?.takeIf { it.isNotBlank() } ?: return@launch
+            openDetail(
+                browseId = id,
+                title = full.albumName?.takeIf { it.isNotBlank() } ?: "Album",
+                subtitle = song.artist,
+                thumbnailUrl = song.thumbnailUrl,
+                type = BrowseType.ALBUM
+            )
+            onOpened()
         }
     }
 
@@ -652,7 +725,7 @@ class MusicViewModel @Inject constructor(
                         else it.copy(
                             detail = it.detail.copy(
                                 loading = false,
-                                error = error.message ?: "Couldn't open this page."
+                                error = friendlyMusicError(error, "Couldn't open this page.")
                             )
                         )
                     }
@@ -713,13 +786,14 @@ class MusicViewModel @Inject constructor(
                             )
                         )
                     }
+                    persistFeedCache()
                 },
                 onFailure = { error ->
                     _state.update {
                         it.copy(
                             explore = it.explore.copy(
                                 loading = false,
-                                error = error.message ?: "Couldn't load Explore."
+                                error = friendlyMusicError(error, "Couldn't load Explore.")
                             )
                         )
                     }
@@ -762,7 +836,7 @@ class MusicViewModel @Inject constructor(
                         else it.copy(
                             explore = it.explore.copy(
                                 selectedLoading = false,
-                                selectedError = error.message ?: "Couldn't open this category."
+                                selectedError = friendlyMusicError(error, "Couldn't open this category.")
                             )
                         )
                     }
@@ -815,4 +889,16 @@ class MusicViewModel @Inject constructor(
         if (detail.songs.isEmpty()) return
         MusicPlayer.playQueue(detail.songs, startIndex)
     }
+    private fun persistFeedCache() {
+        val state = _state.value
+        viewModelScope.launch(Dispatchers.IO) {
+            MusicFeedCache.save(
+                context = context,
+                home = state.home.shelves,
+                explore = state.explore.sections,
+                account = state.home.account
+            )
+        }
+    }
+
 }

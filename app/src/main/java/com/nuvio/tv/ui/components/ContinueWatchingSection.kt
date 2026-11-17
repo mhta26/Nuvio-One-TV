@@ -1,6 +1,6 @@
 package com.nuvio.tv.ui.components
 
-import com.nuvio.tv.ui.screens.home.shuffleFocusKey
+import com.nuvio.tv.ui.screens.home.continueWatchingItemKey
 
 import android.view.KeyEvent as AndroidKeyEvent
 import androidx.compose.foundation.BorderStroke
@@ -137,6 +137,8 @@ fun ContinueWatchingSection(
     onMarkWatched: (ContinueWatchingItem) -> Unit = {},
     modifier: Modifier = Modifier,
     title: String? = null,
+    showLiveTvHint: Boolean = true,
+    showOptionsMenu: Boolean = true,
     focusedItemIndex: Int = -1,
     onItemFocused: (itemIndex: Int) -> Unit = {},
     blurUnwatchedEpisodes: Boolean = false,
@@ -196,7 +198,7 @@ fun ContinueWatchingSection(
                     color = NuvioTheme.colors.TextPrimary
                 )
                 // Live TV fork: "Live TV ▲" hint when this is the top row.
-                com.nuvio.tv.livetv.home.LiveTvHomeHint()
+                if (showLiveTvHint) com.nuvio.tv.livetv.home.LiveTvHomeHint()
             }
         }
 
@@ -253,19 +255,14 @@ fun ContinueWatchingSection(
         ) {
             itemsIndexed(
                 items = items,
-                key = { _, progress ->
-                    progress.shuffleFocusKey ?: when (progress) {
-                        is ContinueWatchingItem.InProgress ->
-                            "cw_${progress.progress.contentId}_${progress.progress.videoId}_${progress.progress.season ?: -1}_${progress.progress.episode ?: -1}"
-                        is ContinueWatchingItem.NextUp ->
-                            "nextup_${progress.info.contentId}_${progress.info.videoId}_${progress.info.season}_${progress.info.episode}"
-                    }
-                }
+                key = { _, progress -> continueWatchingItemKey(progress) }
             ) { index, progress ->
                 val requester = com.nuvio.tv.ui.components.rememberCachedFocusRequester(focusRequesters, index)
                 val focusModifier = Modifier.focusRequester(requester)
                 val stableOnClick = remember(progress) { { onItemClick(progress) } }
-                val stableOnLongPress = remember(progress) { { optionsItem = progress } }
+                val stableOnLongPress = remember(progress, showOptionsMenu) {
+                    { if (showOptionsMenu) optionsItem = progress }
+                }
                 var isCardFocused by remember { mutableStateOf(false) }
 
                     ContinueWatchingCard(

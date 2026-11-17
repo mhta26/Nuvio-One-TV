@@ -5,6 +5,7 @@ import com.nuvio.tv.core.tracking.TrackingMembershipRemovalConfirmation
 import com.nuvio.tv.data.local.StartupAuthNotice
 import com.nuvio.tv.domain.model.CatalogRow
 import com.nuvio.tv.domain.model.ContinueWatchingCardStyle
+import com.nuvio.tv.domain.model.ContinueWatchingClickAction
 import com.nuvio.tv.domain.model.Collection
 import com.nuvio.tv.domain.model.FocusedPosterTrailerPlaybackTarget
 import com.nuvio.tv.domain.model.HomeImdbRatingsVisibility
@@ -19,6 +20,12 @@ import com.nuvio.tv.domain.model.WatchProgress
 data class HomeUiState(
     val catalogRows: List<CatalogRow> = emptyList(),
     val continueWatchingItems: List<ContinueWatchingItem> = emptyList(),
+    /**
+     * Live TV fork: On Demand titles you started, for their own Continue Watching row.
+     * Nuvio's normal pipeline can't resolve `nuviovod:` ids through addons, so these are
+     * mapped back to the provider's items instead.
+     */
+    val onDemandContinueWatchingItems: List<ContinueWatchingItem> = emptyList(),
     val upcomingItems: List<ContinueWatchingItem> = emptyList(),
     val isLoading: Boolean = true,
     val layoutPreferencesReady: Boolean = false,
@@ -70,6 +77,7 @@ data class HomeUiState(
     val showContinueWatchingEpisodeCount: Boolean = true,
     val continueWatchingEnabled: Boolean = true,
     val continueWatchingCardStyle: ContinueWatchingCardStyle = ContinueWatchingCardStyle.CARD,
+    val continueWatchingClickAction: ContinueWatchingClickAction = ContinueWatchingClickAction.STREAM,
     val heroEnrichmentEnabled: Boolean = false,
     val startupAuthNotice: StartupAuthNotice? = null,
     val homeRows: List<HomeRow> = emptyList(),
@@ -114,6 +122,12 @@ val ContinueWatchingItem.shuffleFocusKey: String?
         is ContinueWatchingItem.InProgress -> "cw_shuffle_${progress.contentId}"
         is ContinueWatchingItem.NextUp -> "cw_shuffle_${info.contentId}"
     }
+
+fun ContinueWatchingClickAction.opensDetails(item: ContinueWatchingItem): Boolean = when (this) {
+    ContinueWatchingClickAction.STREAM -> false
+    ContinueWatchingClickAction.DETAILS -> true
+    ContinueWatchingClickAction.DETAILS_FOR_UPCOMING -> item is ContinueWatchingItem.NextUp && !item.info.hasAired
+}
 
 @Immutable
 data class NextUpInfo(

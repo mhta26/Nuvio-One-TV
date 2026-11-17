@@ -15,6 +15,7 @@ import com.nuvio.tv.data.local.NightMode
 import com.nuvio.tv.data.local.Dv7HandlingMode
 import com.nuvio.tv.data.local.PlayerSettings
 import com.nuvio.tv.data.local.PlayerSettingsDataStore
+import com.nuvio.tv.data.local.PlayerControlButton
 import com.nuvio.tv.data.local.PlayerPreference
 import com.nuvio.tv.core.player.LastPlaybackDiagnostics
 import com.nuvio.tv.data.local.FrameRateMatchingMode
@@ -185,6 +186,14 @@ class PlaybackSettingsViewModel @Inject constructor(
         playerSettingsDataStore.setShowPlayerLoadingStatus(enabled)
     }
 
+    suspend fun setShowPlaybackInfo(enabled: Boolean) {
+        playerSettingsDataStore.setShowPlaybackInfo(enabled)
+    }
+
+    suspend fun setHiddenPlayerControls(controls: Set<PlayerControlButton>) {
+        playerSettingsDataStore.setHiddenPlayerControls(controls)
+    }
+
     suspend fun setPauseOverlayEnabled(enabled: Boolean) {
         playerSettingsDataStore.setPauseOverlayEnabled(enabled)
     }
@@ -265,6 +274,10 @@ class PlaybackSettingsViewModel @Inject constructor(
         playerSettingsDataStore.setExoChaptersEnabled(enabled)
     }
 
+    suspend fun setChapterTitleEnabled(enabled: Boolean) {
+        playerSettingsDataStore.setChapterTitleEnabled(enabled)
+    }
+
     suspend fun setUseLibass(enabled: Boolean) {
         playerSettingsDataStore.setUseLibass(enabled)
     }
@@ -331,6 +344,30 @@ class PlaybackSettingsViewModel @Inject constructor(
 
     suspend fun setSubtitleOutlineWidth(width: Int) {
         playerSettingsDataStore.setSubtitleOutlineWidth(width)
+    }
+
+    suspend fun setSubtitleFontId(fontId: String) {
+        playerSettingsDataStore.setSubtitleFontId(fontId)
+    }
+
+    suspend fun setSubtitleBackgroundRadius(radius: Int) {
+        playerSettingsDataStore.setSubtitleBackgroundRadius(radius)
+    }
+
+    suspend fun setSubtitleShadowEnabled(enabled: Boolean) {
+        playerSettingsDataStore.setSubtitleShadowEnabled(enabled)
+    }
+
+    suspend fun setSubtitleShadowOpacity(opacity: Int) {
+        playerSettingsDataStore.setSubtitleShadowOpacity(opacity)
+    }
+
+    suspend fun setSubtitleShadowSize(size: Int) {
+        playerSettingsDataStore.setSubtitleShadowSize(size)
+    }
+
+    suspend fun resetSubtitleAppearance() {
+        playerSettingsDataStore.resetSubtitleAppearance()
     }
 
     suspend fun setSubtitleHdrStyleEnabled(enabled: Boolean) {
@@ -545,6 +582,18 @@ class PlaybackSettingsViewModel @Inject constructor(
 
     suspend fun setStreamAutoPlayNextEpisodeFallbackEnabled(enabled: Boolean) {
         playerSettingsDataStore.setStreamAutoPlayNextEpisodeFallbackEnabled(enabled)
+    }
+
+    suspend fun setStreamAutoPlayFallbackOnFailure(enabled: Boolean) {
+        playerSettingsDataStore.setStreamAutoPlayFallbackOnFailure(enabled)
+    }
+
+    suspend fun setStreamAutoPlayFallbackMaxSources(count: Int) {
+        playerSettingsDataStore.setStreamAutoPlayFallbackMaxSources(count)
+    }
+
+    suspend fun setStreamAutoPlayFallbackStartupTimeoutSeconds(seconds: Int) {
+        playerSettingsDataStore.setStreamAutoPlayFallbackStartupTimeoutSeconds(seconds)
     }
 
     suspend fun setStreamAutoPlayPreferBingeGroupForNextEpisode(enabled: Boolean) {

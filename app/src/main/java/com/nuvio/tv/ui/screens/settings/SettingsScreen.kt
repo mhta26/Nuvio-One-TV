@@ -1,3 +1,5 @@
+@file:androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+
 @file:OptIn(ExperimentalTvMaterial3Api::class)
 
 package com.nuvio.tv.ui.screens.settings
@@ -174,8 +176,8 @@ private fun settingsSectionSpec(category: SettingsCategory): SettingsSectionSpec
     SettingsCategory.ABOUT -> SettingsSectionSpec(category, stringResource(R.string.about_title), Icons.Default.Info, destination = SettingsSectionDestination.Inline)
     SettingsCategory.DEBUG -> SettingsSectionSpec(category, stringResource(R.string.settings_debug), Icons.Default.BugReport, destination = SettingsSectionDestination.Inline)
     // Live TV fork
-    SettingsCategory.LIVE_TV -> SettingsSectionSpec(category, "Live TV", Icons.Default.LiveTv, destination = SettingsSectionDestination.Inline)
-    SettingsCategory.ON_DEMAND -> SettingsSectionSpec(category, "On Demand", Icons.Default.Movie, destination = SettingsSectionDestination.Inline)
+    SettingsCategory.LIVE_TV -> SettingsSectionSpec(category, stringResource(R.string.iptv_settings_live_tv), Icons.Default.LiveTv, destination = SettingsSectionDestination.Inline)
+    SettingsCategory.ON_DEMAND -> SettingsSectionSpec(category, stringResource(R.string.iptv_settings_on_demand), Icons.Default.Movie, destination = SettingsSectionDestination.Inline)
     SettingsCategory.SPORTS -> SettingsSectionSpec(category, "Sports", Icons.Default.EmojiEvents, destination = SettingsSectionDestination.Inline)
     SettingsCategory.YOUTUBE -> SettingsSectionSpec(category, "OneTube", Icons.Default.PlayCircle, destination = SettingsSectionDestination.Inline)
     SettingsCategory.SIDE_MENU -> SettingsSectionSpec(category, "Menu & Features", Icons.Default.Menu, destination = SettingsSectionDestination.Inline)
@@ -238,6 +240,12 @@ fun SettingsScreen(
     }
     val visibleSections = visibleCategories.map { category -> settingsSectionSpec(category) }
 
+    val motionContext = androidx.compose.ui.platform.LocalContext.current
+    val lightSettingsMotion = remember(motionContext) {
+        val manager = motionContext.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        val memory = android.app.ActivityManager.MemoryInfo().also(manager::getMemoryInfo)
+        com.nuvio.tv.core.ui.reduceSettingsMotion(memory.totalMem, MemoryBudget.isLowRamTier, manager.isLowRamDevice)
+    }
     val isRtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
     val isHorizonStyle = NuvioTheme.settingsUiStyle == SettingsUiStyle.HORIZON
     var selectedCategory by rememberSaveable {
@@ -456,7 +464,7 @@ fun SettingsScreen(
 
     LaunchedEffect(pendingContentFocusRequestId) {
         val category = pendingContentFocusCategory ?: return@LaunchedEffect
-        delay(SETTINGS_DETAIL_FOCUS_DELAY_MS)
+        if (lightSettingsMotion) withFrameNanos { } else delay(SETTINGS_DETAIL_FOCUS_DELAY_MS)
         // Asked once per frame until the pane takes focus or the window closes, rather than
         // betting on one fixed delay. The pane is not always laid out when the delay expires,
         // and the fallback below moves by direction, which lands wherever is nearest the rail
@@ -700,6 +708,9 @@ fun SettingsScreen(
                                 .widthIn(max = 880.dp)
                                 .fillMaxWidth(),
                             transitionSpec = {
+                                if (lightSettingsMotion) {
+                                    androidx.compose.animation.EnterTransition.None.togetherWith(androidx.compose.animation.ExitTransition.None)
+                                } else {
                                 val order = visibleSections.map { it.category }
                                 val forward = order.indexOf(targetState) >= order.indexOf(initialState)
                                 val toStart = forward != isRtl
@@ -713,6 +724,7 @@ fun SettingsScreen(
                                         ) { fullWidth -> if (toStart) -fullWidth / 4 else fullWidth / 4 } +
                                             fadeOut(tween(SETTINGS_DETAIL_ANIM_OUT_DURATION_MS))
                                     )
+                                }
                             },
                             label = "settingsDetailTransition"
                         ) { animatedCategory ->

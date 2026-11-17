@@ -166,6 +166,20 @@ It needs **Android 7.0 or newer** (Fire OS 6 or later).
 
 ---
 
+## Performance
+
+Nuvio One ships with a baseline profile, so Android precompiles the hot code paths for Home, OneTube, Music, Live TV and the player when the app is installed or updated. There is nothing to set up.
+
+If you sideload the APK and want the extra step from the community "make sideloaded Nuvio faster" guide, you can force a full AOT compile on the TV:
+
+```sh
+adb shell cmd package compile -m speed -f app.onetube.tv
+```
+
+This is optional, only affects that device, and has to be re-run after every update. `scripts/adb-speed-compile.sh` and `scripts/adb-speed-compile.ps1` wrap the command and print the result. See **[docs/PERFORMANCE.md](docs/PERFORMANCE.md)** for details.
+
+---
+
 ## Getting started
 
 1. Open the app and **sign in with your Nuvio account** (or skip and add addons yourself).
@@ -236,7 +250,7 @@ Your Live TV and Sports setup, in a private app folder in your own Google Drive 
 <details>
 <summary><b>Where do sports scores come from?</b></summary>
 
-ESPN's public feed, TheSportsDB and sporting-events.org. Sports they don't cover are found in your own TV guide.
+ESPN's public feed, FotMob's league data through our own sports data service, TheSportsDB, WWE/AEW/TNA and boxing schedules, and sporting-events.org. Sports they don't cover are found in your own TV guide.
 </details>
 
 ---
@@ -256,7 +270,7 @@ Enjoying the app? A coffee keeps the updates coming. Totally optional, always ap
 - **[SmartTube](https://github.com/yuliskov/SmartTube) / [MediaServiceCore](https://github.com/yuliskov/MediaServiceCore)** by Yurii Liskov (MIT licence): the YouTube engine. Licence texts are in `mediaservicecore/`.
 - **[BitChord](https://github.com/kushagrasinghx/BitChord)** by Kushagra Singh (GPL-3.0): the YouTube Music catalogue client and the Music section's design. The ported code is in `app/src/main/java/com/music/bitchord/` and `app/src/main/java/com/nuvio/tv/music/`.
 - **[SponsorBlock](https://sponsor.ajay.app)** and **[DeArrow](https://dearrow.ajay.app)** by Ajay Ramachandran and their communities (CC BY-NC-SA 4.0).
-- Sports data from ESPN's public feed, [TheSportsDB](https://www.thesportsdb.com) and sporting-events.org. Guide design inspired by TiviMate.
+- Sports data from ESPN's public feed, [TheSportsDB](https://www.thesportsdb.com), [FotMob](https://www.fotmob.com) (unofficial), [WWE.com](https://www.wwe.com), [All Elite Wrestling](https://www.allelitewrestling.com), [TNA Wrestling](https://tnawrestling.com), [Box.live](https://box.live), [BoxingScene](https://www.boxingscene.com) and sporting-events.org. Guide design inspired by TiviMate.
 - Built with Kotlin, Jetpack Compose, TV Material 3 and Media3 / ExoPlayer.
 
 This is an unofficial fork. It is **not affiliated with or endorsed by NuvioMedia, NuvioPlusIPTV, SmartTube, SponsorBlock, DeArrow, TiviMate, Google or YouTube**. YouTube is a trademark of Google LLC. Please report issues here, not to those projects.

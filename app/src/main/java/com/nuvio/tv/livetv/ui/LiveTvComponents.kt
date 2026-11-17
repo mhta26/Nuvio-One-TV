@@ -102,7 +102,8 @@ internal fun LiveText(
     align: TextAlign? = null,
     marquee: Boolean = false,
     /** A soft dark shadow, for text over the picture (the info panel). */
-    shadow: Boolean = false
+    shadow: Boolean = false,
+    lineHeight: TextUnit = TextUnit.Unspecified
 ) {
     Text(
         style = if (shadow) androidx.compose.material3.LocalTextStyle.current.copy(shadow = TEXT_OVER_PICTURE) else androidx.compose.material3.LocalTextStyle.current,
@@ -120,7 +121,8 @@ internal fun LiveText(
         maxLines = maxLines,
         softWrap = !(marquee && maxLines == 1),
         overflow = if (marquee && maxLines == 1) TextOverflow.Clip else TextOverflow.Ellipsis,
-        textAlign = align
+        textAlign = align,
+        lineHeight = lineHeight
     )
 }
 
@@ -510,6 +512,16 @@ internal class LiveMemo<K, V>(private val max: Int) {
 private val titleMarksMemo = LiveMemo<String, TitleMarks>(4096)
 
 internal fun titleMarks(title: String): TitleMarks = titleMarksMemo.get(title) { workOutTitleMarks(it) }
+
+/**
+ * The title as the guide's header shows it. Guides often put the match-up in the sub-title
+ * ("College Football" + "Texas at LSU"), which TiviMate shows as "College Football : Texas at LSU".
+ */
+internal fun programDisplayTitle(program: EpgProgram): String {
+    val title = titleMarks(program.title).title
+    val sub = program.subTitle?.trim().orEmpty()
+    return if (sub.isEmpty() || title.contains(sub, ignoreCase = true)) title else "$title : $sub"
+}
 
 private fun workOutTitleMarks(title: String): TitleMarks {
     var t = title

@@ -70,6 +70,25 @@ class ContinueWatchingEnrichmentCacheProfilesTest {
         assertEquals("primary data", primary.readText())
     }
 
+    @Test
+    fun `negative next-up cache stays isolated and clears only the requested profile`() = runTest {
+        val cache = cache()
+        cache.saveNoNextUpSeeds(mapOf("title-one" to 100L), profileId = 1)
+        cache.saveNoNextUpSeeds(mapOf("title-two" to 200L), profileId = 2)
+        cache.clearAll(profileId = 1)
+        assertTrue(cache.getNoNextUpSeeds(profileId = 1).isEmpty())
+        assertEquals(mapOf("title-two" to 200L), cache.getNoNextUpSeeds(profileId = 2))
+    }
+
+    @Test
+    fun `explicit negative-cache profile survives a change of active profile`() = runTest {
+        val cache = cache()
+        activeProfile.value = 2
+        cache.saveNoNextUpSeeds(mapOf("title-one" to 100L), profileId = 1)
+        assertTrue(cache.getNoNextUpSeeds().isEmpty())
+        assertEquals(mapOf("title-one" to 100L), cache.getNoNextUpSeeds(profileId = 1))
+    }
+
     private fun progressItem() = CachedInProgressItem(
         contentId = "tt0001", contentType = "movie", name = "Movie", poster = null,
         backdrop = null, logo = null, videoId = "tt0001", season = null, episode = null,

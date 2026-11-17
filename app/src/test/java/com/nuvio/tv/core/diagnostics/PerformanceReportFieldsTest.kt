@@ -18,6 +18,9 @@ class PerformanceReportFieldsTest {
         assertEquals(5000L, json.getLong("rebuffer_total_ms"))
         assertEquals(6, json.length())
     }
+    @Test fun redactedStalkerFailureStillReportsAnError() {
+        assertEquals("error", playbackPerformanceFields(LastPlaybackDiagnostics(result = "Stalker playback failed")).getString("outcome"))
+    }
     @Test fun unknownOutcomeNeverExportsFreeText() {
         assertEquals("pending", playbackPerformanceFields(LastPlaybackDiagnostics(result = "account@example.test")).getString("outcome"))
         assertEquals("played", playbackPerformanceFields(LastPlaybackDiagnostics(result = "Played")).getString("outcome"))

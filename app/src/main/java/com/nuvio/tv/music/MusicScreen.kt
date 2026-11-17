@@ -19,8 +19,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.MusicNote
@@ -36,6 +38,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,6 +75,7 @@ import androidx.tv.material3.LocalTextStyle
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import com.music.bitchord.data.model.BrowseType
+import com.music.bitchord.data.YtMusicRepository
 import com.nuvio.tv.R
 import com.music.bitchord.data.model.HomeShelf
 import com.music.bitchord.data.model.ShelfItem
@@ -79,6 +83,9 @@ import com.music.bitchord.data.model.Song
 import com.nuvio.tv.youtube.YouTubeAccountViewModel
 import com.nuvio.tv.LocalOpenSidebar
 import com.nuvio.tv.LocalSidebarExpanded
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** One density scale for the whole Music section. */
 private const val MUSIC_UI_SCALE = 0.88f
@@ -100,12 +107,14 @@ fun MusicScreen(
     val liked by MusicLibrary.liked.collectAsState()
     val recents by MusicLibrary.recents.collectAsState()
     val playlists by MusicLibrary.playlists.collectAsState()
+    val spotifySync by MusicSpotifyWebSync.state.collectAsState()
     val party by MusicPartyManager.state.collectAsState()
     val accountViewModel: YouTubeAccountViewModel = hiltViewModel()
     // Music keeps its own YouTube profile choice, separate from OneTube's.
     LaunchedEffect(accountViewModel) { accountViewModel.useScope(com.nuvio.tv.youtube.AccountScope.MUSIC) }
     val account by accountViewModel.state.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var showNowPlaying by remember { mutableStateOf(false) }
     var musicVideo by remember { mutableStateOf<MusicVideoRequest?>(null) }
     var showSettings by remember { mutableStateOf(false) }
@@ -189,7 +198,30 @@ fun MusicScreen(
 
     fun openShelfItem(shelf: HomeShelf, index: Int) {
         val item = shelf.items.getOrNull(index) ?: return
-        if (item.videoId != null) {
+        // Playlist/mix cards can carry a preview track. Open the playlist itself rather than
+        // playing that one preview and leaving the rest of the mix behind.
+        val playlistId = item.browseId?.takeIf {
+            it.startsWith("account:playlist:") ||
+                it.startsWith("VL") || it.startsWith("PL") || it.startsWith("OLAK5uy_") ||
+                it.startsWith("RD") || it.startsWith("MPRE")
+        }
+        if (playlistId != null) {
+            val isAlbum = playlistId.startsWith("MPRE")
+            val detailId = if (playlistId.startsWith("account:") ||
+                playlistId.startsWith("VL") || isAlbum
+            ) {
+                playlistId
+            } else {
+                "VL$playlistId"
+            }
+            viewModel.openDetail(
+                browseId = detailId,
+                title = item.title,
+                subtitle = item.subtitle,
+                thumbnailUrl = item.thumbnailUrl,
+                type = if (isAlbum) BrowseType.ALBUM else BrowseType.PLAYLIST
+            )
+        } else if (item.videoId != null) {
             viewModel.playShelfItem(shelf, index)
             showNowPlaying = true
         } else {
@@ -203,6 +235,52 @@ fun MusicScreen(
                 )
             }
         }
+    }
+
+    fun showVideoFor(song: Song, startMs: Long) {
+        // A local/addon track has no YouTube video; leave the video screen and let its audio play.
+        if (song.localUri != null ||
+            song.videoId.startsWith("local:") || song.videoId.startsWith("webdav:") ||
+            song.videoId.startsWith("navidrome:")
+        ) {
+            musicVideo = null
+            showNowPlaying = true
+            return
+        }
+        scope.launch {
+            val video = if (song.isVideo) song else withContext(Dispatchers.IO) {
+                YtMusicRepository.resolveVideo(song) ?: song
+            }
+            musicVideo = MusicVideoRequest(video, startMs)
+        }
+    }
+
+    fun skipVideo(direction: Int) {
+        val s = MusicPlayer.state.value
+        if (s.queue.isEmpty() || s.index !in s.queue.indices) return
+        val target = when {
+            direction > 0 && s.index < s.queue.lastIndex -> s.index + 1
+            direction < 0 && s.index > 0 -> s.index - 1
+            direction > 0 && s.repeatMode == RepeatMode.ALL -> 0
+            direction < 0 && s.repeatMode == RepeatMode.ALL -> s.queue.lastIndex
+            else -> return
+        }
+        MusicPlayer.jumpTo(target, play = false)
+        MusicPlayer.state.value.song?.let { showVideoFor(it, 0L) }
+    }
+
+    fun selectVideoQueue(index: Int) {
+        if (index !in MusicPlayer.state.value.queue.indices) return
+        MusicPlayer.jumpTo(index, play = false)
+        MusicPlayer.state.value.song?.let { showVideoFor(it, 0L) }
+    }
+
+    fun closeVideo(videoPositionMs: Long) {
+        val request = musicVideo ?: return
+        val mapped = MusicPlayer.audioPositionForVideo(request.video.videoId, videoPositionMs)
+        musicVideo = null
+        showNowPlaying = true
+        MusicPlayer.jumpTo(MusicPlayer.state.value.index, mapped, play = true)
     }
 
     fun selectTab(tab: MusicTab) {
@@ -359,10 +437,6 @@ fun MusicScreen(
                     state.tab == MusicTab.HOME -> MusicHomeScreen(
                         state = state.home,
                         onShelfItemClick = ::openShelfItem,
-                        onPlayShelfItem = { shelf, index ->
-                            viewModel.playShelfItem(shelf, index)
-                            showNowPlaying = true
-                        },
                         onHeroDetails = { item ->
                             item.browseId?.let { id ->
                                 viewModel.openDetail(
@@ -468,6 +542,33 @@ fun MusicScreen(
                         onLoadMore = viewModel::loadMoreSearch
                     )
                 }
+                if (spotifySync.busy) {
+                    Row(
+                        Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(24.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(MusicPalette.surfaceRaised)
+                            .border(1.dp, MusicPalette.accent, RoundedCornerShape(50))
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MusicPalette.accent
+                        )
+                        Text(
+                            text = spotifySync.progress ?: "Syncing Spotify…",
+                            color = MusicPalette.text,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.widthIn(max = 380.dp)
+                        )
+                    }
+                }
             }
         }
     }
@@ -484,21 +585,26 @@ fun MusicScreen(
                 },
                 onOpenArtist = { song ->
                     viewModel.openArtist(song) { showNowPlaying = false }
+                },
+                onOpenAlbum = { song ->
+                    viewModel.openAlbum(song) { showNowPlaying = false }
                 }
             )
         }
     }
 
     musicVideo?.let { request ->
-        MusicOverlayDialog(onDismiss = { musicVideo = null }) {
+        MusicOverlayDialog(onDismiss = {
+            musicVideo = null
+            showNowPlaying = true
+            if (!MusicPlayer.state.value.isPlaying) MusicPlayer.toggle()
+        }) {
             MusicVideoPlayerScreen(
                 video = request.video,
                 startPositionMs = request.startPositionMs,
-                onClose = {
-                    musicVideo = null
-                    showNowPlaying = true
-                    if (!MusicPlayer.state.value.isPlaying) MusicPlayer.toggle()
-                }
+                onClose = ::closeVideo,
+                onSkip = ::skipVideo,
+                onSelectQueue = ::selectVideoQueue
             )
         }
     }

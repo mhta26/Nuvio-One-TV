@@ -27,6 +27,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Login
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.runtime.Composable
@@ -74,6 +78,16 @@ internal fun MusicIntegrationsScreen(
     val webDav by MusicWebDav.config.collectAsState()
     val navidrome by MusicNavidrome.config.collectAsState()
     val addons by MusicAddonRegistry.configs.collectAsState()
+    val spotifyWeb by MusicSpotifyWebSession.state.collectAsState()
+    val webSync by MusicSpotifyWebSync.state.collectAsState()
+    var spotifyWebMessage by remember { mutableStateOf<String?>(null) }
+    val spotifyLoginLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            spotifyWebMessage = "Spotify connected."
+        }
+    }
     val closeFocus = remember { FocusRequester() }
     val lastFmLoginFocus = remember { FocusRequester() }
     val spotifyImportFocus = remember { FocusRequester() }
@@ -97,6 +111,7 @@ internal fun MusicIntegrationsScreen(
         MusicNavidrome.init(context)
         MusicScrobbler.init(context)
         MusicAddonRegistry.init(context)
+        MusicSpotifyWebSession.init(context)
         withFrameNanos { }
         runCatching { closeFocus.requestFocus() }
     }
@@ -211,8 +226,7 @@ internal fun MusicIntegrationsScreen(
                                 value = lastFmUsername,
                                 placeholder = "Last.fm username",
                                 onValueChange = { lastFmUsername = it },
-                                modifier = Modifier.weight(1f),
-                                downFocus = lastFmLoginFocus
+                                modifier = Modifier.weight(1f)
                             )
                             IntegrationField(
                                 label = "Password",
@@ -301,9 +315,88 @@ internal fun MusicIntegrationsScreen(
                 IntegrationCard(
                     icon = Icons.Default.MusicNote,
                     tint = MusicPalette.accentTeal,
-                    title = "Spotify playlists",
-                    subtitle = "Import a public playlist by link; tracks are matched in the music catalogue."
+                    title = "Spotify",
+                    subtitle = when {
+                        spotifyWeb.connected ->
+                            "Connected as ${spotifyWeb.accountName ?: "your Spotify account"}."
+                        else -> "Sign in on this TV, or import a public playlist."
+                    }
                 ) {
+                    if (spotifyWeb.connected) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                            IntegrationPill(
+                                icon = Icons.Default.Sync,
+                                label = if (webSync.busy) "Syncing…" else "Sync playlists & Liked Songs",
+                                primary = true,
+                                // Keep it focusable while syncing: disabling it moved focus to Last.fm.
+                                enabled = true,
+                                onClick = { if (!webSync.busy) MusicSpotifyWebSync.sync(context) }
+                            )
+                            IntegrationPill(
+                                icon = Icons.Default.Login,
+                                label = "Re-link",
+                                enabled = !webSync.busy,
+                                onClick = {
+                                    spotifyLoginLauncher.launch(
+                                        android.content.Intent(context, SpotifyLoginActivity::class.java)
+                                    )
+                                }
+                            )
+                            IntegrationPill(
+                                icon = Icons.Default.Logout,
+                                label = "Disconnect",
+                                enabled = !webSync.busy,
+                                onClick = {
+                                    MusicSpotifyWebSession.clear(context)
+                                    MusicSpotifyWebSync.reset()
+                                    spotifyWebMessage = "Spotify disconnected."
+                                }
+                            )
+                        }
+                    } else {
+                        Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                            IntegrationPill(
+                                icon = Icons.Default.Login,
+                                label = "Sign in to Spotify on this TV",
+                                primary = true,
+                                onClick = {
+                                    spotifyLoginLauncher.launch(
+                                        android.content.Intent(context, SpotifyLoginActivity::class.java)
+                                    )
+                                }
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = "The TV opens Spotify's real sign-in page. The session cookie stays encrypted on this TV.",
+                            color = MusicPalette.textMuted,
+                            fontSize = 10.sp,
+                            lineHeight = 14.sp
+                        )
+                    }
+                    spotifyWebMessage?.let {
+                        Spacer(Modifier.height(8.dp))
+                        Text(text = it, color = MusicPalette.accentTeal, fontSize = 11.sp)
+                    }
+                    webSync.progress?.let {
+                        Spacer(Modifier.height(8.dp))
+                        Text(text = it, color = MusicPalette.textSecondary, fontSize = 11.sp)
+                    }
+                    webSync.result?.let {
+                        Spacer(Modifier.height(8.dp))
+                        Text(text = it, color = MusicPalette.accentTeal, fontSize = 11.sp)
+                    }
+                    webSync.error?.let {
+                        Spacer(Modifier.height(8.dp))
+                        Text(text = it, color = MusicPalette.error, fontSize = 11.sp)
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = "Or import a public playlist",
+                        color = MusicPalette.textMuted,
+                        fontSize = 10.sp
+                    )
+                    Spacer(Modifier.height(6.dp))
                     IntegrationField(
                         label = "Playlist link",
                         value = spotifyUrl,

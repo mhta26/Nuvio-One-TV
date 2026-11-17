@@ -61,7 +61,12 @@ object MusicLibrary {
     private const val KEY_LIKED = "liked_songs"
     private const val KEY_RECENTS = "recent_songs"
     private const val KEY_PLAYLISTS = "playlists"
-    private const val MAX_RECENTS = 60
+    /**
+     * Recently played is kept effectively unlimited for a TV listener: one entry per track and
+     * old rows age out only once this many distinct songs have been played. Stored as a single
+     * JSON string, so it stays bounded rather than growing with every play.
+     */
+    private const val MAX_RECENTS = 500
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -104,6 +109,25 @@ object MusicLibrary {
         _liked.value = next
         persist(KEY_LIKED, next)
         return existing == null
+    }
+
+    /**
+     * Adds Spotify-liked songs to this device's Liked Songs. Existing likes are kept and
+     * duplicates are skipped; the returned count is how many were added.
+     */
+    @Synchronized
+    fun addLikedSongs(songs: List<Song>): Int {
+        if (songs.isEmpty()) return 0
+        val current = _liked.value
+        val existing = current.mapTo(HashSet()) { it.videoId }
+        val additions = songs
+            .filter { it.videoId.isNotBlank() && existing.add(it.videoId) }
+            .map { it.toStored() }
+        if (additions.isEmpty()) return 0
+        val next = current + additions
+        _liked.value = next
+        persist(KEY_LIKED, next)
+        return additions.size
     }
 
     /** Moves [song] to the front of Recently Played, keeping one entry per video. */

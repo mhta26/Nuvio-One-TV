@@ -285,11 +285,13 @@ private data class ContinueWatchingPosterInput(
     val pattern: String,
     val screens: Set<CustomPosterScreen>,
     val continueWatchingItems: List<ContinueWatchingItem>,
+    val onDemandItems: List<ContinueWatchingItem>,
     val upcomingItems: List<ContinueWatchingItem>,
 )
 
 private data class ContinueWatchingPosterOverlay(
     val continueWatchingItems: List<ContinueWatchingItem>,
+    val onDemandItems: List<ContinueWatchingItem>,
     val upcomingItems: List<ContinueWatchingItem>,
 )
 
@@ -306,6 +308,7 @@ internal fun HomeViewModel.observeModernHomePresentationPipeline() {
                     pattern = state.customPosterUrlPattern,
                     screens = state.customPosterEnabledScreens,
                     continueWatchingItems = state.continueWatchingItems,
+                    onDemandItems = state.onDemandContinueWatchingItems,
                     upcomingItems = state.upcomingItems,
                 )
             }
@@ -317,7 +320,7 @@ internal fun HomeViewModel.observeModernHomePresentationPipeline() {
             if (!input.enabled || patternForScreen(input.pattern, CustomPosterScreen.CONTINUE_WATCHING, input.screens).isBlank()) {
                 emptySet()
             } else buildSet {
-                for (item in input.continueWatchingItems + input.upcomingItems) {
+                for (item in input.continueWatchingItems + input.onDemandItems + input.upcomingItems) {
                     val id = when (item) {
                         is ContinueWatchingItem.InProgress -> item.progress.contentId
                         is ContinueWatchingItem.NextUp -> item.info.contentId
@@ -345,11 +348,11 @@ internal fun HomeViewModel.observeModernHomePresentationPipeline() {
 
         val posterOverlay = combine(posterInput, libraryPosterIds) { input, libraryIds ->
             if (!input.enabled) {
-                ContinueWatchingPosterOverlay(emptyList(), emptyList())
+                ContinueWatchingPosterOverlay(emptyList(), emptyList(), emptyList())
             } else {
                 val pattern = patternForScreen(input.pattern, CustomPosterScreen.CONTINUE_WATCHING, input.screens)
                 val idHints = if (pattern.isBlank()) emptyMap() else {
-                    (input.continueWatchingItems + input.upcomingItems).associate { item ->
+                    (input.continueWatchingItems + input.onDemandItems + input.upcomingItems).associate { item ->
                         val (id, type) = when (item) {
                             is ContinueWatchingItem.InProgress -> item.progress.contentId to item.progress.contentType
                             is ContinueWatchingItem.NextUp -> item.info.contentId to item.info.contentType
@@ -364,6 +367,7 @@ internal fun HomeViewModel.observeModernHomePresentationPipeline() {
                 }
                 ContinueWatchingPosterOverlay(
                     continueWatchingItems = input.continueWatchingItems.withCustomPosterUrls(pattern, idHints),
+                    onDemandItems = input.onDemandItems.withCustomPosterUrls(pattern, idHints),
                     upcomingItems = input.upcomingItems.withCustomPosterUrls(pattern, idHints),
                 )
             }
@@ -374,6 +378,7 @@ internal fun HomeViewModel.observeModernHomePresentationPipeline() {
                     homeRows = state.homeRows,
                     catalogRows = state.catalogRows,
                     continueWatchingItems = overlay.continueWatchingItems,
+                    onDemandItems = overlay.onDemandItems,
                     upcomingItems = overlay.upcomingItems,
                     useLandscapePosters = state.modernLandscapePostersEnabled,
                     showCatalogTypeSuffix = state.catalogTypeSuffixEnabled,
@@ -390,6 +395,7 @@ internal fun HomeViewModel.observeModernHomePresentationPipeline() {
             .distinctUntilChanged { old, new ->
                 old.homeRows === new.homeRows
                     && old.continueWatchingItems == new.continueWatchingItems
+                    && old.onDemandItems == new.onDemandItems
                     && old.upcomingItems == new.upcomingItems
                     && old.useLandscapePosters == new.useLandscapePosters
                     && old.showCatalogTypeSuffix == new.showCatalogTypeSuffix
