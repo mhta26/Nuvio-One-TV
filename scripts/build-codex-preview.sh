@@ -51,7 +51,7 @@ if [[ ! -f "$NUVIO_RELEASE_STORE_FILE" ]]; then
 fi
 # Keep the same version across two Gradle processes. Releasing the compiler heap
 # before R8 avoids running both memory-heavy stages together on the CI runner.
-release_version="${NUVIO_ONE_TV_VERSION:-1.2.0}"
+release_version="${NUVIO_ONE_TV_VERSION:-1.2.1}"
 if [[ ! "$release_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     echo "NUVIO_ONE_TV_VERSION must be a stable major.minor.patch version" >&2
     exit 1

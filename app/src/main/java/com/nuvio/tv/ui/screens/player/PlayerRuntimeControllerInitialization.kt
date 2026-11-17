@@ -258,7 +258,12 @@ internal fun PlayerRuntimeController.initializePlayer(
                     "Tunneled playback skipped: media audio goes to USB (route=${currentAudioOutputRoute?.key})"
                 )
             }
-            val tunnelingActive = playerSettings.effectiveTunnelingEnabled && !tunnelingBlockedByUsbAudio
+            val forceSoftwareVideo = forceSoftwareVideoDecoderForStreamUrl == requestedUrl
+            val tunnelingActive = videoAttemptAllowsTunneling(
+                requested = playerSettings.effectiveTunnelingEnabled,
+                usbAudioBlocked = tunnelingBlockedByUsbAudio,
+                softwareVideo = forceSoftwareVideo
+            )
             if (rememberAudioDelayPerDeviceEnabled) {
                 applyStoredAudioDelayForCurrentRouteIfEnabled()
             }
@@ -944,7 +949,6 @@ internal fun PlayerRuntimeController.initializePlayer(
             isMapDv7ToHevcActiveForCurrentPlayback = mapDv7ToHevcEnabled
             val convertToDv81Active = !mapDv7ToHevcEnabled &&
                     dv7AutoResult?.decision == DolbyVisionBaseLayerPolicy.Decision.CONVERT_TO_DV81
-            val forceSoftwareVideo = forceSoftwareVideoDecoderForStreamUrl == currentStreamUrl
             if (forceSoftwareVideo) {
                 Log.i(PlayerRuntimeController.TAG, "VIDEO_DECODER: retrying this stream with a software decoder")
             }
@@ -1751,7 +1755,7 @@ internal fun PlayerRuntimeController.initializePlayer(
                         val mayTrySoftwareVideo = error.errorCode != PlaybackException.ERROR_CODE_DECODING_RESOURCES_RECLAIMED ||
                             errorRetryCount > 0 || startupRetryCount > 0
                         if (mayTrySoftwareVideo &&
-                            trySoftwareVideoDecoderFallback(error, currentPosition, userPausedManually)
+                            trySoftwareVideoDecoderFallback(error, currentPosition, userPausedManually, allowEngineFailover)
                         ) {
                             return
                         }

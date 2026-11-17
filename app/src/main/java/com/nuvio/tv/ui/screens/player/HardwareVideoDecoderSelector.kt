@@ -76,3 +76,7 @@ internal val softwareOnlyDecoderNames: Set<String> by lazy {
             .toSet()
     }.getOrDefault(emptySet())
 }
+
+/** Platform software decoders cannot satisfy tunneled video requests. Never change the saved preference. */
+internal fun videoAttemptAllowsTunneling(requested: Boolean, usbAudioBlocked: Boolean, softwareVideo: Boolean): Boolean =
+    requested && !usbAudioBlocked && !softwareVideo

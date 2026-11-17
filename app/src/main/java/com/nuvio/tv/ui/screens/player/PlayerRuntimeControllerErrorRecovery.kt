@@ -138,7 +138,8 @@ internal val VIDEO_DECODER_ERROR_CODES = setOf(
 internal fun PlayerRuntimeController.trySoftwareVideoDecoderFallback(
     error: PlaybackException,
     savedPosition: Long,
-    paused: Boolean
+    paused: Boolean,
+    allowEngineFailover: Boolean
 ): Boolean {
     if (currentInternalPlayerEngine != InternalPlayerEngine.EXOPLAYER) return false
     if (error.errorCode !in VIDEO_DECODER_ERROR_CODES) return false
@@ -170,7 +171,9 @@ internal fun PlayerRuntimeController.trySoftwareVideoDecoderFallback(
         url = currentStreamUrl,
         headers = currentHeaders,
         overrideInternalPlayerEngine = InternalPlayerEngine.EXOPLAYER,
-        allowEngineFailover = false,
+        // A software retry is still the same engine attempt. Preserve the caller's
+        // permission so an enabled Exo -> MPV fallback remains possible if it fails.
+        allowEngineFailover = allowEngineFailover,
         startPaused = paused
     )
     return true
