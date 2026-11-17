@@ -334,10 +334,10 @@ class LiveTvPreferences internal constructor(
     }
 
     init {
-        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+        storageScope.launch {
             runCatching { turnOnPlaylistGroupsOnce() }
         }
-        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+        storageScope.launch {
             profileManager.activeProfileId.collect { id -> runCatching { seedProfile(id) } }
         }
     }
