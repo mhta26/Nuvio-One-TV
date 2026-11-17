@@ -135,6 +135,7 @@ internal val VIDEO_DECODER_ERROR_CODES = setOf(
  * If no software decoder exists (for example Dolby Vision on a TV without a software DV decoder),
  * the rebuild fails and the normal error screen offers MPV.
  */
+@androidx.annotation.OptIn(UnstableApi::class)
 internal fun PlayerRuntimeController.trySoftwareVideoDecoderFallback(
     error: PlaybackException,
     savedPosition: Long,
