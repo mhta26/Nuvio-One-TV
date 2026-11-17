@@ -4,6 +4,12 @@ import android.content.Context
 import com.nuvio.tv.core.profile.ProfileManager
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
@@ -18,6 +24,7 @@ import java.nio.file.Files
 
 class LiveTvImportProgressPreferencesTest {
     private lateinit var tempDir: File
+    private lateinit var storageJob: Job
     private lateinit var preferences: LiveTvPreferences
 
     @Before
@@ -30,11 +37,14 @@ class LiveTvImportProgressPreferencesTest {
         val profileManager = mockk<ProfileManager> {
             every { activeProfileId } returns MutableStateFlow(1)
         }
-        preferences = LiveTvPreferences(context, profileManager)
+        storageJob = SupervisorJob()
+        preferences = LiveTvPreferences(context, profileManager, CoroutineScope(Dispatchers.IO + storageJob))
     }
 
     @After
     fun tearDown() {
+        // DataStore readers/writers must stop before removing the backing directory.
+        runBlocking { storageJob.cancelAndJoin() }
         tempDir.deleteRecursively()
     }
 

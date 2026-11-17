@@ -39,10 +39,17 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class LiveTvPreferences @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val profileManager: com.nuvio.tv.core.profile.ProfileManager
+class LiveTvPreferences internal constructor(
+    private val context: Context,
+    private val profileManager: com.nuvio.tv.core.profile.ProfileManager,
+    private val storageScope: CoroutineScope
 ) {
+    /** App-owned IO lifetime in production; an explicitly joined lifetime in file-backed tests. */
+    @Inject constructor(
+        @ApplicationContext context: Context,
+        profileManager: com.nuvio.tv.core.profile.ProfileManager
+    ) : this(context, profileManager, CoroutineScope(Dispatchers.IO + SupervisorJob()))
+
     // A provider edit/restore and publication of its staged imports are ordered together.
     // Unrelated playback/display preferences do not wait for a catalogue import.
     private val sourceMutations = Mutex()
@@ -58,7 +65,7 @@ class LiveTvPreferences @Inject constructor(
     }
 
     private val store: DataStore<Preferences> = PreferenceDataStoreFactory.create(
-        scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+        scope = storageScope,
         produceFile = { context.preferencesDataStoreFile("live_tv") }
     )
 
@@ -67,12 +74,12 @@ class LiveTvPreferences @Inject constructor(
      * kept apart so saving it doesn't rewrite and re-read the main settings every time.
      */
     private val deviceStore: DataStore<Preferences> = PreferenceDataStoreFactory.create(
-        scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+        scope = storageScope,
         produceFile = { context.preferencesDataStoreFile("live_tv_device") }
     )
 
     /** Writes that must survive the screen that started them (see [saveGroupOrder]). */
-    private val writeScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val writeScope = storageScope
 
     private object Keys {
         val playlists = stringPreferencesKey("playlists")

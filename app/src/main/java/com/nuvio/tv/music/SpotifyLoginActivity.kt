@@ -91,7 +91,12 @@ class SpotifyLoginActivity : androidx.activity.ComponentActivity() {
         MusicSpotifyWebSession.init(this)
         cursorStep = 26f * resources.displayMetrics.density
 
-        val root = FrameLayout(this).apply { setBackgroundColor(Color.BLACK) }
+        // Intercept the cursor's D-pad keys before WebView, using the public View API.
+        // Back remains with ComponentActivity's OnBackPressedDispatcher.
+        val root = object : FrameLayout(this) {
+            override fun dispatchKeyEvent(event: KeyEvent): Boolean =
+                this@SpotifyLoginActivity.consumeCursorKeyEvent(event) || super.dispatchKeyEvent(event)
+        }.apply { setBackgroundColor(Color.BLACK) }
 
         webView = WebView(this).apply {
             layoutParams = FrameLayout.LayoutParams(
@@ -200,8 +205,8 @@ class SpotifyLoginActivity : androidx.activity.ComponentActivity() {
         }
     }
 
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (!cursorOn) return super.dispatchKeyEvent(event)
+    private fun consumeCursorKeyEvent(event: KeyEvent): Boolean {
+        if (!cursorOn) return false
         if (event.action == KeyEvent.ACTION_DOWN) {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_DPAD_UP -> {
@@ -228,14 +233,14 @@ class SpotifyLoginActivity : androidx.activity.ComponentActivity() {
                     setCursorOn(false)
                     return true
                 }
-                else -> return super.dispatchKeyEvent(event)
+                else -> return false
             }
         }
         return when (event.keyCode) {
             KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT,
             KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_CENTER,
             KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> true
-            else -> super.dispatchKeyEvent(event)
+            else -> false
         }
     }
 

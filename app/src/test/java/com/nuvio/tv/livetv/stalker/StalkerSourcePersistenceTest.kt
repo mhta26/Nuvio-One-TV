@@ -6,6 +6,12 @@ import com.nuvio.tv.core.profile.ProfileManager
 import com.nuvio.tv.livetv.data.LiveTvPreferences
 import com.nuvio.tv.livetv.model.PlaylistSource
 import io.mockk.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.json.JSONArray
@@ -20,6 +26,7 @@ import java.nio.file.Files
 /** All identity values in this fixture are deliberately synthetic. */
 class StalkerSourcePersistenceTest {
     private lateinit var directory: File
+    private lateinit var storageJob: Job
     private lateinit var preferences: LiveTvPreferences
     private val config = StalkerConfig("https://portal.invalid/stalker_portal/c/", "00:00:00:00:00:00",
         "fixture-user", "fixture-password", "fixture-serial", "fixture-device", "fixture-device-two",
@@ -32,10 +39,14 @@ class StalkerSourcePersistenceTest {
             every { filesDir } returns directory
         }
         val profiles = mockk<ProfileManager> { every { activeProfileId } returns MutableStateFlow(1) }
-        preferences = LiveTvPreferences(context, profiles)
+        storageJob = SupervisorJob()
+        preferences = LiveTvPreferences(context, profiles, CoroutineScope(Dispatchers.IO + storageJob))
     }
 
-    @After fun tearDown() { directory.deleteRecursively() }
+    @After fun tearDown() {
+        runBlocking { storageJob.cancelAndJoin() }
+        directory.deleteRecursively()
+    }
 
     @Test fun `provider identity and import choices survive backup and restore`() = runTest {
         val original = PlaylistSource("portal", "Portal", "", sourceType = "stalker", stalkerConfig = config,
