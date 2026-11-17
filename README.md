@@ -4,13 +4,13 @@
 
 <img src="branding/nuvio-one-tv/tv-banner.png" width="320" alt="Nuvio One TV" />
 
-**[تحميل ARM 64-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/v1.2.0%2Bbuild.44076379270/Nuvio-One-TV-arm64-v8a.apk)** · **[تحميل ARM 32-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/v1.2.0%2Bbuild.44076379270/Nuvio-One-TV-armeabi-v7a.apk)**
+**[تحميل ARM 64-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/v1.2.1%2Bbuild.44138092200/Nuvio-One-TV-arm64-v8a.apk)** · **[تحميل ARM 32-bit](https://github.com/mhta26/Nuvio-One-TV/releases/download/v1.2.1%2Bbuild.44138092200/Nuvio-One-TV-armeabi-v7a.apk)**
 
 [الإصدارات / Releases](https://github.com/mhta26/Nuvio-One-TV/releases) · Android TV 7+ · ARM 32/64
 
-اختر ملفًا واحدًا يناسب معمارية جهازك. الإصدار الشخصي **1.2.0** يدمج تحسينات Nuvio One **1.2.0-beta.1.15** للترجمة وSpotify وOn Demand وفك الفيديو، مع تحسينات لتقليل إعادة بناء القائمة العامة وانتقالات الإعدادات على الأجهزة محدودة الذاكرة. يحتفظ بالخط العربي للترجمات الخارجية وإصلاحات IPTV والبوسترات والذاكرة وتصدير التشخيص على Android 9 وإعدادات ربط الخدمات. حدّث النسخة الشخصية السابقة مباشرة دون حذف بياناتها؛ وتبقى منفصلة عن التطبيق الأصلي. رقم إصدارنا مستقل عن مرحلة beta للمشروع الأساسي.
+اختر ملفًا واحدًا يناسب معمارية جهازك. الإصدار الشخصي **1.2.1** يصلح المحاولة البديلة بعد فشل فك الفيديو: تعطيل Tunneling للمحاولة البرمجية فقط، والحفاظ على إذن الانتقال إلى MPV عند تفعيل التبديل التلقائي، وتجنب تشغيل استعادة الفيديو لأخطاء مفكك الصوت. يتضمن تحسينات 1.2.0 للترجمة وSpotify وOn Demand والأداء والتخزين، ويحافظ على الخط والبوسترات وSimkl والتشخيص ودعم Android 9. حدّث النسخة الشخصية السابقة مباشرة دون حذف بياناتها؛ الحزمة والتوقيع محفوظان.
 
-[دمج الإصدار الأساسي وتحسينات الأداء](UPSTREAM-MERGE-1.2.0.md) · [تصدير تشخيص الأداء](PERFORMANCE-DIAGNOSTICS.md) · [إصلاح البوسترات](POSTER-CONSISTENCY-REVIEW.md) · [مراجعة أداء IPTV](IPTV-PERFORMANCE-REVIEW.md) · [خط الترجمات وفحوص المحارف](SUBTITLE-FONTS.md) · [مراجعة الكود الأساسية](CODE-AUDIT-NUVIO-ONE-TV.md) · [صفحة هذا الإصدار](https://github.com/mhta26/Nuvio-One-TV/releases/tag/v1.2.0%2Bbuild.44076379270)
+[إصلاح استعادة فك الفيديو](VIDEO-DECODER-RECOVERY.md) · [دمج الإصدار الأساسي وتحسينات الأداء](UPSTREAM-MERGE-1.2.0.md) · [تصدير تشخيص الأداء](PERFORMANCE-DIAGNOSTICS.md) · [إصلاح البوسترات](POSTER-CONSISTENCY-REVIEW.md) · [مراجعة أداء IPTV](IPTV-PERFORMANCE-REVIEW.md) · [خط الترجمات وفحوص المحارف](SUBTITLE-FONTS.md) · [مراجعة الكود الأساسية](CODE-AUDIT-NUVIO-ONE-TV.md) · [صفحة هذا الإصدار](https://github.com/mhta26/Nuvio-One-TV/releases/tag/v1.2.1%2Bbuild.44138092200)
 
 **Personal Nuvio One TV fork for Android TV, Google TV and Fire TV.**
 

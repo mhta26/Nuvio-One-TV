@@ -102,10 +102,10 @@ and features while reducing competing image work during navigation.
 
 ## Stable identity and upgrade compatibility
 
-The default personal release is version `1.2.0`, channel `stable`, with no Test
+The default personal release is version `1.2.1`, channel `stable`, with no Test
 resource overlay. `NUVIO_ONE_TV_VERSION` (or the workflow's `app_version` input)
 sets a future stable major.minor.patch version. Increment it for future updates (for
-example `1.2.1`); build metadata alone does not make a semantic version newer for the
+example `1.2.2`); build metadata alone does not make a semantic version newer for the
 in-app updater. Version codes remain on the
 previous personal build's monotonically increasing track, with the same package
 and signing identity, so no uninstall or data reset is needed.
