@@ -143,6 +143,8 @@ internal fun PlayerRuntimeController.trySoftwareVideoDecoderFallback(
 ): Boolean {
     if (currentInternalPlayerEngine != InternalPlayerEngine.EXOPLAYER) return false
     if (error.errorCode !in VIDEO_DECODER_ERROR_CODES) return false
+    val rendererMime = (error as? androidx.media3.exoplayer.ExoPlaybackException)?.rendererFormat?.sampleMimeType
+    if (rendererMime != null && !androidx.media3.common.MimeTypes.isVideo(rendererMime)) return false
     if (currentStreamUrl.isBlank()) return false
     if (forceSoftwareVideoDecoderForStreamUrl == currentStreamUrl) return false
 

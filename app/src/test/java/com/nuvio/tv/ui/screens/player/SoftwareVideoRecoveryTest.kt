@@ -59,6 +59,22 @@ class SoftwareVideoRecoveryTest {
             PlaybackException("fixture network", null, PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED), 0, false, true))
         verify(exactly = 0) { controller.initializePlayer(any(), any(), any(), any(), any()) }
     }
+    @Test fun audioDecoderFailureDoesNotTriggerVideoRebuild() {
+        val audioError = androidx.media3.exoplayer.ExoPlaybackException.createForRenderer(
+            RuntimeException("fixture audio"), "audio", 0,
+            androidx.media3.common.Format.Builder().setSampleMimeType("audio/ac3").build(),
+            androidx.media3.common.C.FORMAT_HANDLED, false, PlaybackException.ERROR_CODE_DECODING_FAILED)
+        assertFalse(controller.trySoftwareVideoDecoderFallback(audioError, 0, false, true))
+        verify(exactly = 0) { controller.initializePlayer(any(), any(), any(), any(), any()) }
+    }
+    @Test fun videoRendererFailureStillRetries() {
+        val videoError = androidx.media3.exoplayer.ExoPlaybackException.createForRenderer(
+            RuntimeException("fixture video"), "video", 0,
+            androidx.media3.common.Format.Builder().setSampleMimeType("video/avc").build(),
+            androidx.media3.common.C.FORMAT_HANDLED, false, PlaybackException.ERROR_CODE_DECODING_FAILED)
+        assertTrue(controller.trySoftwareVideoDecoderFallback(videoError, 0, false, true))
+        verify(exactly = 1) { controller.initializePlayer(any(), any(), any(), any(), any()) }
+    }
     @Test fun softwareRetryDisablesTunnelingWithoutChangingNormalAttempts() {
         assertTrue(videoAttemptAllowsTunneling(true, false, false))
         assertFalse(videoAttemptAllowsTunneling(true, false, true))
